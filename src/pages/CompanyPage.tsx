@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, PlusCircle, Eye, Star } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
+import { AuthModal } from '../components/AuthModal'
 import { getProbability, timeUntil, formatDate } from '../utils/odds'
 
 const fmtViews = (n: number) => {
@@ -21,6 +23,7 @@ export const CompanyPage = () => {
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const currentUser = useStore(s => s.currentUser)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const company = companies.find(c => c.id === id)
   if (!company) return (
@@ -52,7 +55,10 @@ export const CompanyPage = () => {
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{company.name}</h1>
               {currentUser && (
                 <button
-                  onClick={() => toggleFavoriteCompany(company.id)}
+                  onClick={() => {
+                    if (!currentUser) { setShowAuthModal(true); return }
+                    toggleFavoriteCompany(company.id)
+                  }}
                   className={`flex-shrink-0 p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
                   title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
@@ -147,6 +153,7 @@ export const CompanyPage = () => {
           </Link>
         </div>
       )}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} prompt="Sign in to save your favorite companies." />}
     </Layout>
   )
 }
