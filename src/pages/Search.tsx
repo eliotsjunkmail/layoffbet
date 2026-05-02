@@ -1,0 +1,103 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Search as SearchIcon, Eye } from 'lucide-react'
+import { useStore } from '../store/useStore'
+import { Layout } from '../components/Layout'
+import { CompanyLogo } from '../components/CompanyLogo'
+import { getProbability } from '../utils/odds'
+
+const fmtViews = (n: number) => {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`
+  return String(n)
+}
+
+export const Search = () => {
+  const companies = useStore(s => s.companies)
+  const events = useStore(s => s.events)
+  const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const [query, setQuery] = useState('')
+
+  const q = query.toLowerCase().trim()
+
+  const matchedCompanies = q
+    ? companies.filter(c => c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q))
+    : [...companies].sort((a, b) => b.viewCount - a.viewCount)
+
+  const matchedEvents = q
+    ? events.filter(e => e.title.toLowerCase().includes(q) || e.companyName.toLowerCase().includes(q))
+    : events.filter(e => getEffectiveStatus(e) === 'active')
+
+  return (
+    <Layout>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Search</h1>
+
+      <div className="relative mb-6">
+        <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search companies or events..."
+          className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all shadow-sm"
+          autoFocus
+        />
+      </div>
+
+      <section className="mb-6">
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">Companies</h2>
+        <div className="space-y-2">
+          {matchedCompanies.slice(0, 8).map(c => {
+            const companyEvents = events.filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
+            return (
+              <Link key={c.id} to={`/company/${c.id}`} className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+                <CompanyLogo name={c.name} id={c.id} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
+                  <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                    <span>{c.industry}</span>
+                    <span className="flex items-center gap-0.5"><Eye className="w-3 h-3" />{fmtViews(c.viewCount)}</span>
+                    {companyEvents.length > 0 && <span className="text-violet-600 dark:text-violet-400">{companyEvents.length} active</span>}
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+          {matchedCompanies.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm">No companies found.</p>}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+          {q ? 'Matching Predictions' : 'Active Predictions'}
+        </h2>
+        <div className="space-y-3">
+          {matchedEvents.slice(0, 15).map(event => {
+            const prob = getProbability(event.yesPool, event.noPool)
+            const status = getEffectiveStatus(event)
+            return (
+              <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${status === 'active' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-700'}`}>
+                    {status}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug mb-2 line-clamp-2">{event.title}</p>
+                <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500">
+                  <span className="text-emerald-600 dark:text-emerald-400">YES {prob.yes}%</span>
+                  <span>{event.yesPool + event.noPool} wagered</span>
+                  <span className="text-rose-600 dark:text-rose-400">NO {prob.no}%</span>
+                </div>
+              </Link>
+            )
+          })}
+          {matchedEvents.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm">No predictions found.</p>}
+        </div>
+      </section>
+    </Layout>
+  )
+}

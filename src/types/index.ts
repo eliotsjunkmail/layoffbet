@@ -1,0 +1,54 @@
+export interface User {
+  id: string
+  username: string
+  password: string
+  coins: number
+  isAdmin: boolean
+  createdAt: string
+  lastCoinsDate: string
+}
+
+export interface Company {
+  id: string
+  name: string
+  description: string
+  industry: string
+  viewCount: number
+  createdAt: string
+}
+
+export type EventStatus = 'active' | 'expired' | 'resolved' | 'archived'
+
+export interface Event {
+  id: string
+  companyId: string
+  companyName: string
+  title: string
+  description: string
+  expiresAt: string
+  status: EventStatus
+  creatorId: string
+  creatorName: string
+  yesPool: number
+  noPool: number
+  outcome: 'yes' | 'no' | null
+  createdAt: string
+}
+
+export interface Bet {
+  id: string
+  eventId: string
+  userId: string
+  side: 'yes' | 'no'
+  amount: number
+  createdAt: string
+}
+
+export interface Comment {
+  id: string
+  eventId: string
+  content: string
+  createdAt: string
+}
+
+export type Theme = 'light' | 'dark'

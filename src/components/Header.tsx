@@ -1,0 +1,134 @@
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { TrendingUp, PlusCircle, Search, User, Shield, LogOut, Settings, Layers, Coins, X } from 'lucide-react'
+import { useStore } from '../store/useStore'
+
+const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
+  const currentUser = useStore(s => s.currentUser)
+  const logout = useStore(s => s.logout)
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    onClose()
+    navigate('/')
+  }
+
+  const go = (path: string) => { navigate(path); onClose() }
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
+        <div className="max-w-2xl mx-auto px-4 py-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="font-semibold text-gray-900 dark:text-white">{currentUser?.username}</div>
+              <div className="flex items-center gap-1 mt-0.5">
+                <Coins className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+                <span className="text-sm font-medium text-violet-600 dark:text-violet-300">{currentUser?.coins.toLocaleString()}</span>
+                <span className="text-sm text-gray-400 dark:text-slate-500">Coins</span>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-1 mb-4">
+            <button onClick={() => go('/profile')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
+              <User className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+              <span className="text-sm font-medium text-gray-900 dark:text-white">My Profile</span>
+            </button>
+            <button onClick={() => go('/settings')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
+              <Settings className="w-5 h-5 text-gray-500 dark:text-slate-400" />
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Settings</span>
+            </button>
+            {currentUser?.isAdmin && (
+              <button onClick={() => go('/admin')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
+                <Shield className="w-5 h-5 text-violet-500 dark:text-violet-400" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Panel</span>
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm font-medium text-gray-700 dark:text-slate-300"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+        <div className="h-safe-area-inset-bottom" />
+      </div>
+    </>
+  )
+}
+
+export const Header = () => {
+  const currentUser = useStore(s => s.currentUser)
+  const location = useLocation()
+  const [showProfile, setShowProfile] = useState(false)
+
+  const isActive = (path: string) =>
+    location.pathname === path
+      ? 'text-violet-600 dark:text-violet-400'
+      : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
+
+  return (
+    <>
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200 dark:border-slate-800">
+        <div className="max-w-2xl mx-auto flex items-center justify-between px-4 h-14">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-violet-600 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-gray-900 dark:text-white tracking-tight text-sm">layoffbet.com</span>
+          </Link>
+
+          <nav className="flex items-center gap-1">
+            {currentUser ? (
+              <>
+                <Link to="/feed" className={`p-2 rounded-lg transition-colors ${isActive('/feed')}`}>
+                  <Layers className="w-5 h-5" />
+                </Link>
+                <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
+                  <Search className="w-5 h-5" />
+                </Link>
+                <Link to="/create" className={`p-2 rounded-lg transition-colors ${isActive('/create')}`}>
+                  <PlusCircle className="w-5 h-5" />
+                </Link>
+                <button
+                  onClick={() => setShowProfile(true)}
+                  className="flex items-center gap-1.5 ml-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full pl-2 pr-3 py-1.5 transition-colors"
+                >
+                  <div className="w-5 h-5 bg-violet-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {currentUser.username.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-300 flex items-center gap-0.5">
+                    <Coins className="w-3 h-3" />{currentUser.coins.toLocaleString()}
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
+                  <Search className="w-5 h-5" />
+                </Link>
+                <Link
+                  to="/login"
+                  className="ml-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors"
+                >
+                  Sign In
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      {showProfile && <ProfileSheet onClose={() => setShowProfile(false)} />}
+    </>
+  )
+}
