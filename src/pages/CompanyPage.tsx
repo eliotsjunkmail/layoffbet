@@ -24,6 +24,7 @@ export const CompanyPage = () => {
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const currentUser = useStore(s => s.currentUser)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [pendingFavorite, setPendingFavorite] = useState(false)
 
   const company = companies.find(c => c.id === id)
   if (!company) return (
@@ -56,7 +57,7 @@ export const CompanyPage = () => {
               {currentUser && (
                 <button
                   onClick={() => {
-                    if (!currentUser) { setShowAuthModal(true); return }
+                    if (!currentUser) { setPendingFavorite(true); setShowAuthModal(true); return }
                     toggleFavoriteCompany(company.id)
                   }}
                   className={`flex-shrink-0 p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
@@ -153,7 +154,20 @@ export const CompanyPage = () => {
           </Link>
         </div>
       )}
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} prompt="Sign in to save your favorite companies." />}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => {
+            setShowAuthModal(false)
+            if (pendingFavorite && useStore.getState().currentUser) {
+              toggleFavoriteCompany(company.id)
+              setPendingFavorite(false)
+            }
+          }}
+          promptTitle="Save this company"
+          prompt={`Star ${company.name} to track it from your home screen.`}
+          anonNote="Just pick a username and password — no email, no personal info required. It takes 5 seconds."
+        />
+      )}
     </Layout>
   )
 }

@@ -6,9 +6,11 @@ import { useStore } from '../store/useStore'
 interface AuthModalProps {
   onClose: () => void
   prompt?: string
+  promptTitle?: string
+  anonNote?: string
 }
 
-export const AuthModal = ({ onClose, prompt }: AuthModalProps) => {
+export const AuthModal = ({ onClose, prompt, promptTitle, anonNote }: AuthModalProps) => {
   const [mode, setMode] = useState<'choose' | 'register' | 'login'>('choose')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -41,7 +43,7 @@ export const AuthModal = ({ onClose, prompt }: AuthModalProps) => {
           <div className="flex items-center gap-2">
             <Coins className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             <span className="font-semibold text-gray-900 dark:text-white">
-              {mode === 'choose' ? 'Join to place bets' : mode === 'register' ? 'Create account' : 'Sign in'}
+              {mode === 'choose' ? (promptTitle ?? 'Join to place bets') : mode === 'register' ? 'Create account' : 'Sign in'}
             </span>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
@@ -54,7 +56,7 @@ export const AuthModal = ({ onClose, prompt }: AuthModalProps) => {
             <>
               {prompt && <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">{prompt}</p>}
               <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
-                Create a free anonymous account — no email or identity required. You'll get <span className="font-semibold text-violet-600 dark:text-violet-400">100 Coins</span> daily to bet with.
+                {anonNote ?? <>Create a free anonymous account — no email or identity required. You'll get <span className="font-semibold text-violet-600 dark:text-violet-400">100 Coins</span> daily to bet with.</>}
               </p>
               <button
                 onClick={() => setMode('register')}
