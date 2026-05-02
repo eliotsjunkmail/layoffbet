@@ -67,10 +67,6 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* Hero */}
         <div className="pt-10 pb-8 text-center">
-          <span className="inline-flex items-center gap-1.5 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 text-xs font-semibold px-3 py-1 rounded-full border border-violet-200 dark:border-violet-800 mb-5">
-            <span className="w-1.5 h-1.5 bg-violet-500 rounded-full animate-pulse" />
-            100% Anonymous
-          </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
             Find out what's really<br />happening at your company
           </h1>
