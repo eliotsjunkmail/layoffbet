@@ -4,7 +4,7 @@ import { TrendingUp } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Footer } from '../components/Footer'
 
-const REMEMBER_KEY = 'layoffbet-remember'
+const REMEMBER_KEY = 'next-layoff-remember'
 
 export const Login = () => {
   const [searchParams] = useSearchParams()
@@ -65,7 +65,7 @@ export const Login = () => {
             <Link to="/" className="w-14 h-14 bg-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-violet-200 dark:shadow-violet-900/50">
               <TrendingUp className="w-7 h-7 text-white" />
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight">layoffbet.com</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Next Layoff</h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Anonymous prediction markets</p>
           </div>
 
