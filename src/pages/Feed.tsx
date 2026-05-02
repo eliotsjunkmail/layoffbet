@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, Clock, Heart, PlusCircle, ChevronDown } from 'lucide-react'
+import { TrendingUp, Clock, Star, PlusCircle, ChevronDown } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { getProbability, timeUntil } from '../utils/odds'
@@ -60,9 +60,9 @@ export const Feed = () => {
           {favoriteCompanyIds.length > 0 && (
             <button
               onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCompanyId(null) }}
-              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showFavoritesOnly ? 'bg-rose-500 text-white' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 shadow-sm'}`}
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${showFavoritesOnly ? 'bg-amber-400 text-white' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 shadow-sm'}`}
             >
-              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+              <Star className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
               Favorites
             </button>
           )}

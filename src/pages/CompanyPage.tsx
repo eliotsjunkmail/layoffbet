@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Heart } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -53,10 +53,10 @@ export const CompanyPage = () => {
               {currentUser && (
                 <button
                   onClick={() => toggleFavoriteCompany(company.id)}
-                  className={`flex-shrink-0 p-2 rounded-xl transition-colors ${isFavorite ? 'text-rose-500 bg-rose-50 dark:bg-rose-900/30' : 'text-gray-300 dark:text-slate-600 hover:text-rose-400 dark:hover:text-rose-400'}`}
+                  className={`flex-shrink-0 p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
                   title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
-                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-rose-500' : ''}`} />
+                  <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
                 </button>
               )}
             </div>

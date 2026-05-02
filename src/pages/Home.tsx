@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, TrendingUp, Eye, Flame, ArrowRight, ChevronRight } from 'lucide-react'
+import { Search, TrendingUp, Eye, Flame, ArrowRight, ChevronRight, Star } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -21,9 +21,12 @@ export const Home = () => {
   const events = useStore(s => s.events)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const currentUser = useStore(s => s.currentUser)
+  const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
 
+  const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
+  const hasFavorites = favorites.length > 0
   const popular = companies.filter(c => POPULAR_IDS.includes(c.id))
 
   const activeEventsByCompany = useMemo(() => {
@@ -117,14 +120,16 @@ export const Home = () => {
 
         {!query && (
           <>
-            {/* Popular */}
+            {/* Favorites or Popular */}
             <section className="mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <Flame className="w-4 h-4 text-orange-500" />
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Popular Right Now</h2>
+                {hasFavorites
+                  ? <><Star className="w-4 h-4 text-amber-400 fill-amber-400" /><h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">My Companies</h2></>
+                  : <><Flame className="w-4 h-4 text-orange-500" /><h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Popular Right Now</h2></>
+                }
               </div>
               <div className="grid grid-cols-3 gap-3">
-                {popular.map(c => {
+                {(hasFavorites ? favorites : popular).map(c => {
                   const topEvent = topEventByCompany[c.id]
                   const prob = topEvent ? getProbability(topEvent.yesPool, topEvent.noPool) : null
                   const activeBets = activeEventsByCompany[c.id] ?? 0
