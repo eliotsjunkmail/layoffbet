@@ -4,6 +4,7 @@ import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Pin } from 'lucide-r
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
+import { SwipeCard } from '../components/SwipeCard'
 import { getProbability, timeUntil, formatDate } from '../utils/odds'
 
 const barProps = (yesPool: number, noPool: number) => {
@@ -26,11 +27,39 @@ export const CompanyPage = () => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const currentUser = useStore(s => s.currentUser)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const pinnedEventIds = useStore(s => s.pinnedEventIds)
   const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
+  const placeBet = useStore(s => s.placeBet)
+  const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
+  const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const [shareCopied, setShareCopied] = useState(false)
+  const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
+  const [toast, setToast] = useState('')
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
+
+  const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    if (currentUser) {
+      if (placeBet(eventId, side, 10)) {
+        setSwipeFlash({ id: eventId, side })
+        setTimeout(() => setSwipeFlash(null), 600)
+        showToast(side === 'yes' ? '✓ YES — 10 coins' : '✕ NO — 10 coins')
+      } else {
+        showToast('Already bet or not enough coins')
+      }
+    } else {
+      if (placeAnonymousVote(eventId, side)) {
+        setSwipeFlash({ id: eventId, side })
+        setTimeout(() => setSwipeFlash(null), 600)
+        showToast(side === 'yes' ? '✓ YES' : '✕ NO')
+      } else {
+        showToast('10 bets reached — sign in to keep going')
+      }
+    }
+  }
 
   const company = companies.find(c => c.slug === slug)
 
@@ -52,10 +81,6 @@ export const CompanyPage = () => {
       return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
     })
   const past = companyEvents.filter(e => ['expired', 'resolved', 'archived'].includes(getEffectiveStatus(e)))
-
-  const avgYes = active.length > 0
-    ? Math.round(active.reduce((sum, e) => sum + getProbability(e.yesPool, e.noPool).yes, 0) / active.length)
-    : null
 
   const handleShare = async () => {
     const url = window.location.href
@@ -81,7 +106,7 @@ export const CompanyPage = () => {
 
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-5 shadow-sm dark:shadow-none">
         <div className="flex items-start gap-4">
-          <CompanyLogo name={company.name} id={company.id} industry={company.industry} sentiment={avgYes ?? undefined} size="xl" />
+          <CompanyLogo name={company.name} id={company.id} industry={company.industry} size="xl" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{company.name}</h1>
@@ -110,18 +135,6 @@ export const CompanyPage = () => {
             </div>
           </div>
         </div>
-        {avgYes !== null && (
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
-            <div className="text-xs text-gray-400 dark:text-slate-400 mb-1.5">Avg. layoff sentiment across active predictions</div>
-            <div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${avgYes}%` }} />
-            </div>
-            <div className="flex justify-between text-xs mt-1">
-              <span className="text-emerald-600 dark:text-emerald-400">YES {avgYes}%</span>
-              <span className="text-rose-600 dark:text-rose-400">NO {100 - avgYes}%</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Copied toast */}
@@ -141,39 +154,51 @@ export const CompanyPage = () => {
             {active.map(event => {
               const { dominant, pct } = barProps(event.yesPool, event.noPool)
               const isPinned = pinnedEventIds.includes(event.id)
+              const flash = swipeFlash?.id === event.id
+              const anonVote = anonVotedEvents[event.id]
+              const anonCount = anonVote?.count ?? 0
+              const exhausted = !currentUser && anonCount >= 10
               return (
-                <div key={event.id} className="relative bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+                <SwipeCard
+                  key={event.id}
+                  onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                  onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                  disabled={exhausted}
+                  onClick={() => navigate(`/event/${event.id}`)}
+                  cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md select-none transition-colors
+                    ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                      flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                      anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
+                      anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
+                      'border-gray-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700'}`}
+                >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <Link to={`/event/${event.id}`} className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug">{event.title}</p>
-                    </Link>
+                    <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
                     <button
-                      onClick={() => togglePinnedEvent(event.id)}
+                      onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
                       className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
                     >
                       <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
                     </button>
                   </div>
-                  <Link to={`/event/${event.id}`} className="block">
-                    <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                      <div
-                        className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500">
-                      {dominant === 'yes'
-                        ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                        : <span className="text-gray-300 dark:text-slate-700">·</span>
-                      }
-                      <span>{timeUntil(event.expiresAt)}</span>
-                      {dominant === 'no'
-                        ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                        : <span className="text-gray-300 dark:text-slate-700">·</span>
-                      }
-                    </div>
-                  </Link>
-                </div>
+                  <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                    <div
+                      className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    {dominant === 'yes'
+                      ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                      : <span className="text-gray-300 dark:text-slate-700">·</span>
+                    }
+                    <span className="text-gray-400 dark:text-slate-500">{timeUntil(event.expiresAt)}</span>
+                    {dominant === 'no'
+                      ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                      : <span className="text-gray-300 dark:text-slate-700">·</span>
+                    }
+                  </div>
+                </SwipeCard>
               )
             })}
           </div>
@@ -216,6 +241,12 @@ export const CompanyPage = () => {
           <Link to="/create" className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
             <PlusCircle className="w-4 h-4" /> Create a Prediction
           </Link>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+          {toast}
         </div>
       )}
     </Layout>
