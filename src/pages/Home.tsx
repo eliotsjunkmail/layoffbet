@@ -222,7 +222,7 @@ export const Home = () => {
 
           {!currentUser && (
             <p className="text-xs text-gray-400 dark:text-slate-500">
-              Browse freely. <Link to="/login" className="text-violet-600 dark:text-violet-400 hover:underline">Sign in</Link> to place bets.
+              Swipe left or right to bet — no sign-in needed.
             </p>
           )}
         </div>
