@@ -336,7 +336,7 @@ interface StoreState {
   addFeedback: (text: string, type: string) => void
   deleteFeedback: (id: string) => void
 
-  placeAnonymousVote: (eventId: string, side: 'yes' | 'no') => boolean
+  placeAnonymousVote: (eventId: string, side: 'yes' | 'no', amount?: number) => boolean
   placeBet: (eventId: string, side: 'yes' | 'no', amount: number) => boolean
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount'>) => void
@@ -385,7 +385,7 @@ export const useStore = create<StoreState>()(
           : [...s.pinnedEventIds, eventId],
       })),
 
-      placeAnonymousVote: (eventId, side) => {
+      placeAnonymousVote: (eventId, side, amount = 10) => {
         const { events, anonVotedEvents, getEffectiveStatus } = get()
         const existing = anonVotedEvents[eventId]
         if (existing && existing.count >= 10) return false
@@ -398,8 +398,8 @@ export const useStore = create<StoreState>()(
           },
           events: s.events.map(e => e.id === eventId ? {
             ...e,
-            yesPool: side === 'yes' ? e.yesPool + 10 : e.yesPool,
-            noPool:  side === 'no'  ? e.noPool  + 10 : e.noPool,
+            yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool,
+            noPool:  side === 'no'  ? e.noPool  + amount : e.noPool,
           } : e),
         }))
         return true
