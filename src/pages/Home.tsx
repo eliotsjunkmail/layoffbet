@@ -4,7 +4,6 @@ import { Search, TrendingUp, Eye, ArrowRight, Star, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
-import { AuthModal } from '../components/AuthModal'
 import { getProbability } from '../utils/odds'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
@@ -27,7 +26,6 @@ export const Home = () => {
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
   const [showDropdown, setShowDropdown] = useState(false)
-  const [authTarget, setAuthTarget] = useState<string | null>(null)
   const searchRef = useRef<HTMLDivElement>(null)
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
@@ -79,11 +77,8 @@ export const Home = () => {
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!currentUser) { setAuthTarget(companyId); return }
     toggleFavoriteCompany(companyId)
   }
-
-  const authTargetCompany = companies.find(c => c.id === authTarget)
 
   return (
     <Layout fullWidth>
@@ -270,18 +265,6 @@ export const Home = () => {
         )}
       </div>
 
-      {authTarget && authTargetCompany && (
-        <AuthModal
-          onClose={() => {
-            const user = useStore.getState().currentUser
-            if (user) toggleFavoriteCompany(authTarget)
-            setAuthTarget(null)
-          }}
-          promptTitle="Save this company"
-          prompt={`Star ${authTargetCompany.name} to track it from your home screen.`}
-          anonNote="Just pick a username and password — no email, no personal info required. It takes 5 seconds."
-        />
-      )}
     </Layout>
   )
 }

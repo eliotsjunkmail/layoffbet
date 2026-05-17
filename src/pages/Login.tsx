@@ -65,7 +65,7 @@ export const Login = () => {
             <Link to="/" className="w-14 h-14 bg-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-violet-200 dark:shadow-violet-900/50">
               <TrendingUp className="w-7 h-7 text-white" />
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight">Layoff Bets</h1>
+            <h1 className="text-2xl font-bold tracking-tight">LayoffBet.com</h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Anonymous prediction markets</p>
           </div>
 
@@ -86,12 +86,12 @@ export const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Username</label>
+              <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Username or email</label>
               <input
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="anonymous_user"
+                placeholder="username or email"
                 className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all"
                 autoComplete="username"
               />

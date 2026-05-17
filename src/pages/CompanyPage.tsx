@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
-import { AuthModal } from '../components/AuthModal'
 import { getProbability, timeUntil, formatDate } from '../utils/odds'
 
 const fmtViews = (n: number) => {
@@ -19,12 +18,9 @@ export const CompanyPage = () => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
-
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
-  const currentUser = useStore(s => s.currentUser)
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [pendingFavorite, setPendingFavorite] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
 
   const company = companies.find(c => c.slug === slug)
 
@@ -48,6 +44,22 @@ export const CompanyPage = () => {
     ? Math.round(active.reduce((sum, e) => sum + getProbability(e.yesPool, e.noPool).yes, 0) / active.length)
     : null
 
+  const handleShare = async () => {
+    const url = window.location.href
+    const shareData = {
+      title: `${company.name} on LayoffBet.com`,
+      text: `Employees are placing anonymous bets on what's really happening at ${company.name} — layoffs, hiring freezes, restructuring, and more. See what insiders are predicting on LayoffBet.com.`,
+      url,
+    }
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${shareData.text}\n${url}`)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2500)
+    }
+  }
+
   return (
     <Layout>
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-5 text-sm">
@@ -60,18 +72,22 @@ export const CompanyPage = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{company.name}</h1>
-              {currentUser && (
+              <div className="flex items-center gap-1 flex-shrink-0">
                 <button
-                  onClick={() => {
-                    if (!currentUser) { setPendingFavorite(true); setShowAuthModal(true); return }
-                    toggleFavoriteCompany(company.id)
-                  }}
-                  className={`flex-shrink-0 p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
+                  onClick={handleShare}
+                  className="p-2 rounded-xl transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                  title="Share this company"
+                >
+                  {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => toggleFavoriteCompany(company.id)}
+                  className={`p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
                   title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
                   <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
                 </button>
-              )}
+              </div>
             </div>
             <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 mb-2">{company.industry}</div>
             <p className="text-gray-500 dark:text-slate-400 text-sm">{company.description}</p>
@@ -94,6 +110,13 @@ export const CompanyPage = () => {
           </div>
         )}
       </div>
+
+      {/* Copied toast */}
+      {shareCopied && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 dark:bg-slate-700 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in">
+          <Check className="w-3.5 h-3.5 text-emerald-400" /> Link copied to clipboard
+        </div>
+      )}
 
       {active.length > 0 && (
         <section className="mb-6">
@@ -159,20 +182,6 @@ export const CompanyPage = () => {
             <PlusCircle className="w-4 h-4" /> Create a Prediction
           </Link>
         </div>
-      )}
-      {showAuthModal && (
-        <AuthModal
-          onClose={() => {
-            setShowAuthModal(false)
-            if (pendingFavorite && useStore.getState().currentUser) {
-              toggleFavoriteCompany(company.id)
-              setPendingFavorite(false)
-            }
-          }}
-          promptTitle="Save this company"
-          prompt={`Star ${company.name} to track it from your home screen.`}
-          anonNote="Just pick a username and password — no email, no personal info required. It takes 5 seconds."
-        />
       )}
     </Layout>
   )
