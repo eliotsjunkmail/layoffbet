@@ -371,7 +371,7 @@ export const useStore = create<StoreState>()(
 
       login: (username, password) => {
         const user = get().users.find(
-          u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+          u => u.username.toLowerCase() === username.toLowerCase() && u.password.toLowerCase() === password.toLowerCase()
         )
         if (!user) return false
         set({ currentUser: user })
@@ -382,7 +382,7 @@ export const useStore = create<StoreState>()(
       logout: () => set({ currentUser: null }),
 
       register: (username, password) => {
-        if (!username.trim() || !password) return { ok: false, error: 'Username and password are required.' }
+        if (!username || !password) return { ok: false, error: 'Username and password are required.' }
         const exists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
         if (exists) return { ok: false, error: 'Username already taken.' }
         const user: User = {

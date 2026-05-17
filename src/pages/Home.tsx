@@ -170,19 +170,12 @@ export const Home = () => {
             .sort((a, b) => (b.yesPool + b.noPool) - (a.yesPool + a.noPool))
           return (
             <section key={c.id} className="mb-6">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group">
                   <CompanyLogo name={c.name} id={c.id} size="sm" />
                   <span className="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
                   <span className="text-xs text-gray-400 dark:text-slate-500">{c.industry}</span>
                 </Link>
-                <button
-                  onClick={e => handleStar(e, c.id)}
-                  className="p-1.5 rounded-lg text-amber-400 hover:text-amber-300 transition-colors"
-                  title="Remove from favorites"
-                >
-                  <Star className="w-4 h-4 fill-amber-400" />
-                </button>
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2">
