@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Eye, ArrowRight, Star, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -22,6 +22,7 @@ export const Home = () => {
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
@@ -89,6 +90,12 @@ export const Home = () => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Clear search whenever the home page is navigated to (e.g. logo click)
+  useEffect(() => {
+    setQuery('')
+    setShowDropdown(false)
+  }, [location.key])
+
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -120,7 +127,7 @@ export const Home = () => {
               value={query}
               onChange={e => { setQuery(e.target.value); setShowDropdown(true) }}
               onFocus={() => query && setShowDropdown(true)}
-              placeholder="Search your company..."
+              placeholder="Search for a company..."
               className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl pl-12 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all shadow-sm text-sm"
             />
             {query && (
