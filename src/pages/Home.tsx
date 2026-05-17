@@ -90,8 +90,8 @@ export const Home = () => {
             <span className="hidden sm:block">Find out what's really<br />happening at your company</span>
           </h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base mb-8 max-w-sm mx-auto whitespace-nowrap overflow-hidden text-ellipsis sm:whitespace-normal sm:overflow-visible">
-            Anonymous prediction markets for the workplace.
-            <span className="hidden sm:inline"> Track signals, bet on outcomes.</span>
+            Anonymous prediction markets for the workplace
+            <span className="hidden sm:inline"> — track signals, bet on outcomes</span>
           </p>
 
           {/* Search with typeahead */}
@@ -210,7 +210,7 @@ export const Home = () => {
                 </div>
               ) : (
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-4 text-center">
-                  <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}.</p>
+                  <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
                   <Link to="/create" className="text-xs text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">Create one →</Link>
                 </div>
               )}
@@ -218,38 +218,41 @@ export const Home = () => {
           )
         })}
 
-        {/* Industry filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-          {INDUSTRIES.map(ind => (
-            <button
-              key={ind}
-              onClick={() => setIndustry(ind)}
-              className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
-                industry === ind
-                  ? 'bg-violet-600 border-violet-600 text-white'
-                  : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-violet-300 dark:hover:border-violet-700'
-              }`}
-            >
-              {ind}
-            </button>
-          ))}
-        </div>
+        {/* Industry filter + Browse — hidden once user has favorites */}
+        {!hasFavorites && (
+          <>
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+              {INDUSTRIES.map(ind => (
+                <button
+                  key={ind}
+                  onClick={() => setIndustry(ind)}
+                  className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
+                    industry === ind
+                      ? 'bg-violet-600 border-violet-600 text-white'
+                      : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-violet-300 dark:hover:border-violet-700'
+                  }`}
+                >
+                  {ind}
+                </button>
+              ))}
+            </div>
 
-        {/* All companies */}
-        <section className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
-            <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-              {filtered.length}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {filtered.map(c => (
-              <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} />
-            ))}
-          </div>
-        </section>
+            <section className="mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
+                <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                  {filtered.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {filtered.map(c => (
+                  <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
         {/* CTA for guests */}
         {!currentUser && (

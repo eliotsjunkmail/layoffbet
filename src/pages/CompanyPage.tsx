@@ -25,8 +25,8 @@ export const CompanyPage = () => {
   const company = companies.find(c => c.slug === slug)
 
   useEffect(() => {
-    if (company) document.title = `${company.name} | LayoffBet.com`
-    return () => { document.title = 'LayoffBet.com' }
+    if (company) document.title = `${company.name} | Layoff Bet`
+    return () => { document.title = 'Layoff Bet' }
   }, [company])
 
   if (!company) return (
@@ -47,8 +47,8 @@ export const CompanyPage = () => {
   const handleShare = async () => {
     const url = window.location.href
     const shareData = {
-      title: `${company.name} on LayoffBet.com`,
-      text: `Employees are placing anonymous bets on what's really happening at ${company.name} — layoffs, hiring freezes, restructuring, and more. See what insiders are predicting on LayoffBet.com.`,
+      title: `${company.name} on Layoff Bet`,
+      text: `Employees are placing anonymous bets on what's really happening at ${company.name} — layoffs, hiring freezes, restructuring, and more. See what insiders are predicting on Layoff Bet.`,
       url,
     }
     if (navigator.share) {

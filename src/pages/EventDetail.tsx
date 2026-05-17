@@ -29,8 +29,8 @@ export const EventDetail = () => {
   const event = events.find(e => e.id === id)
 
   useEffect(() => {
-    if (event) document.title = `${event.companyName} | LayoffBet.com`
-    return () => { document.title = 'LayoffBet.com' }
+    if (event) document.title = `${event.companyName} | Layoff Bet`
+    return () => { document.title = 'Layoff Bet' }
   }, [event])
 
   if (!event) return (
