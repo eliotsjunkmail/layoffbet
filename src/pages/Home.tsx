@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Pin, ChevronRight } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
+import { AuthModal } from '../components/AuthModal'
 import { getProbability } from '../utils/odds'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
@@ -14,6 +15,14 @@ const fmtViews = (n: number) => {
   return String(n)
 }
 
+const barProps = (yesPool: number, noPool: number) => {
+  const total = yesPool + noPool
+  if (total === 0) return { dominant: 'yes' as const, pct: 50 }
+  const yesPct = Math.round((yesPool / total) * 100)
+  if (yesPct >= 50) return { dominant: 'yes' as const, pct: yesPct }
+  return { dominant: 'no' as const, pct: 100 - yesPct }
+}
+
 export const Home = () => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
@@ -21,6 +30,9 @@ export const Home = () => {
   const currentUser = useStore(s => s.currentUser)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
+  const placeBet = useStore(s => s.placeBet)
+  const pinnedEventIds = useStore(s => s.pinnedEventIds)
+  const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -28,6 +40,15 @@ export const Home = () => {
   const [industry, setIndustry] = useState('All')
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [pendingSwipe, setPendingSwipe] = useState<{ eventId: string; side: 'yes' | 'no' } | null>(null)
+  const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
+  const [toast, setToast] = useState('')
+  const touchXRef = useRef(0)
+  const didSwipeRef = useRef(false)
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0
@@ -100,6 +121,29 @@ export const Home = () => {
     e.preventDefault()
     e.stopPropagation()
     toggleFavoriteCompany(companyId)
+  }
+
+  const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    if (!currentUser) {
+      setPendingSwipe({ eventId, side })
+      setShowAuthModal(true)
+      return
+    }
+    if (placeBet(eventId, side, 10)) {
+      setSwipeFlash({ id: eventId, side })
+      setTimeout(() => setSwipeFlash(null), 600)
+      showToast(side === 'yes' ? '✓ Bet YES — 10 coins' : '✕ Bet NO — 10 coins')
+    } else {
+      showToast('Already bet or not enough coins')
+    }
+  }
+
+  const handleAuthClose = () => {
+    setShowAuthModal(false)
+    if (pendingSwipe && currentUser) {
+      handleSwipeBet(pendingSwipe.eventId, pendingSwipe.side)
+    }
+    setPendingSwipe(null)
   }
 
   return (
@@ -192,19 +236,27 @@ export const Home = () => {
         {hasFavorites && favorites.map((c, idx) => {
           const activeEvents = events
             .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
-            .sort((a, b) => (b.yesPool + b.noPool) - (a.yesPool + a.noPool))
+            .sort((a, b) => {
+              const aPinned = pinnedEventIds.includes(a.id)
+              const bPinned = pinnedEventIds.includes(b.id)
+              if (aPinned !== bPinned) return aPinned ? -1 : 1
+              return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
+            })
           return (
             <section key={c.id} className={`mb-2 ${idx > 0 ? 'pt-5 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
-                <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group">
+                <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group min-w-0">
                   <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
-                  <div>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+                    </div>
                     <div className="text-xs text-gray-400 dark:text-slate-500 leading-none mt-0.5">{c.industry}</div>
                   </div>
                 </Link>
                 {activeEvents.length > 0 && (
-                  <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800">
+                  <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
                     {activeEvents.length} active
                   </span>
                 )}
@@ -212,19 +264,53 @@ export const Home = () => {
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
                   {activeEvents.slice(0, 3).map(e => {
-                    const prob = getProbability(e.yesPool, e.noPool)
+                    const { dominant, pct } = barProps(e.yesPool, e.noPool)
+                    const isPinned = pinnedEventIds.includes(e.id)
+                    const flash = swipeFlash?.id === e.id
                     return (
-                      <Link key={e.id} to={`/event/${e.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3.5 hover:border-violet-400 dark:hover:border-violet-600 transition-all shadow-sm hover:shadow-md">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug mb-2.5 line-clamp-1">{e.title}</p>
-                        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-2">
-                          <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${prob.yes}%` }} />
+                      <div
+                        key={e.id}
+                        className={`relative block bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 transition-all shadow-sm hover:shadow-md cursor-pointer select-none
+                          ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                            flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                            'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
+                        onTouchStart={e2 => { touchXRef.current = e2.touches[0].clientX; didSwipeRef.current = false }}
+                        onTouchEnd={e2 => {
+                          const dx = e2.changedTouches[0].clientX - touchXRef.current
+                          if (Math.abs(dx) > 60) {
+                            didSwipeRef.current = true
+                            handleSwipeBet(e.id, dx > 0 ? 'yes' : 'no')
+                          }
+                        }}
+                        onClick={() => { if (!didSwipeRef.current) navigate(`/event/${e.id}`) }}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{e.title}</p>
+                          <button
+                            onClick={ev => { ev.stopPropagation(); togglePinnedEvent(e.id) }}
+                            className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
+                          >
+                            <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
+                          </button>
                         </div>
-                        <div className="flex justify-between text-xs font-semibold">
-                          <span className="text-emerald-600 dark:text-emerald-400">YES {prob.yes}%</span>
-                          <span className="text-gray-400 dark:text-slate-500 font-normal">{e.yesPool + e.noPool} coins</span>
-                          <span className="text-rose-600 dark:text-rose-400">NO {prob.no}%</span>
+                        <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                          <div
+                            className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                            style={{ width: `${pct}%` }}
+                          />
                         </div>
-                      </Link>
+                        <div className="flex justify-between text-xs">
+                          {dominant === 'yes'
+                            ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                            : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
+                          }
+                          <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins</span>
+                          {dominant === 'no'
+                            ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                            : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
+                          }
+                        </div>
+                      </div>
                     )
                   })}
                   {activeEvents.length > 3 && (
@@ -239,6 +325,8 @@ export const Home = () => {
                   <Link to="/create" className="text-xs text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">Create one →</Link>
                 </div>
               )}
+              {/* Ad after first company */}
+              {idx === 0 && <AdBanner />}
             </section>
           )
         })}
@@ -248,6 +336,8 @@ export const Home = () => {
         {/* Industry filter + Browse — hidden once user has favorites */}
         {!hasFavorites && (
           <>
+            <AdBanner />
+
             <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
               {INDUSTRIES.map(ind => (
                 <button
@@ -281,8 +371,6 @@ export const Home = () => {
           </>
         )}
 
-        <AdBanner />
-
         {/* CTA for guests */}
         {!currentUser && (
           <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-8 text-center">
@@ -297,96 +385,99 @@ export const Home = () => {
         )}
       </div>
 
+      {showAuthModal && <AuthModal onClose={handleAuthClose} prompt="Sign in to place your swipe bet." />}
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+          {toast}
+        </div>
+      )}
     </Layout>
   )
 }
 
 const ADS = [
   {
-    headline: 'Write 10x more bugs, 10x faster',
-    body: 'Our AI autocompletes your mistakes before you even make them. True 10x engineering, guaranteed.',
-    cta: 'Ship faster →',
+    brand: 'NextGig',
+    tagline: 'Your next job is already posted.',
+    body: 'Stop refreshing Slack waiting for good news. 50,000+ companies are hiring — none of them have a "workforce evolution" program.',
+    cta: 'Browse jobs →',
+    color: 'blue',
   },
   {
-    headline: 'Your senior dev. But cheaper.',
-    body: 'Confidently wrong. Always available. Never argues in code review or asks for equity.',
-    cta: 'Try free for 30 days →',
+    brand: 'VibeCoder AI',
+    tagline: 'Code 10x faster. Get fired 10x sooner.',
+    body: 'Our AI writes your code so confidently wrong that your manager will think you did it yourself.',
+    cta: 'Try for free →',
+    color: 'teal',
   },
   {
-    headline: 'We read the docs so you don\'t have to.',
-    body: 'Then misunderstood them. Then hallucinated the rest. Stack traces have never looked so creative.',
-    cta: 'Get started →',
+    brand: 'ResumeGPT',
+    tagline: 'Your resume, but make it lie tastefully.',
+    body: '"Leveraged cross-functional synergies to drive impact." We turn your work history into a buzzword symphony HR can\'t ignore.',
+    cta: 'Polish my resume →',
+    color: 'violet',
   },
 ]
 
 const AdBanner = () => {
-  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem('lb-ad-dismissed') === '1')
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * ADS.length))
-  const [progress, setProgress] = useState(0)
-  const DURATION = 7000
-
-  useEffect(() => {
-    if (dismissed) return
-    setProgress(0)
-    const start = Date.now()
-    const frame = () => {
-      const elapsed = Date.now() - start
-      const pct = Math.min((elapsed / DURATION) * 100, 100)
-      setProgress(pct)
-      if (pct < 100) requestAnimationFrame(frame)
-      else { setIdx(i => (i + 1) % ADS.length); setProgress(0) }
-    }
-    const raf = requestAnimationFrame(frame)
-    return () => cancelAnimationFrame(raf)
-  }, [idx, dismissed])
+  const [dismissed, setDismissed] = useState(false)
+  const [idx] = useState(() => Math.floor(Math.random() * ADS.length))
 
   if (dismissed) return null
 
   const ad = ADS[idx]
 
-  const dismiss = () => {
-    sessionStorage.setItem('lb-ad-dismissed', '1')
-    setDismissed(true)
+  const colorMap: Record<string, { border: string; bg: string; logo: string; label: string; brand: string; cta: string; dismiss: string }> = {
+    blue: {
+      border: 'border-blue-200 dark:border-blue-900/60',
+      bg: 'from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/30',
+      logo: 'from-blue-400 to-indigo-500',
+      label: 'border-blue-300/50 dark:border-blue-800 text-blue-500/60 dark:text-blue-600',
+      brand: 'text-blue-700 dark:text-blue-400',
+      cta: 'text-blue-600 dark:text-blue-400 hover:text-blue-500',
+      dismiss: 'text-blue-400 dark:text-blue-700 hover:text-blue-600 dark:hover:text-blue-500',
+    },
+    teal: {
+      border: 'border-teal-200 dark:border-teal-900/60',
+      bg: 'from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/30',
+      logo: 'from-teal-400 to-cyan-500',
+      label: 'border-teal-300/50 dark:border-teal-800 text-teal-500/60 dark:text-teal-600',
+      brand: 'text-teal-700 dark:text-teal-400',
+      cta: 'text-teal-600 dark:text-teal-400 hover:text-teal-500',
+      dismiss: 'text-teal-400 dark:text-teal-700 hover:text-teal-600 dark:hover:text-teal-500',
+    },
+    violet: {
+      border: 'border-violet-200 dark:border-violet-900/60',
+      bg: 'from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/30',
+      logo: 'from-violet-400 to-purple-500',
+      label: 'border-violet-300/50 dark:border-violet-800 text-violet-500/60 dark:text-violet-600',
+      brand: 'text-violet-700 dark:text-violet-400',
+      cta: 'text-violet-600 dark:text-violet-400 hover:text-violet-500',
+      dismiss: 'text-violet-400 dark:text-violet-700 hover:text-violet-600 dark:hover:text-violet-500',
+    },
   }
 
-  return (
-    <div className="mb-6 relative rounded-2xl overflow-hidden border border-teal-200 dark:border-teal-900/60 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/30 shadow-sm">
-      {/* Progress bar */}
-      <div className="absolute top-0 left-0 h-0.5 bg-teal-400 dark:bg-teal-500 transition-none" style={{ width: `${progress}%` }} />
+  const c = colorMap[ad.color] ?? colorMap.teal
+  const initials = ad.brand.split(' ').map(w => w[0]).join('').slice(0, 2)
 
+  return (
+    <div className={`mb-6 mt-3 relative rounded-2xl overflow-hidden border ${c.border} bg-gradient-to-br ${c.bg} shadow-sm`}>
       <div className="px-4 pt-4 pb-3">
-        {/* Header row */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-md flex items-center justify-center text-white text-[10px] font-black leading-none">VC</div>
-            <span className="text-xs font-bold text-teal-700 dark:text-teal-400 tracking-tight">VibeCoder AI</span>
-            <span className="text-[10px] text-teal-500/60 dark:text-teal-600 border border-teal-300/50 dark:border-teal-800 rounded px-1 py-px uppercase tracking-widest">Ad</span>
+            <div className={`w-6 h-6 bg-gradient-to-br ${c.logo} rounded-md flex items-center justify-center text-white text-[10px] font-black leading-none`}>{initials}</div>
+            <span className={`text-xs font-bold ${c.brand} tracking-tight`}>{ad.brand}</span>
+            <span className={`text-[10px] border rounded px-1 py-px uppercase tracking-widest ${c.label}`}>Ad</span>
           </div>
-          <button onClick={dismiss} className="text-teal-400 dark:text-teal-700 hover:text-teal-600 dark:hover:text-teal-500 transition-colors p-0.5">
+          <button onClick={() => setDismissed(true)} className={`${c.dismiss} transition-colors p-0.5`}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        {/* Ad copy */}
-        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug mb-1">{ad.headline}</p>
+        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug mb-1">{ad.tagline}</p>
         <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mb-3">{ad.body}</p>
-
-        {/* Footer row */}
-        <div className="flex items-center justify-between">
-          <button className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-500 transition-colors">
-            {ad.cta}
-          </button>
-          {/* Dot indicators */}
-          <div className="flex items-center gap-1">
-            {ADS.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setIdx(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === idx ? 'bg-teal-500' : 'bg-teal-200 dark:bg-teal-800 hover:bg-teal-300 dark:hover:bg-teal-700'}`}
-              />
-            ))}
-          </div>
-        </div>
+        <button className={`text-xs font-semibold ${c.cta} transition-colors`}>
+          {ad.cta}
+        </button>
       </div>
     </div>
   )

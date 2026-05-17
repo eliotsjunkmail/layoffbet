@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -9,9 +9,10 @@ export const CreateEvent = () => {
   const createEvent = useStore(s => s.createEvent)
   const navigate = useNavigate()
 
+  const { state } = useLocation() as { state: { companyId?: string } | null }
   const sorted = [...companies].sort((a, b) => a.name.localeCompare(b.name))
   const minDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]
-  const [companyId, setCompanyId] = useState(sorted[0]?.id ?? '')
+  const [companyId, setCompanyId] = useState(state?.companyId ?? sorted[0]?.id ?? '')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [expiresAt, setExpiresAt] = useState('')

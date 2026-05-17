@@ -6,7 +6,7 @@ import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { getProbability, formatDate } from '../utils/odds'
 
-type Tab = 'events' | 'companies' | 'users'
+type Tab = 'events' | 'companies' | 'users' | 'feedback'
 
 const INDUSTRIES = ['Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing', 'Other']
 
@@ -25,6 +25,8 @@ export const Admin = () => {
   const deleteCompany = useStore(s => s.deleteCompany)
   const deleteComment = useStore(s => s.deleteComment)
   const banUser = useStore(s => s.banUser)
+  const feedback = useStore(s => s.feedback)
+  const deleteFeedback = useStore(s => s.deleteFeedback)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
 
   const [tab, setTab] = useState<Tab>('events')
@@ -84,7 +86,7 @@ export const Admin = () => {
       </div>
 
       <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1 mb-5 gap-1">
-        {(['events', 'companies', 'users'] as Tab[]).map(t => (
+        {(['events', 'companies', 'users', 'feedback'] as Tab[]).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 text-sm font-medium rounded-lg capitalize transition-all ${tab === t ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow' : 'text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200'}`}>
             {t}
           </button>
@@ -220,6 +222,28 @@ export const Admin = () => {
                   Ban
                 </button>
               )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'feedback' && (
+        <div className="space-y-3">
+          {feedback.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm text-center py-8">No feedback yet</p>}
+          {[...feedback].reverse().map(f => (
+            <div key={f.id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 shadow-sm dark:shadow-none">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium mb-2 inline-block ${f.type === 'bug' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : f.type === 'feature' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>
+                    {f.type === 'bug' ? '🐛 Bug' : f.type === 'feature' ? '💡 Feature' : '💬 Other'}
+                  </span>
+                  <p className="text-sm text-gray-700 dark:text-slate-200 leading-relaxed">{f.text}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">{new Date(f.createdAt).toLocaleString()}</p>
+                </div>
+                <button onClick={() => deleteFeedback(f.id)} className="text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-colors flex-shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Pin } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { getProbability, timeUntil, formatDate } from '../utils/odds'
+
+const barProps = (yesPool: number, noPool: number) => {
+  const total = yesPool + noPool
+  if (total === 0) return { dominant: 'yes' as const, pct: 50 }
+  const yesPct = Math.round((yesPool / total) * 100)
+  if (yesPct >= 50) return { dominant: 'yes' as const, pct: yesPct }
+  return { dominant: 'no' as const, pct: 100 - yesPct }
+}
 
 const fmtViews = (n: number) => {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
@@ -20,6 +28,8 @@ export const CompanyPage = () => {
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
+  const pinnedEventIds = useStore(s => s.pinnedEventIds)
+  const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const [shareCopied, setShareCopied] = useState(false)
 
   const company = companies.find(c => c.slug === slug)
@@ -37,7 +47,14 @@ export const CompanyPage = () => {
 
   const isFavorite = favoriteCompanyIds.includes(company.id)
   const companyEvents = events.filter(e => e.companyId === company.id)
-  const active = companyEvents.filter(e => getEffectiveStatus(e) === 'active')
+  const active = companyEvents
+    .filter(e => getEffectiveStatus(e) === 'active')
+    .sort((a, b) => {
+      const aPinned = pinnedEventIds.includes(a.id)
+      const bPinned = pinnedEventIds.includes(b.id)
+      if (aPinned !== bPinned) return aPinned ? -1 : 1
+      return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
+    })
   const past = companyEvents.filter(e => ['expired', 'resolved', 'archived'].includes(getEffectiveStatus(e)))
 
   const avgYes = active.length > 0
@@ -126,19 +143,41 @@ export const CompanyPage = () => {
           </div>
           <div className="space-y-3">
             {active.map(event => {
-              const prob = getProbability(event.yesPool, event.noPool)
+              const { dominant, pct } = barProps(event.yesPool, event.noPool)
+              const isPinned = pinnedEventIds.includes(event.id)
               return (
-                <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
-                  <p className="text-sm text-gray-900 dark:text-white font-medium mb-2 leading-snug">{event.title}</p>
-                  <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
+                <div key={event.id} className="relative bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <Link to={`/event/${event.id}`} className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug">{event.title}</p>
+                    </Link>
+                    <button
+                      onClick={() => togglePinnedEvent(event.id)}
+                      className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
+                    >
+                      <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
+                    </button>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500">
-                    <span className="text-emerald-600 dark:text-emerald-400">YES {prob.yes}%</span>
-                    <span>{timeUntil(event.expiresAt)}</span>
-                    <span className="text-rose-600 dark:text-rose-400">NO {prob.no}%</span>
-                  </div>
-                </Link>
+                  <Link to={`/event/${event.id}`} className="block">
+                    <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                      <div
+                        className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500">
+                      {dominant === 'yes'
+                        ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                        : <span className="text-gray-300 dark:text-slate-700">·</span>
+                      }
+                      <span>{timeUntil(event.expiresAt)}</span>
+                      {dominant === 'no'
+                        ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                        : <span className="text-gray-300 dark:text-slate-700">·</span>
+                      }
+                    </div>
+                  </Link>
+                </div>
               )
             })}
           </div>

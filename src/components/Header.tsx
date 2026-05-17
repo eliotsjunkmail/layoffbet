@@ -68,8 +68,13 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
 
 export const Header = () => {
   const currentUser = useStore(s => s.currentUser)
+  const companies = useStore(s => s.companies)
   const location = useLocation()
+  const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
+
+  const pathSlug = location.pathname.replace(/^\//, '').split('/')[0]
+  const currentCompany = companies.find(c => c.slug === pathSlug)
 
   const isActive = (path: string) =>
     location.pathname === path
@@ -99,9 +104,12 @@ export const Header = () => {
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />
                 </Link>
-                <Link to="/create" className={`p-2 rounded-lg transition-colors ${isActive('/create')}`}>
+                <button
+                  onClick={() => navigate('/create', { state: { companyId: currentCompany?.id } })}
+                  className={`p-2 rounded-lg transition-colors ${isActive('/create')}`}
+                >
                   <PlusCircle className="w-5 h-5" />
-                </Link>
+                </button>
                 <button
                   onClick={() => setShowProfile(true)}
                   className="flex items-center gap-1.5 ml-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full pl-2 pr-3 py-1.5 transition-colors"

@@ -115,14 +115,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* Countdown banner */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 mb-4 text-center">
-          <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Stealth beta · Launching {launchLabel}</p>
-          <div className="flex items-center justify-center gap-3">
-            {[{ v: days, l: 'Days' }, { v: hours, l: 'Hrs' }, { v: mins, l: 'Min' }, { v: secs, l: 'Sec' }].map(({ v, l }) => (
-              <div key={l} className="flex flex-col items-center">
-                <span className="text-2xl font-black text-white tabular-nums leading-none">{pad(v)}</span>
-                <span className="text-[10px] text-slate-600 uppercase tracking-wider mt-0.5">{l}</span>
-              </div>
-            ))}
+          <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Stealth beta · Launching late 2026</p>
+          <div className="flex flex-col items-center">
+            <span className="text-5xl font-black text-white tabular-nums leading-none">{pad(days)}</span>
+            <span className="text-xs text-slate-600 uppercase tracking-wider mt-1.5">Days to launch</span>
           </div>
         </div>
 

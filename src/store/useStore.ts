@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, Company, Event, Bet, Comment, Theme } from '../types'
+import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem } from '../types'
 import { uid, isExpired } from '../utils/odds'
 
 const DAILY_COINS = 100
@@ -321,6 +321,8 @@ interface StoreState {
   theme: Theme
   onboardingCompanyId: string | null
   favoriteCompanyIds: string[]
+  pinnedEventIds: string[]
+  feedback: FeedbackItem[]
 
   login: (username: string, password: string) => boolean
   logout: () => void
@@ -329,6 +331,9 @@ interface StoreState {
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
+  togglePinnedEvent: (eventId: string) => void
+  addFeedback: (text: string, type: string) => void
+  deleteFeedback: (id: string) => void
 
   placeBet: (eventId: string, side: 'yes' | 'no', amount: number) => boolean
   getUserBet: (eventId: string) => Bet | undefined
@@ -360,6 +365,8 @@ export const useStore = create<StoreState>()(
       theme: 'light',
       onboardingCompanyId: null,
       favoriteCompanyIds: [],
+      pinnedEventIds: [],
+      feedback: [],
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -368,6 +375,18 @@ export const useStore = create<StoreState>()(
           ? s.favoriteCompanyIds.filter(id => id !== companyId)
           : [...s.favoriteCompanyIds, companyId],
       })),
+
+      togglePinnedEvent: (eventId) => set(s => ({
+        pinnedEventIds: s.pinnedEventIds.includes(eventId)
+          ? s.pinnedEventIds.filter(id => id !== eventId)
+          : [...s.pinnedEventIds, eventId],
+      })),
+
+      addFeedback: (text, type) => set(s => ({
+        feedback: [...s.feedback, { id: `fb-${uid()}`, text: text.trim(), type: type as FeedbackItem['type'], createdAt: new Date().toISOString() }]
+      })),
+
+      deleteFeedback: (id) => set(s => ({ feedback: s.feedback.filter(f => f.id !== id) })),
 
       login: (username, password) => {
         const user = get().users.find(
@@ -573,6 +592,8 @@ export const useStore = create<StoreState>()(
         theme: s.theme,
         onboardingCompanyId: s.onboardingCompanyId,
         favoriteCompanyIds: s.favoriteCompanyIds,
+        pinnedEventIds: s.pinnedEventIds,
+        feedback: s.feedback,
       }),
     }
   )

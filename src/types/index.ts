@@ -54,3 +54,10 @@ export interface Comment {
 }
 
 export type Theme = 'light' | 'dark'
+
+export interface FeedbackItem {
+  id: string
+  text: string
+  type: 'bug' | 'feature' | 'other'
+  createdAt: string
+}
