@@ -204,6 +204,78 @@ const SEED_EVENTS: Event[] = [
     expiresAt: futureDate(200), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
     yesPool: 350, noPool: 250, outcome: null, createdAt: pastDate(1), viewCount: 4102,
   },
+
+  // ADP predictions
+  {
+    id: 'evt-a1', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will conduct its annual June layoff round in 2025, as it has every year',
+    description: 'ADP has run layoffs in June every year like clockwork, timed to its fiscal year end. Employees treat it as a certainty — the only question is which teams get hit. Director-level positions and recently reorganized divisions are historically most at risk. Internal signs point to another round this June.',
+    expiresAt: futureDate(30), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 620, noPool: 80, outcome: null, createdAt: pastDate(9), viewCount: 8441,
+  },
+  {
+    id: 'evt-a2', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will close at least 3 more legacy office buildings this year as it consolidates to hubs',
+    description: 'ADP has already shrunk its Roseland, NJ headquarters from five buildings to one-and-a-half. The same playbook is being rolled out nationally — closing smaller field offices and funneling employees into regional "Centers of Excellence" in Norfolk, VA, Maitland, FL, El Paso, TX, and Phoenix, AZ.',
+    expiresAt: futureDate(60), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 480, noPool: 220, outcome: null, createdAt: pastDate(7), viewCount: 6123,
+  },
+  {
+    id: 'evt-a3', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will eliminate all remaining homeshored (WFH) roles before end of 2025',
+    description: 'ADP converted thousands of employees to work-from-home status years ago, then reversed course. Homeshored employees have been told to report to new hub locations or leave. Insiders say the final wave of WFH terminations is being processed — no exceptions are being made regardless of tenure or performance.',
+    expiresAt: futureDate(45), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 540, noPool: 160, outcome: null, createdAt: pastDate(6), viewCount: 7209,
+  },
+  {
+    id: 'evt-a4', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will cut 500+ director and VP-level positions in its tax and compliance division',
+    description: 'ADP\'s tax division has been a repeated target of restructuring. Director-level roles are being eliminated as layers of management are compressed. Multiple sources confirm that compliance and payroll tax teams received PIP notices ahead of the last two June cycles. A third wave is widely anticipated.',
+    expiresAt: futureDate(35), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 390, noPool: 210, outcome: null, createdAt: pastDate(5), viewCount: 5334,
+  },
+  {
+    id: 'evt-a5', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will expand its India offshore center to replace at least 1,000 US-based roles',
+    description: 'ADP employees have reported being asked to train offshore counterparts in India "with enthusiasm." Job postings for equivalent roles in India-based ADP offices have increased significantly while US postings in the same functions have dried up. The pattern mirrors what played out in operations and IT support two years ago.',
+    expiresAt: futureDate(90), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 460, noPool: 240, outcome: null, createdAt: pastDate(4), viewCount: 4987,
+  },
+  {
+    id: 'evt-a6', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP\'s Maitland, FL hub will see significant headcount cuts as the hub model stalls',
+    description: 'Maitland was positioned as one of ADP\'s flagship Centers of Excellence. But teams there have already been hit with layoffs and the promised growth in headcount never materialized. Employees relocated to Maitland report that their division\'s work is being redistributed offshore, undermining the hub rationale entirely.',
+    expiresAt: futureDate(50), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 310, noPool: 290, outcome: null, createdAt: pastDate(3), viewCount: 3812,
+  },
+  {
+    id: 'evt-a7', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will sell or fully vacate its Roseland, NJ headquarters campus within 2 years',
+    description: 'The Roseland campus has been gutted — five buildings down to barely one. Real estate carrying costs on empty corporate campuses are a board-level priority to eliminate. Several other large HQ campuses in similar conditions have been sold or leased back. Roseland is the next likely candidate.',
+    expiresAt: futureDate(150), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 340, noPool: 360, outcome: null, createdAt: pastDate(3), viewCount: 3201,
+  },
+  {
+    id: 'evt-a8', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP\'s stock will underperform the S&P 500 over the next 12 months amid restructuring drag',
+    description: 'ADP\'s repeated restructuring cycles are beginning to show up in client satisfaction scores and service quality metrics. Institutional investors have flagged execution risk from overlapping transformation initiatives. If client churn ticks up alongside the headcount reductions, revenue growth will miss consensus estimates.',
+    expiresAt: futureDate(180), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 280, noPool: 320, outcome: null, createdAt: pastDate(2), viewCount: 2789,
+  },
+  {
+    id: 'evt-a9', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP confirmed June 2024 layoffs affecting hundreds of US-based employees across divisions',
+    description: 'Leadership informed teams of the reduction in late May. The Maitland and Roseland locations were hit hardest. Several director-level positions were eliminated with little notice. Affected employees reported receiving standard severance packages with non-disparagement clauses.',
+    expiresAt: pastDate(7), status: 'resolved', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 710, noPool: 90, outcome: 'yes', createdAt: pastDate(60), viewCount: 11234,
+  },
+  {
+    id: 'evt-a10', companyId: 'comp-2', companyName: 'ADP',
+    title: 'ADP will require all remote employees to return to office or accept severance by Q4',
+    description: 'ADP has already eliminated homeshored roles in waves. The next phase targets hybrid employees who have resisted RTO mandates at hub locations. Internal HR communications reference a "workforce alignment initiative" that insiders interpret as a final push to convert or cut anyone still working remote.',
+    expiresAt: futureDate(75), status: 'active', creatorId: 'user-admin', creatorName: 'admin',
+    yesPool: 500, noPool: 200, outcome: null, createdAt: pastDate(1), viewCount: 6102,
+  },
 ]
 
 const SEED_COMMENTS: Comment[] = [
@@ -226,6 +298,17 @@ const SEED_COMMENTS: Comment[] = [
   { id: 'cmt-b8', eventId: 'evt-b4', content: 'All the contractors in my group got 30-day notices last month. FTEs, you\'re next.', createdAt: pastDate(2) },
   { id: 'cmt-b9', eventId: 'evt-b8', content: 'This happens every year. Bonuses hit in Feb, layoffs announced in March. Clockwork.', createdAt: pastDate(1) },
   { id: 'cmt-b10', eventId: 'evt-b9', content: 'I was part of this. No warning, no severance negotiation. Just a Teams call and a badge deactivation.', createdAt: pastDate(10) },
+  // ADP comments
+  { id: 'cmt-a1', eventId: 'evt-a1', content: 'June layoffs at ADP are as predictable as tax season. Set your calendar.', createdAt: pastDate(7) },
+  { id: 'cmt-a2', eventId: 'evt-a1', content: 'Been here 11 years. It\'s June every single time. The only variable is which floor gets cleared.', createdAt: pastDate(5) },
+  { id: 'cmt-a3', eventId: 'evt-a1', content: 'Leadership briefed on scope already. Wider than last year. Whole business units being eliminated not just individuals.', createdAt: pastDate(3) },
+  { id: 'cmt-a4', eventId: 'evt-a2', content: 'My building had 400 people two years ago. We\'re down to maybe 60. The lights are literally off on two floors.', createdAt: pastDate(6) },
+  { id: 'cmt-a5', eventId: 'evt-a3', content: 'They told us to report to Norfolk or resign. Nobody wanted to relocate so most of us just waited for the package.', createdAt: pastDate(4) },
+  { id: 'cmt-a6', eventId: 'evt-a3', content: 'Homeshored since 2019. Got the "alignment" email last month. We all know what that means.', createdAt: pastDate(2) },
+  { id: 'cmt-a7', eventId: 'evt-a5', content: 'I spent 3 months documenting everything for my offshore replacement. They called it "knowledge transfer."', createdAt: pastDate(5) },
+  { id: 'cmt-a8', eventId: 'evt-a5', content: 'My manager actually said "train them with enthusiasm." I could not make this up.', createdAt: pastDate(3) },
+  { id: 'cmt-a9', eventId: 'evt-a9', content: 'Was in the Maitland group. Got the call on a Tuesday at 10am. Badge stopped working by noon.', createdAt: pastDate(20) },
+  { id: 'cmt-a10', eventId: 'evt-a10', content: 'The "alignment initiative" email is HR code for figure out if you\'re going to make the drive or take the package.', createdAt: pastDate(1) },
 ]
 
 interface StoreState {
@@ -479,7 +562,7 @@ export const useStore = create<StoreState>()(
       },
     }),
     {
-      name: 'layoff-bets-store-v4',
+      name: 'layoff-bets-store-v5',
       partialize: (s) => ({
         users: s.users,
         companies: s.companies,
