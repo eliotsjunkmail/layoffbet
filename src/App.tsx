@@ -58,7 +58,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
           <p className="text-base font-semibold text-white mb-1 text-center">Where do you work?</p>
-          <p className="text-xs text-slate-500 text-center mb-5">This site is for Pershing employees only</p>
+          <p className="text-xs text-slate-500 text-center mb-5">Access is restricted to verified employees</p>
 
           <form onSubmit={submit} className="space-y-3">
             <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
