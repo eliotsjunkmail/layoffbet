@@ -323,6 +323,7 @@ interface StoreState {
   favoriteCompanyIds: string[]
   pinnedEventIds: string[]
   feedback: FeedbackItem[]
+  anonVotedEvents: Record<string, 'yes' | 'no'>
 
   login: (username: string, password: string) => boolean
   logout: () => void
@@ -335,6 +336,7 @@ interface StoreState {
   addFeedback: (text: string, type: string) => void
   deleteFeedback: (id: string) => void
 
+  placeAnonymousVote: (eventId: string, side: 'yes' | 'no') => boolean
   placeBet: (eventId: string, side: 'yes' | 'no', amount: number) => boolean
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount'>) => void
@@ -367,6 +369,7 @@ export const useStore = create<StoreState>()(
       favoriteCompanyIds: [],
       pinnedEventIds: [],
       feedback: [],
+      anonVotedEvents: {},
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -381,6 +384,22 @@ export const useStore = create<StoreState>()(
           ? s.pinnedEventIds.filter(id => id !== eventId)
           : [...s.pinnedEventIds, eventId],
       })),
+
+      placeAnonymousVote: (eventId, side) => {
+        const { events, anonVotedEvents, getEffectiveStatus } = get()
+        if (anonVotedEvents[eventId]) return false
+        const event = events.find(e => e.id === eventId)
+        if (!event || getEffectiveStatus(event) !== 'active') return false
+        set(s => ({
+          anonVotedEvents: { ...s.anonVotedEvents, [eventId]: side },
+          events: s.events.map(e => e.id === eventId ? {
+            ...e,
+            yesPool: side === 'yes' ? e.yesPool + 10 : e.yesPool,
+            noPool:  side === 'no'  ? e.noPool  + 10 : e.noPool,
+          } : e),
+        }))
+        return true
+      },
 
       addFeedback: (text, type) => set(s => ({
         feedback: [...s.feedback, { id: `fb-${uid()}`, text: text.trim(), type: type as FeedbackItem['type'], createdAt: new Date().toISOString() }]
@@ -594,6 +613,7 @@ export const useStore = create<StoreState>()(
         favoriteCompanyIds: s.favoriteCompanyIds,
         pinnedEventIds: s.pinnedEventIds,
         feedback: s.feedback,
+        anonVotedEvents: s.anonVotedEvents,
       }),
     }
   )

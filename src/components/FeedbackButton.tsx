@@ -2,25 +2,18 @@ import { useState } from 'react'
 import { MessageSquarePlus, X, Send } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
-const TYPES = [
-  { value: 'bug', label: '🐛 Bug' },
-  { value: 'feature', label: '💡 Feature idea' },
-  { value: 'other', label: '💬 Other' },
-]
-
 export const FeedbackButton = () => {
   const addFeedback = useStore(s => s.addFeedback)
   const [open, setOpen] = useState(false)
-  const [type, setType] = useState('feature')
   const [text, setText] = useState('')
   const [sent, setSent] = useState(false)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!text.trim()) return
-    addFeedback(text, type)
+    addFeedback(text, 'other')
     setSent(true)
-    setTimeout(() => { setOpen(false); setSent(false); setText(''); setType('feature') }, 1500)
+    setTimeout(() => { setOpen(false); setSent(false); setText('') }, 1500)
   }
 
   return (
@@ -50,18 +43,6 @@ export const FeedbackButton = () => {
               </div>
             ) : (
               <form onSubmit={submit} className="p-5 space-y-3">
-                <div className="flex gap-2">
-                  {TYPES.map(t => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => setType(t.value)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-all ${type === t.value ? 'bg-violet-600 border-violet-600 text-white' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-violet-300'}`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
                 <textarea
                   value={text}
                   onChange={e => setText(e.target.value)}

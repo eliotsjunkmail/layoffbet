@@ -4,7 +4,6 @@ import { Search, TrendingUp, Eye, ArrowRight, Star, X, Pin, ChevronRight } from 
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
-import { AuthModal } from '../components/AuthModal'
 import { getProbability } from '../utils/odds'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
@@ -31,6 +30,8 @@ export const Home = () => {
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const placeBet = useStore(s => s.placeBet)
+  const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
+  const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const pinnedEventIds = useStore(s => s.pinnedEventIds)
   const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const navigate = useNavigate()
@@ -41,8 +42,6 @@ export const Home = () => {
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [pendingSwipe, setPendingSwipe] = useState<{ eventId: string; side: 'yes' | 'no' } | null>(null)
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
   const touchXRef = useRef(0)
@@ -124,26 +123,14 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    if (!currentUser) {
-      setPendingSwipe({ eventId, side })
-      setShowAuthModal(true)
-      return
-    }
-    if (placeBet(eventId, side, 10)) {
+    const ok = currentUser ? placeBet(eventId, side, 10) : placeAnonymousVote(eventId, side)
+    if (ok) {
       setSwipeFlash({ id: eventId, side })
       setTimeout(() => setSwipeFlash(null), 600)
-      showToast(side === 'yes' ? '✓ Bet YES — 10 coins' : '✕ Bet NO — 10 coins')
+      showToast(side === 'yes' ? '✓ YES' : '✕ NO')
     } else {
-      showToast('Already bet or not enough coins')
+      showToast('Already voted on this one')
     }
-  }
-
-  const handleAuthClose = () => {
-    setShowAuthModal(false)
-    if (pendingSwipe && currentUser) {
-      handleSwipeBet(pendingSwipe.eventId, pendingSwipe.side)
-    }
-    setPendingSwipe(null)
   }
 
   return (
@@ -267,12 +254,15 @@ export const Home = () => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const isPinned = pinnedEventIds.includes(e.id)
                     const flash = swipeFlash?.id === e.id
+                    const myVote = anonVotedEvents[e.id]
                     return (
                       <div
                         key={e.id}
                         className={`relative block bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 transition-all shadow-sm hover:shadow-md cursor-pointer select-none
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                            myVote === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
+                            myVote === 'no'  ? 'border-rose-200 dark:border-rose-800' :
                             'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                         onTouchStart={e2 => { touchXRef.current = e2.touches[0].clientX; didSwipeRef.current = false }}
                         onTouchEnd={e2 => {
@@ -385,7 +375,6 @@ export const Home = () => {
         )}
       </div>
 
-      {showAuthModal && <AuthModal onClose={handleAuthClose} prompt="Sign in to place your swipe bet." />}
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
