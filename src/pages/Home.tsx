@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Eye, ArrowRight, Star, X, Pin, ChevronRight } from 'lucide-react'
+import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -44,8 +45,6 @@ export const Home = () => {
 
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
-  const touchXRef = useRef(0)
-  const didSwipeRef = useRef(false)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
@@ -255,24 +254,20 @@ export const Home = () => {
                     const isPinned = pinnedEventIds.includes(e.id)
                     const flash = swipeFlash?.id === e.id
                     const myVote = anonVotedEvents[e.id]
+                    const voted = !!myVote
                     return (
-                      <div
+                      <SwipeCard
                         key={e.id}
-                        className={`relative block bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 transition-all shadow-sm hover:shadow-md cursor-pointer select-none
+                        onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
+                        onSwipeNo={() => handleSwipeBet(e.id, 'no')}
+                        disabled={voted}
+                        onClick={() => navigate(`/event/${e.id}`)}
+                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
                             myVote === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
                             myVote === 'no'  ? 'border-rose-200 dark:border-rose-800' :
                             'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
-                        onTouchStart={e2 => { touchXRef.current = e2.touches[0].clientX; didSwipeRef.current = false }}
-                        onTouchEnd={e2 => {
-                          const dx = e2.changedTouches[0].clientX - touchXRef.current
-                          if (Math.abs(dx) > 60) {
-                            didSwipeRef.current = true
-                            handleSwipeBet(e.id, dx > 0 ? 'yes' : 'no')
-                          }
-                        }}
-                        onClick={() => { if (!didSwipeRef.current) navigate(`/event/${e.id}`) }}
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{e.title}</p>
@@ -300,7 +295,7 @@ export const Home = () => {
                             : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
                           }
                         </div>
-                      </div>
+                      </SwipeCard>
                     )
                   })}
                   {activeEvents.length > 3 && (
