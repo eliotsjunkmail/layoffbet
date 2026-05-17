@@ -33,6 +33,7 @@ export interface Event {
   noPool: number
   outcome: 'yes' | 'no' | null
   createdAt: string
+  viewCount: number
 }
 
 export interface Bet {
