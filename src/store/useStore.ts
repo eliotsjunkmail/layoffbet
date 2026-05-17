@@ -323,7 +323,7 @@ interface StoreState {
   favoriteCompanyIds: string[]
   pinnedEventIds: string[]
   feedback: FeedbackItem[]
-  anonVotedEvents: Record<string, 'yes' | 'no'>
+  anonVotedEvents: Record<string, { lastSide: 'yes' | 'no'; count: number }>
 
   login: (username: string, password: string) => boolean
   logout: () => void
@@ -387,11 +387,15 @@ export const useStore = create<StoreState>()(
 
       placeAnonymousVote: (eventId, side) => {
         const { events, anonVotedEvents, getEffectiveStatus } = get()
-        if (anonVotedEvents[eventId]) return false
+        const existing = anonVotedEvents[eventId]
+        if (existing && existing.count >= 10) return false
         const event = events.find(e => e.id === eventId)
         if (!event || getEffectiveStatus(event) !== 'active') return false
         set(s => ({
-          anonVotedEvents: { ...s.anonVotedEvents, [eventId]: side },
+          anonVotedEvents: {
+            ...s.anonVotedEvents,
+            [eventId]: { lastSide: side, count: (existing?.count ?? 0) + 1 },
+          },
           events: s.events.map(e => e.id === eventId ? {
             ...e,
             yesPool: side === 'yes' ? e.yesPool + 10 : e.yesPool,

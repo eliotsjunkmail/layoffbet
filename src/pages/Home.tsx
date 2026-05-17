@@ -122,13 +122,22 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    const ok = currentUser ? placeBet(eventId, side, 10) : placeAnonymousVote(eventId, side)
-    if (ok) {
-      setSwipeFlash({ id: eventId, side })
-      setTimeout(() => setSwipeFlash(null), 600)
-      showToast(side === 'yes' ? '✓ YES' : '✕ NO')
+    if (currentUser) {
+      if (placeBet(eventId, side, 10)) {
+        setSwipeFlash({ id: eventId, side })
+        setTimeout(() => setSwipeFlash(null), 600)
+        showToast(side === 'yes' ? '✓ YES — 10 coins' : '✕ NO — 10 coins')
+      } else {
+        showToast('Already bet or not enough coins')
+      }
     } else {
-      showToast('Already voted on this one')
+      if (placeAnonymousVote(eventId, side)) {
+        setSwipeFlash({ id: eventId, side })
+        setTimeout(() => setSwipeFlash(null), 600)
+        showToast(side === 'yes' ? '✓ YES' : '✕ NO')
+      } else {
+        showToast('10 bets reached — sign in to keep going')
+      }
     }
   }
 
@@ -253,20 +262,21 @@ export const Home = () => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const isPinned = pinnedEventIds.includes(e.id)
                     const flash = swipeFlash?.id === e.id
-                    const myVote = anonVotedEvents[e.id]
-                    const voted = !!myVote
+                    const anonVote = anonVotedEvents[e.id]
+                    const anonCount = anonVote?.count ?? 0
+                    const exhausted = !currentUser && anonCount >= 10
                     return (
                       <SwipeCard
                         key={e.id}
                         onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
                         onSwipeNo={() => handleSwipeBet(e.id, 'no')}
-                        disabled={voted}
+                        disabled={exhausted}
                         onClick={() => navigate(`/event/${e.id}`)}
                         cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            myVote === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
-                            myVote === 'no'  ? 'border-rose-200 dark:border-rose-800' :
+                            anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
+                            anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
                             'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
