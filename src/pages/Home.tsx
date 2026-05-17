@@ -281,6 +281,8 @@ export const Home = () => {
           </>
         )}
 
+        <AdBanner />
+
         {/* CTA for guests */}
         {!currentUser && (
           <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-8 text-center">
@@ -296,6 +298,97 @@ export const Home = () => {
       </div>
 
     </Layout>
+  )
+}
+
+const ADS = [
+  {
+    headline: 'Write 10x more bugs, 10x faster',
+    body: 'Our AI autocompletes your mistakes before you even make them. True 10x engineering, guaranteed.',
+    cta: 'Ship faster →',
+  },
+  {
+    headline: 'Your senior dev. But cheaper.',
+    body: 'Confidently wrong. Always available. Never argues in code review or asks for equity.',
+    cta: 'Try free for 30 days →',
+  },
+  {
+    headline: 'We read the docs so you don\'t have to.',
+    body: 'Then misunderstood them. Then hallucinated the rest. Stack traces have never looked so creative.',
+    cta: 'Get started →',
+  },
+]
+
+const AdBanner = () => {
+  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem('lb-ad-dismissed') === '1')
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * ADS.length))
+  const [progress, setProgress] = useState(0)
+  const DURATION = 7000
+
+  useEffect(() => {
+    if (dismissed) return
+    setProgress(0)
+    const start = Date.now()
+    const frame = () => {
+      const elapsed = Date.now() - start
+      const pct = Math.min((elapsed / DURATION) * 100, 100)
+      setProgress(pct)
+      if (pct < 100) requestAnimationFrame(frame)
+      else { setIdx(i => (i + 1) % ADS.length); setProgress(0) }
+    }
+    const raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [idx, dismissed])
+
+  if (dismissed) return null
+
+  const ad = ADS[idx]
+
+  const dismiss = () => {
+    sessionStorage.setItem('lb-ad-dismissed', '1')
+    setDismissed(true)
+  }
+
+  return (
+    <div className="mb-6 relative rounded-2xl overflow-hidden border border-teal-200 dark:border-teal-900/60 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/30 shadow-sm">
+      {/* Progress bar */}
+      <div className="absolute top-0 left-0 h-0.5 bg-teal-400 dark:bg-teal-500 transition-none" style={{ width: `${progress}%` }} />
+
+      <div className="px-4 pt-4 pb-3">
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-md flex items-center justify-center text-white text-[10px] font-black leading-none">VC</div>
+            <span className="text-xs font-bold text-teal-700 dark:text-teal-400 tracking-tight">VibeCoder AI</span>
+            <span className="text-[10px] text-teal-500/60 dark:text-teal-600 border border-teal-300/50 dark:border-teal-800 rounded px-1 py-px uppercase tracking-widest">Ad</span>
+          </div>
+          <button onClick={dismiss} className="text-teal-400 dark:text-teal-700 hover:text-teal-600 dark:hover:text-teal-500 transition-colors p-0.5">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Ad copy */}
+        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug mb-1">{ad.headline}</p>
+        <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mb-3">{ad.body}</p>
+
+        {/* Footer row */}
+        <div className="flex items-center justify-between">
+          <button className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-500 transition-colors">
+            {ad.cta}
+          </button>
+          {/* Dot indicators */}
+          <div className="flex items-center gap-1">
+            {ADS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${i === idx ? 'bg-teal-500' : 'bg-teal-200 dark:bg-teal-800 hover:bg-teal-300 dark:hover:bg-teal-700'}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
