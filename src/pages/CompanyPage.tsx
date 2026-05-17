@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, PlusCircle, Eye, Star } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -27,6 +27,12 @@ export const CompanyPage = () => {
   const [pendingFavorite, setPendingFavorite] = useState(false)
 
   const company = companies.find(c => c.slug === slug)
+
+  useEffect(() => {
+    if (company) document.title = `${company.name} | LayoffBet.com`
+    return () => { document.title = 'LayoffBet.com' }
+  }, [company])
+
   if (!company) return (
     <Layout>
       <div className="text-center py-20 text-gray-400 dark:text-slate-400">Company not found.</div>

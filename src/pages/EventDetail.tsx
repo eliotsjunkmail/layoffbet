@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -27,6 +27,12 @@ export const EventDetail = () => {
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
 
   const event = events.find(e => e.id === id)
+
+  useEffect(() => {
+    if (event) document.title = `${event.companyName} | LayoffBet.com`
+    return () => { document.title = 'LayoffBet.com' }
+  }, [event])
+
   if (!event) return (
     <Layout>
       <div className="text-center py-20 text-gray-400 dark:text-slate-400">Event not found.</div>
