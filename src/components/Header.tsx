@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { TrendingUp, PlusCircle, Search, User, Shield, LogOut, Settings, Layers, Coins, X } from 'lucide-react'
+import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, Layers, Coins, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
@@ -81,10 +81,13 @@ export const Header = () => {
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-2xl mx-auto flex items-center justify-between px-4 h-14">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-violet-600 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-700 rounded-xl flex items-center justify-center shadow-md shadow-violet-500/30">
+              <Dices className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900 dark:text-white tracking-tight text-sm">Layoff Bets</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
+              <span className="font-black text-violet-600 dark:text-violet-400 text-sm tracking-tight">Bet</span>
+            </div>
           </Link>
 
           <nav className="flex items-center gap-1">

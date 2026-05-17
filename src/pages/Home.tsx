@@ -99,15 +99,18 @@ export const Home = () => {
     <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* Hero */}
-        <div className="pt-10 pb-8 text-center">
-          <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
-            <span className="sm:hidden">What's really happening at work</span>
-            <span className="hidden sm:block">Find out what's really<br />happening at your company</span>
-          </h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base mb-8 max-w-sm mx-auto whitespace-nowrap overflow-hidden text-ellipsis sm:whitespace-normal sm:overflow-visible">
-            Anonymous prediction markets for the workplace
-            <span className="hidden sm:inline"> — track signals, bet on outcomes</span>
-          </p>
+        <div className={`${(currentUser || hasFavorites) ? 'pt-4 pb-4' : 'pt-10 pb-8'} text-center`}>
+          {/* Title + subtitle: always on desktop, hidden on mobile once logged in or has favorites */}
+          <div className={`${(currentUser || hasFavorites) ? 'hidden sm:block' : 'block'} mb-6`}>
+            <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
+              <span className="sm:hidden">What's really happening at work</span>
+              <span className="hidden sm:block">Find out what's really<br />happening at your company</span>
+            </h1>
+            <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base max-w-sm mx-auto whitespace-nowrap overflow-hidden text-ellipsis sm:whitespace-normal sm:overflow-visible">
+              Anonymous prediction markets for the workplace
+              <span className="hidden sm:inline"> — track signals, bet on outcomes</span>
+            </p>
+          </div>
 
           {/* Search with typeahead */}
           <div ref={searchRef} className="relative max-w-md mx-auto mb-4">
@@ -179,45 +182,52 @@ export const Home = () => {
         </div>
 
         {/* Favorite company sections */}
-        {hasFavorites && favorites.map(c => {
+        {hasFavorites && favorites.map((c, idx) => {
           const activeEvents = events
             .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             .sort((a, b) => (b.yesPool + b.noPool) - (a.yesPool + a.noPool))
           return (
-            <section key={c.id} className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Link to={`/${c.slug}`} className="flex items-center gap-2 group">
+            <section key={c.id} className={`mb-2 ${idx > 0 ? 'pt-5 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group">
                   <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
-                  <span className="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
-                  <span className="text-xs text-gray-400 dark:text-slate-500">{c.industry}</span>
+                  <div>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 leading-none mt-0.5">{c.industry}</div>
+                  </div>
                 </Link>
+                {activeEvents.length > 0 && (
+                  <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800">
+                    {activeEvents.length} active
+                  </span>
+                )}
               </div>
               {activeEvents.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {activeEvents.slice(0, 3).map(e => {
                     const prob = getProbability(e.yesPool, e.noPool)
                     return (
-                      <Link key={e.id} to={`/event/${e.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-violet-300 dark:hover:border-violet-700 transition-all">
-                        <p className="text-sm text-gray-900 dark:text-white leading-snug mb-2 line-clamp-1">{e.title}</p>
-                        <div className="h-1 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1">
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
+                      <Link key={e.id} to={`/event/${e.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-3.5 hover:border-violet-400 dark:hover:border-violet-600 transition-all shadow-sm hover:shadow-md">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug mb-2.5 line-clamp-1">{e.title}</p>
+                        <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-2">
+                          <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${prob.yes}%` }} />
                         </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">YES {prob.yes}%</span>
-                          <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins bet</span>
-                          <span className="text-rose-600 dark:text-rose-400 font-medium">NO {prob.no}%</span>
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span className="text-emerald-600 dark:text-emerald-400">YES {prob.yes}%</span>
+                          <span className="text-gray-400 dark:text-slate-500 font-normal">{e.yesPool + e.noPool} coins</span>
+                          <span className="text-rose-600 dark:text-rose-400">NO {prob.no}%</span>
                         </div>
                       </Link>
                     )
                   })}
                   {activeEvents.length > 3 && (
-                    <Link to={`/${c.slug}`} className="block text-center text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 font-medium py-1 transition-colors">
+                    <Link to={`/${c.slug}`} className="block text-center text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 font-medium py-1.5 transition-colors">
                       +{activeEvents.length - 3} more predictions →
                     </Link>
                   )}
                 </div>
               ) : (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-4 text-center">
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-center shadow-sm">
                   <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
                   <Link to="/create" className="text-xs text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">Create one →</Link>
                 </div>
@@ -225,6 +235,8 @@ export const Home = () => {
             </section>
           )
         })}
+
+        {hasFavorites && <div className="mb-6" />}
 
         {/* Industry filter + Browse — hidden once user has favorites */}
         {!hasFavorites && (
