@@ -1,13 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Search, TrendingUp, Eye, Flame, ArrowRight, ChevronRight, Star, X } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { AuthModal } from '../components/AuthModal'
 import { getProbability } from '../utils/odds'
-
-const POPULAR_IDS = ['comp-1', 'comp-2']
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
 
@@ -34,7 +32,6 @@ export const Home = () => {
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0
-  const popular = companies.filter(c => POPULAR_IDS.includes(c.id))
 
   const activeEventsByCompany = useMemo(() => {
     const map: Record<string, number> = {}
@@ -65,11 +62,7 @@ export const Home = () => {
 
   const filtered = useMemo(() => {
     return companies
-      .filter(c => !POPULAR_IDS.includes(c.id))
-      .filter(c => {
-        const matchI = industry === 'All' || c.industry === industry
-        return matchI
-      })
+      .filter(c => industry === 'All' || c.industry === industry)
       .sort((a, b) => b.viewCount - a.viewCount)
   }, [companies, industry])
 
@@ -97,11 +90,13 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* Hero */}
         <div className="pt-10 pb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
-            Find out what's really<br />happening at your company
+          <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
+            <span className="sm:hidden">What's really happening at work</span>
+            <span className="hidden sm:block">Find out what's really<br />happening at your company</span>
           </h1>
-          <p className="text-gray-500 dark:text-slate-400 text-base mb-8 max-w-sm mx-auto">
-            Join employees tracking workplace signals through anonymous prediction markets.
+          <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base mb-8 max-w-sm mx-auto whitespace-nowrap overflow-hidden text-ellipsis sm:whitespace-normal sm:overflow-visible">
+            Anonymous prediction markets for the workplace.
+            <span className="hidden sm:inline"> Track signals, bet on outcomes.</span>
           </p>
 
           {/* Search with typeahead */}
@@ -173,59 +168,60 @@ export const Home = () => {
           )}
         </div>
 
-        {/* Favorites or Popular */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            {hasFavorites
-              ? <><Star className="w-4 h-4 text-amber-400 fill-amber-400" /><h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">My Companies</h2></>
-              : <><Flame className="w-4 h-4 text-orange-500" /><h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Popular Right Now</h2></>
-            }
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {(hasFavorites ? favorites.slice(0, 2) : popular).map(c => {
-              const topEvent = topEventByCompany[c.id]
-              const prob = topEvent ? getProbability(topEvent.yesPool, topEvent.noPool) : null
-              const activeBets = activeEventsByCompany[c.id] ?? 0
-              const isFav = favoriteCompanyIds.includes(c.id)
-              return (
-                <Link
-                  key={c.id}
-                  to={`/${c.slug}`}
-                  className="group bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-start justify-between">
-                    <CompanyLogo name={c.name} id={c.id} size="lg" />
-                    <button
-                      onClick={e => handleStar(e, c.id)}
-                      className={`p-1 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700 hover:text-amber-400 group-hover:text-gray-300 dark:group-hover:text-slate-500'}`}
-                    >
-                      <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
-                    </button>
-                  </div>
-                  <div className="mt-3">
-                    <div className="font-semibold text-gray-900 dark:text-white text-sm leading-tight line-clamp-1">{c.name}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{c.industry}</div>
-                  </div>
-                  <div className="mt-2 flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
-                    <Eye className="w-3 h-3" />
-                    <span>{fmtViews(c.viewCount)}</span>
-                  </div>
-                  {prob && (
-                    <div className="mt-2">
-                      <div className="h-1 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
-                      </div>
-                      <div className="flex justify-between text-xs mt-1">
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">{prob.yes}%</span>
-                        <span className="text-gray-400 dark:text-slate-500">{activeBets} bets</span>
-                      </div>
-                    </div>
-                  )}
+        {/* Favorite company sections */}
+        {hasFavorites && favorites.map(c => {
+          const activeEvents = events
+            .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
+            .sort((a, b) => (b.yesPool + b.noPool) - (a.yesPool + a.noPool))
+          return (
+            <section key={c.id} className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <Link to={`/${c.slug}`} className="flex items-center gap-2 group">
+                  <CompanyLogo name={c.name} id={c.id} size="sm" />
+                  <span className="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                  <span className="text-xs text-gray-400 dark:text-slate-500">{c.industry}</span>
                 </Link>
-              )
-            })}
-          </div>
-        </section>
+                <button
+                  onClick={e => handleStar(e, c.id)}
+                  className="p-1.5 rounded-lg text-amber-400 hover:text-amber-300 transition-colors"
+                  title="Remove from favorites"
+                >
+                  <Star className="w-4 h-4 fill-amber-400" />
+                </button>
+              </div>
+              {activeEvents.length > 0 ? (
+                <div className="space-y-2">
+                  {activeEvents.slice(0, 3).map(e => {
+                    const prob = getProbability(e.yesPool, e.noPool)
+                    return (
+                      <Link key={e.id} to={`/event/${e.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-violet-300 dark:hover:border-violet-700 transition-all">
+                        <p className="text-sm text-gray-900 dark:text-white leading-snug mb-2 line-clamp-1">{e.title}</p>
+                        <div className="h-1 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">YES {prob.yes}%</span>
+                          <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins bet</span>
+                          <span className="text-rose-600 dark:text-rose-400 font-medium">NO {prob.no}%</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                  {activeEvents.length > 3 && (
+                    <Link to={`/${c.slug}`} className="block text-center text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 font-medium py-1 transition-colors">
+                      +{activeEvents.length - 3} more predictions →
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-4 text-center">
+                  <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}.</p>
+                  <Link to="/create" className="text-xs text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">Create one →</Link>
+                </div>
+              )}
+            </section>
+          )
+        })}
 
         {/* Industry filter */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
@@ -250,13 +246,10 @@ export const Home = () => {
             <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
             <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
             <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-              {filtered.length + (industry === 'All' ? popular.length : popular.filter(c => c.industry === industry).length)}
+              {filtered.length}
             </span>
           </div>
           <div className="space-y-2">
-            {(industry !== 'All' ? popular.filter(c => c.industry === industry) : []).map(c => (
-              <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} />
-            ))}
             {filtered.map(c => (
               <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} />
             ))}
