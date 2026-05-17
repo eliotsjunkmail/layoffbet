@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
 import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -33,11 +33,7 @@ export const EventDetail = () => {
     return () => { document.title = 'Layoff Bet' }
   }, [event])
 
-  if (!event) return (
-    <Layout>
-      <div className="text-center py-20 text-gray-400 dark:text-slate-400">Event not found.</div>
-    </Layout>
-  )
+  if (!event) return <Navigate to="/" replace />
 
   const status = getEffectiveStatus(event)
   const prob = getProbability(event.yesPool, event.noPool)

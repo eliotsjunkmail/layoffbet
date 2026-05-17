@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
 import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Pin } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -39,11 +39,7 @@ export const CompanyPage = () => {
     return () => { document.title = 'Layoff Bet' }
   }, [company])
 
-  if (!company) return (
-    <Layout>
-      <div className="text-center py-20 text-gray-400 dark:text-slate-400">Company not found.</div>
-    </Layout>
-  )
+  if (!company) return <Navigate to="/" replace />
 
   const isFavorite = favoriteCompanyIds.includes(company.id)
   const companyEvents = events.filter(e => e.companyId === company.id)
