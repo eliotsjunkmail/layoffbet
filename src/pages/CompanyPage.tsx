@@ -14,7 +14,7 @@ const fmtViews = (n: number) => {
 }
 
 export const CompanyPage = () => {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
@@ -26,7 +26,7 @@ export const CompanyPage = () => {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingFavorite, setPendingFavorite] = useState(false)
 
-  const company = companies.find(c => c.id === id)
+  const company = companies.find(c => c.slug === slug)
   if (!company) return (
     <Layout>
       <div className="text-center py-20 text-gray-400 dark:text-slate-400">Company not found.</div>
@@ -34,7 +34,7 @@ export const CompanyPage = () => {
   )
 
   const isFavorite = favoriteCompanyIds.includes(company.id)
-  const companyEvents = events.filter(e => e.companyId === id)
+  const companyEvents = events.filter(e => e.companyId === company.id)
   const active = companyEvents.filter(e => getEffectiveStatus(e) === 'active')
   const past = companyEvents.filter(e => ['expired', 'resolved', 'archived'].includes(getEffectiveStatus(e)))
 

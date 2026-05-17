@@ -11,6 +11,7 @@ export interface User {
 export interface Company {
   id: string
   name: string
+  slug: string
   description: string
   industry: string
   viewCount: number

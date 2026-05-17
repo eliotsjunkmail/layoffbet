@@ -131,7 +131,7 @@ export const Home = () => {
                     <div
                       key={c.id}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-gray-100 dark:border-slate-700 last:border-0 transition-colors"
-                      onClick={() => { setShowDropdown(false); setQuery(''); navigate(`/company/${c.id}`) }}
+                      onClick={() => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }}
                     >
                       <CompanyLogo name={c.name} id={c.id} size="sm" />
                       <div className="flex-1 min-w-0 text-left">
@@ -190,7 +190,7 @@ export const Home = () => {
               return (
                 <Link
                   key={c.id}
-                  to={`/company/${c.id}`}
+                  to={`/${c.slug}`}
                   className="group bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between">
@@ -306,7 +306,7 @@ const CompanyRow = ({
 
   return (
     <Link
-      to={`/company/${company.id}`}
+      to={`/${company.slug}`}
       className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
     >
       <CompanyLogo name={company.name} id={company.id} size="md" />

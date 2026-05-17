@@ -93,7 +93,7 @@ export const App = () => (
       <Route path="/guidelines" element={<ContentGuidelines />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
 
-      <Route path="/company/:id" element={<CompanyPage />} />
+      <Route path="/:slug" element={<CompanyPage />} />
       <Route path="/event/:id" element={<EventDetail />} />
       <Route path="/search" element={<Search />} />
 

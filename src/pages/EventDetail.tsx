@@ -10,6 +10,7 @@ export const EventDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const events = useStore(s => s.events)
+  const companies = useStore(s => s.companies)
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
   const currentUser = useStore(s => s.currentUser)
@@ -88,7 +89,7 @@ export const EventDetail = () => {
 
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between mb-3">
-          <Link to={`/company/${event.companyId}`} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+          <Link to={`/${companies.find(c => c.id === event.companyId)?.slug ?? event.companyId}`} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
             <Building2 className="w-3.5 h-3.5" />
             {event.companyName}
           </Link>
