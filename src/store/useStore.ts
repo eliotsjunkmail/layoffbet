@@ -139,7 +139,7 @@ interface StoreState {
 
   placeBet: (eventId: string, side: 'yes' | 'no', amount: number) => boolean
   getUserBet: (eventId: string) => Bet | undefined
-  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status'>) => void
+  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount'>) => void
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
   deleteEvent: (eventId: string) => void
@@ -270,6 +270,7 @@ export const useStore = create<StoreState>()(
           noPool: 50,
           outcome: null,
           status: 'active',
+          viewCount: 0,
           createdAt: new Date().toISOString(),
         }
         set(s => ({ events: [event, ...s.events] }))
