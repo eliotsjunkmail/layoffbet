@@ -179,7 +179,7 @@ export const Admin = () => {
                 ) : (
                   <>
                     <div className="flex items-start gap-3">
-                      <CompanyLogo name={c.name} id={c.id} size="sm" />
+                      <CompanyLogo name={c.name} id={c.id} industry={c.industry} size="sm" />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
                         <div className="text-xs text-gray-400 dark:text-slate-500">{c.industry} · {c.description.slice(0, 50)}…</div>

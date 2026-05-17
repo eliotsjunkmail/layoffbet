@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Search as SearchIcon, Eye } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -19,6 +19,21 @@ export const Search = () => {
   const [query, setQuery] = useState('')
 
   const q = query.toLowerCase().trim()
+
+  const sentimentByCompany = useMemo(() => {
+    const map: Record<string, number> = {}
+    const pools: Record<string, { yes: number; no: number }> = {}
+    events.forEach(e => {
+      if (getEffectiveStatus(e) !== 'active') return
+      if (!pools[e.companyId]) pools[e.companyId] = { yes: 0, no: 0 }
+      pools[e.companyId].yes += e.yesPool
+      pools[e.companyId].no += e.noPool
+    })
+    Object.entries(pools).forEach(([id, { yes, no }]) => {
+      map[id] = Math.round((yes / (yes + no)) * 100)
+    })
+    return map
+  }, [events, getEffectiveStatus])
 
   const matchedCompanies = q
     ? companies.filter(c => c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q))
@@ -51,7 +66,7 @@ export const Search = () => {
             const companyEvents = events.filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             return (
               <Link key={c.id} to={`/${c.slug}`} className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
-                <CompanyLogo name={c.name} id={c.id} size="sm" />
+                <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
                   <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mt-0.5">

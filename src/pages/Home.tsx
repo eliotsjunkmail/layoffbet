@@ -49,6 +49,21 @@ export const Home = () => {
     return map
   }, [events, getEffectiveStatus])
 
+  const sentimentByCompany = useMemo(() => {
+    const map: Record<string, number> = {}
+    const pools: Record<string, { yes: number; no: number }> = {}
+    events.forEach(e => {
+      if (getEffectiveStatus(e) !== 'active') return
+      if (!pools[e.companyId]) pools[e.companyId] = { yes: 0, no: 0 }
+      pools[e.companyId].yes += e.yesPool
+      pools[e.companyId].no += e.noPool
+    })
+    Object.entries(pools).forEach(([id, { yes, no }]) => {
+      map[id] = Math.round((yes / (yes + no)) * 100)
+    })
+    return map
+  }, [events, getEffectiveStatus])
+
   const typeaheadResults = useMemo(() => {
     if (!query.trim()) return []
     const q = query.toLowerCase()
@@ -123,7 +138,7 @@ export const Home = () => {
                       className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-gray-100 dark:border-slate-700 last:border-0 transition-colors"
                       onClick={() => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }}
                     >
-                      <CompanyLogo name={c.name} id={c.id} size="sm" />
+                      <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
                       <div className="flex-1 min-w-0 text-left">
                         <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</div>
                         <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
@@ -172,7 +187,7 @@ export const Home = () => {
             <section key={c.id} className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group">
-                  <CompanyLogo name={c.name} id={c.id} size="sm" />
+                  <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
                   <span className="text-sm font-semibold text-gray-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
                   <span className="text-xs text-gray-400 dark:text-slate-500">{c.industry}</span>
                 </Link>
@@ -240,7 +255,7 @@ export const Home = () => {
               </div>
               <div className="space-y-2">
                 {filtered.map(c => (
-                  <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} />
+                  <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
                 ))}
               </div>
             </section>
@@ -266,13 +281,14 @@ export const Home = () => {
 }
 
 const CompanyRow = ({
-  company, activeBets, topEvent, isFav, onStar,
+  company, activeBets, topEvent, isFav, onStar, sentiment,
 }: {
   company: ReturnType<typeof useStore.getState>['companies'][0]
   activeBets: number
   topEvent?: ReturnType<typeof useStore.getState>['events'][0]
   isFav: boolean
   onStar: (e: React.MouseEvent) => void
+  sentiment?: number
 }) => {
   const prob = topEvent ? getProbability(topEvent.yesPool, topEvent.noPool) : null
 
@@ -281,7 +297,7 @@ const CompanyRow = ({
       to={`/${company.slug}`}
       className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
     >
-      <CompanyLogo name={company.name} id={company.id} size="md" />
+      <CompanyLogo name={company.name} id={company.id} industry={company.industry} sentiment={sentiment} size="md" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{company.name}</span>

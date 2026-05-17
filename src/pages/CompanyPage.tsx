@@ -68,7 +68,7 @@ export const CompanyPage = () => {
 
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-5 shadow-sm dark:shadow-none">
         <div className="flex items-start gap-4">
-          <CompanyLogo name={company.name} id={company.id} size="xl" />
+          <CompanyLogo name={company.name} id={company.id} industry={company.industry} sentiment={avgYes ?? undefined} size="xl" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{company.name}</h1>
