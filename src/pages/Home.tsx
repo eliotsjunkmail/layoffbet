@@ -150,7 +150,7 @@ export const Home = () => {
                         </div>
                       </div>
                       <button
-                        onClick={e => { handleStar(e, c.id); setShowDropdown(false) }}
+                        onClick={e => { handleStar(e, c.id); setShowDropdown(false); setQuery('') }}
                         className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
                       >
                         <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
