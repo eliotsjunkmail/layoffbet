@@ -195,12 +195,10 @@ export const CompanyPage = () => {
                     disabled={exhausted}
                     onClick={() => navigate(`/event/${event.id}`)}
                     demoActive={false}
-                    cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md select-none transition-colors
+                    cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                       ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                         flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                        anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
-                        anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
-                        'border-gray-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700'}`}
+                        'border-violet-200 dark:border-violet-800'}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>

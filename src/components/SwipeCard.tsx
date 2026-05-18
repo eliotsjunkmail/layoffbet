@@ -144,6 +144,7 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
           transition: active ? 'none' : 'transform 0.22s cubic-bezier(0.25,0.46,0.45,0.94)',
           willChange: 'transform',
           cursor: disabled ? 'default' : 'grab',
+          WebkitTapHighlightColor: 'transparent',
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}

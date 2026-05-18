@@ -190,10 +190,10 @@ export const Bets = () => {
                         onSwipeNo={() => handleSwipeBet(event.id, 'no')}
                         demoActive={false}
                         onClick={() => navigate(`/event/${event.id}`)}
-                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
+                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
+                            'border-violet-200 dark:border-violet-800'}`}
                       >
                         <div className="mb-2">
                           {BetTag}
