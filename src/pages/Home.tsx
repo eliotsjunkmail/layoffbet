@@ -35,6 +35,7 @@ export const Home = () => {
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const pinnedEventIds = useStore(s => s.pinnedEventIds)
   const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
+  const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -228,7 +229,7 @@ export const Home = () => {
         </div>
 
         {/* Favorite company sections */}
-        {hasFavorites && favorites.map((c, idx) => {
+        {hasFavorites && favorites.map((c, cIdx) => {
           const activeEvents = events
             .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             .sort((a, b) => {
@@ -238,7 +239,7 @@ export const Home = () => {
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
-            <section key={c.id} className={`mb-2 ${idx > 0 ? 'pt-5 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
+            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-5 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group min-w-0">
                   <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
@@ -258,7 +259,7 @@ export const Home = () => {
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
-                  {activeEvents.slice(0, 3).map(e => {
+                  {activeEvents.slice(0, 3).map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const isPinned = pinnedEventIds.includes(e.id)
                     const flash = swipeFlash?.id === e.id
@@ -272,6 +273,7 @@ export const Home = () => {
                         onSwipeNo={() => handleSwipeBet(e.id, 'no')}
                         disabled={exhausted}
                         onClick={() => navigate(`/event/${e.id}`)}
+                        demoActive={cIdx === 0 && eIdx === 0}
                         cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
@@ -281,6 +283,9 @@ export const Home = () => {
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{e.title}</p>
+                          {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
+                            <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                          )}
                           <button
                             onClick={ev => { ev.stopPropagation(); togglePinnedEvent(e.id) }}
                             className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
@@ -321,7 +326,7 @@ export const Home = () => {
                 </div>
               )}
               {/* Ad after first company */}
-              {idx === 0 && <AdBanner />}
+              {cIdx === 0 && <AdBanner />}
             </section>
           )
         })}

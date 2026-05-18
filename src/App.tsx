@@ -202,6 +202,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { Feed } from './pages/Feed'
+import { Bets } from './pages/Bets'
 import { EventDetail } from './pages/EventDetail'
 import { CreateEvent } from './pages/CreateEvent'
 import { CompanyPage } from './pages/CompanyPage'
@@ -247,6 +248,7 @@ export const App = () => (
       <Route path="/search" element={<Search />} />
 
       <Route path="/feed" element={<Protected><Feed /></Protected>} />
+      <Route path="/bets" element={<Protected><Bets /></Protected>} />
       <Route path="/create" element={<Protected><CreateEvent /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />

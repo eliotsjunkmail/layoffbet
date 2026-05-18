@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 interface SwipeCardProps {
   onSwipeYes: () => void
@@ -7,22 +7,68 @@ interface SwipeCardProps {
   children: React.ReactNode
   cardClassName?: string
   onClick?: () => void
+  demoActive?: boolean
 }
 
 const THRESHOLD = 80
 
-export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClassName = '', onClick }: SwipeCardProps) => {
+export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClassName = '', onClick, demoActive }: SwipeCardProps) => {
   const [dx, setDx] = useState(0)
   const [active, setActive] = useState(false)
   const startX = useRef(0)
   const startY = useRef(0)
   const dirLocked = useRef<'h' | 'v' | null>(null)
   const didSwipe = useRef(false)
+  const demoCancelled = useRef(false)
+  const demoRaf = useRef<number | null>(null)
 
   const progress = Math.min(Math.abs(dx) / THRESHOLD, 1)
   const isRight = dx > 0
 
+  useEffect(() => {
+    if (!demoActive) return
+    demoCancelled.current = false
+
+    const animSeg = (from: number, to: number, dur: number) =>
+      new Promise<void>(resolve => {
+        const t0 = performance.now()
+        const tick = (now: number) => {
+          if (demoCancelled.current) return resolve()
+          const t = Math.min((now - t0) / dur, 1)
+          const e = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+          setDx(from + (to - from) * e)
+          setActive(true)
+          if (t < 1) { demoRaf.current = requestAnimationFrame(tick) } else { resolve() }
+        }
+        demoRaf.current = requestAnimationFrame(tick)
+      })
+
+    const pause = (ms: number) =>
+      new Promise<void>(resolve => setTimeout(() => { if (!demoCancelled.current) resolve() }, ms))
+
+    const run = async () => {
+      await pause(700)
+      if (demoCancelled.current) return
+      await animSeg(0, 65, 900)
+      await pause(400)
+      await animSeg(65, 0, 600)
+      await pause(300)
+      await animSeg(0, -65, 900)
+      await pause(400)
+      await animSeg(-65, 0, 600)
+      if (!demoCancelled.current) { setDx(0); setActive(false) }
+    }
+    run()
+
+    return () => {
+      demoCancelled.current = true
+      if (demoRaf.current) cancelAnimationFrame(demoRaf.current)
+    }
+  }, [demoActive])
+
   const onTouchStart = (e: React.TouchEvent) => {
+    demoCancelled.current = true
+    if (demoRaf.current) cancelAnimationFrame(demoRaf.current)
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     dirLocked.current = null
@@ -34,13 +80,11 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
     if (disabled) return
     const newDx = e.touches[0].clientX - startX.current
     const newDy = e.touches[0].clientY - startY.current
-
     if (!dirLocked.current) {
       if (Math.abs(newDx) > 6 || Math.abs(newDy) > 6) {
         dirLocked.current = Math.abs(newDx) > Math.abs(newDy) ? 'h' : 'v'
       }
     }
-
     if (dirLocked.current === 'h') {
       e.preventDefault()
       setActive(true)
@@ -49,28 +93,18 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
   }
 
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (dirLocked.current !== 'h') {
-      setDx(0)
-      setActive(false)
-      return
-    }
+    if (dirLocked.current !== 'h') { setDx(0); setActive(false); return }
     const finalDx = e.changedTouches[0].clientX - startX.current
     setActive(false)
     setDx(0)
-    if (finalDx > THRESHOLD) {
-      didSwipe.current = true
-      onSwipeYes()
-    } else if (finalDx < -THRESHOLD) {
-      didSwipe.current = true
-      onSwipeNo()
-    }
+    if (finalDx > THRESHOLD) { didSwipe.current = true; onSwipeYes() }
+    else if (finalDx < -THRESHOLD) { didSwipe.current = true; onSwipeNo() }
   }
 
   const rotation = dx * 0.035
 
   return (
     <div className="relative" style={{ touchAction: 'pan-y' }}>
-      {/* Hint layer — visible behind the card as it slides */}
       <div className="absolute inset-0 rounded-xl flex items-stretch overflow-hidden">
         <div
           className="w-1/2 flex items-center px-4 rounded-l-xl bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700"
@@ -92,7 +126,6 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
         </div>
       </div>
 
-      {/* Card — moves with the finger */}
       <div
         className={cardClassName}
         style={{

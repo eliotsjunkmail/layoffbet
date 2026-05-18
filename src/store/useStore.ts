@@ -324,6 +324,8 @@ interface StoreState {
   pinnedEventIds: string[]
   feedback: FeedbackItem[]
   anonVotedEvents: Record<string, { lastSide: 'yes' | 'no'; count: number }>
+  companyLastVisit: Record<string, string>
+  markCompanyVisited: (companyId: string) => void
 
   login: (username: string, password: string) => boolean
   logout: () => void
@@ -370,6 +372,7 @@ export const useStore = create<StoreState>()(
       pinnedEventIds: [],
       feedback: [],
       anonVotedEvents: {},
+      companyLastVisit: {},
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -383,6 +386,10 @@ export const useStore = create<StoreState>()(
         pinnedEventIds: s.pinnedEventIds.includes(eventId)
           ? s.pinnedEventIds.filter(id => id !== eventId)
           : [...s.pinnedEventIds, eventId],
+      })),
+
+      markCompanyVisited: (companyId) => set(s => ({
+        companyLastVisit: { ...s.companyLastVisit, [companyId]: new Date().toISOString() },
       })),
 
       placeAnonymousVote: (eventId, side, amount = 10) => {
@@ -618,6 +625,7 @@ export const useStore = create<StoreState>()(
         pinnedEventIds: s.pinnedEventIds,
         feedback: s.feedback,
         anonVotedEvents: s.anonVotedEvents,
+        companyLastVisit: s.companyLastVisit,
       }),
     }
   )

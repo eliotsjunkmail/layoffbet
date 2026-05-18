@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, Layers, Coins, X } from 'lucide-react'
+import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, Receipt, Coins, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
@@ -98,8 +98,8 @@ export const Header = () => {
           <nav className="flex items-center gap-1">
             {currentUser ? (
               <>
-                <Link to="/feed" className={`p-2 rounded-lg transition-colors ${isActive('/feed')}`}>
-                  <Layers className="w-5 h-5" />
+                <Link to="/bets" className={`p-2 rounded-lg transition-colors ${isActive('/bets')}`}>
+                  <Receipt className="w-5 h-5" />
                 </Link>
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />

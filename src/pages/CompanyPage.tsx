@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
 import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Pin } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -32,6 +32,8 @@ export const CompanyPage = () => {
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const pinnedEventIds = useStore(s => s.pinnedEventIds)
   const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
+  const companyLastVisit = useStore(s => s.companyLastVisit)
+  const markCompanyVisited = useStore(s => s.markCompanyVisited)
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
@@ -63,10 +65,16 @@ export const CompanyPage = () => {
 
   const company = companies.find(c => c.slug === slug)
 
+  const prevVisitTimeRef = useRef<string | undefined>(company ? companyLastVisit[company.id] : undefined)
+
   useEffect(() => {
     if (company) document.title = `${company.name} | Layoff Bet`
     return () => { document.title = 'Layoff Bet' }
   }, [company])
+
+  useEffect(() => {
+    if (company) markCompanyVisited(company.id)
+  }, [company?.id])
 
   if (!company) return <Navigate to="/" replace />
 
@@ -151,7 +159,7 @@ export const CompanyPage = () => {
             <span className="text-xs text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">{active.length}</span>
           </div>
           <div className="space-y-3">
-            {active.map(event => {
+            {active.map((event, idx) => {
               const { dominant, pct } = barProps(event.yesPool, event.noPool)
               const isPinned = pinnedEventIds.includes(event.id)
               const flash = swipeFlash?.id === event.id
@@ -165,6 +173,7 @@ export const CompanyPage = () => {
                   onSwipeNo={() => handleSwipeBet(event.id, 'no')}
                   disabled={exhausted}
                   onClick={() => navigate(`/event/${event.id}`)}
+                  demoActive={idx === 0}
                   cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md select-none transition-colors
                     ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                       flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
@@ -174,6 +183,9 @@ export const CompanyPage = () => {
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
+                    {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
+                      <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                    )}
                     <button
                       onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
                       className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
