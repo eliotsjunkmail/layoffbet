@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
 import { timeUntil, betMovementStr } from '../utils/odds'
+import { AdBanner } from '../components/AdBanner'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -86,8 +87,9 @@ export const Bets = () => {
   const shown = tab === 'active' ? groupByCompany(activeItems) : groupByCompany(completedItems)
   const totalShown = tab === 'active' ? activeItems.length : completedItems.length
 
-  // Global card index for demo (first card across all companies)
+  // Global card index for demo (first card) and ad placement (every 5)
   let cardIndex = 0
+  let globalItemIndex = 0
 
   return (
     <Layout>
@@ -142,6 +144,8 @@ export const Bets = () => {
                   const flash = swipeFlash?.id === event.id
                   const isFirstCard = cardIndex === 0
                   cardIndex++
+                  globalItemIndex++
+                  const showAd = globalItemIndex % 5 === 0
 
                   // Coin + side tag shown top-left of every card
                   const BetTag = bet ? (
@@ -156,19 +160,65 @@ export const Bets = () => {
 
                   if (tab === 'completed') {
                     return (
-                      <div
-                        key={event.id}
+                      <div key={event.id}>
+                        <div
+                          onClick={() => navigate(`/event/${event.id}`)}
+                          className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            {BetTag}
+                            <span className="text-xs font-medium">
+                              {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
+                              {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
+                              {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
+                              {!bet && <span className="text-gray-400 dark:text-slate-500" />}
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
+                          <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                            <div
+                              className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                            <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
+                            {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                          </div>
+                          {status === 'resolved' && event.outcome && bet && (
+                            <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
+                              Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
+                            </div>
+                          )}
+                        </div>
+                        {showAd && <AdBanner />}
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div key={event.id}>
+                      <SwipeCard
+                        onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                        onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                        demoActive={isFirstCard}
                         onClick={() => navigate(`/event/${event.id}`)}
-                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
+                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
+                          ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                            flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                            'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                       >
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-start justify-between gap-2 mb-2">
                           {BetTag}
-                          <span className="text-xs font-medium">
-                            {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
-                            {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
-                            {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
-                            {!bet && <span className="text-gray-400 dark:text-slate-500" />}
-                          </span>
+                          {!bet && (
+                            <button
+                              onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
+                              className="text-gray-300 dark:text-slate-600 hover:text-violet-400 p-0.5 flex-shrink-0 -mt-0.5"
+                            >
+                              <Pin className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
                         <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
@@ -179,54 +229,12 @@ export const Bets = () => {
                         </div>
                         <div className="flex justify-between text-xs">
                           {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                          <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
+                          <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
                           {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
                         </div>
-                        {status === 'resolved' && event.outcome && bet && (
-                          <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
-                            Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <SwipeCard
-                      key={event.id}
-                      onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
-                      onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                      demoActive={isFirstCard}
-                      onClick={() => navigate(`/event/${event.id}`)}
-                      cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
-                        ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                          flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                          'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        {BetTag}
-                        {!bet && (
-                          <button
-                            onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
-                            className="text-gray-300 dark:text-slate-600 hover:text-violet-400 p-0.5 flex-shrink-0 -mt-0.5"
-                          >
-                            <Pin className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
-                      <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                        <div
-                          className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                        <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
-                        {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                      </div>
-                    </SwipeCard>
+                      </SwipeCard>
+                      {showAd && <AdBanner />}
+                    </div>
                   )
                 })}
               </div>
@@ -234,6 +242,7 @@ export const Bets = () => {
           ))}
         </div>
       )}
+      {totalShown > 0 && totalShown % 5 !== 0 && <AdBanner />}
 
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">

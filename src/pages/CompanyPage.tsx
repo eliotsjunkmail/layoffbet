@@ -6,6 +6,7 @@ import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { SwipeCard } from '../components/SwipeCard'
 import { getProbability, timeUntil, formatDate, betMovementStr } from '../utils/odds'
+import { AdBanner } from '../components/AdBanner'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -169,52 +170,55 @@ export const CompanyPage = () => {
               const anonCount = anonVote?.count ?? 0
               const exhausted = !currentUser && anonCount >= 10
               return (
-                <SwipeCard
-                  key={event.id}
-                  onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
-                  onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                  disabled={exhausted}
-                  onClick={() => navigate(`/event/${event.id}`)}
-                  demoActive={idx === 0}
-                  cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md select-none transition-colors
-                    ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                      flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                      anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
-                      anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
-                      'border-gray-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700'}`}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
-                    {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
-                      <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
-                    )}
-                    <button
-                      onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
-                      className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
-                    >
-                      <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
-                    </button>
-                  </div>
-                  <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                    <div
-                      className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    {dominant === 'yes'
-                      ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                      : <span className="text-gray-300 dark:text-slate-700">·</span>
-                    }
-                    <span className="text-gray-400 dark:text-slate-500">{timeUntil(event.expiresAt)}</span>
-                    {dominant === 'no'
-                      ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                      : <span className="text-gray-300 dark:text-slate-700">·</span>
-                    }
-                  </div>
-                </SwipeCard>
+                <div key={event.id}>
+                  <SwipeCard
+                    onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                    onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                    disabled={exhausted}
+                    onClick={() => navigate(`/event/${event.id}`)}
+                    demoActive={idx === 0}
+                    cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md select-none transition-colors
+                      ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                        flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                        anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
+                        anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
+                        'border-gray-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700'}`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
+                      {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
+                        <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                      )}
+                      <button
+                        onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
+                        className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
+                      >
+                        <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
+                      </button>
+                    </div>
+                    <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                      <div
+                        className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      {dominant === 'yes'
+                        ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                        : <span className="text-gray-300 dark:text-slate-700">·</span>
+                      }
+                      <span className="text-gray-400 dark:text-slate-500">{timeUntil(event.expiresAt)}</span>
+                      {dominant === 'no'
+                        ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                        : <span className="text-gray-300 dark:text-slate-700">·</span>
+                      }
+                    </div>
+                  </SwipeCard>
+                  {idx === 2 && <AdBanner />}
+                </div>
               )
             })}
+            {active.length <= 3 && <AdBanner />}
           </div>
         </section>
       )}
