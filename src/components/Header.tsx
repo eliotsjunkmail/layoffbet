@@ -125,8 +125,13 @@ export const Header = () => {
           <nav className="flex items-center gap-1">
             {currentUser ? (
               <>
-                <Link to="/bets" className={`px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/bets')}`}>
-                  Bets{activeBetCount > 0 ? ` (${activeBetCount > 99 ? '99+' : activeBetCount})` : ''}
+                <Link to="/bets" className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/bets')}`}>
+                  Bets
+                  {activeBetCount > 0 && (
+                    <span className="bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {activeBetCount > 99 ? '99+' : activeBetCount}
+                    </span>
+                  )}
                 </Link>
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />
