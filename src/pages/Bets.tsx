@@ -89,6 +89,16 @@ export const Bets = () => {
   // Global card index for demo (first card across all companies)
   let cardIndex = 0
 
+  const SubHeader = ({ side }: { side: 'yes' | 'no' | 'pinned' }) => (
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${side === 'yes' ? 'bg-emerald-500' : side === 'no' ? 'bg-rose-500' : 'bg-violet-400'}`} />
+      <span className={`text-xs font-bold tracking-wide ${side === 'yes' ? 'text-emerald-600 dark:text-emerald-400' : side === 'no' ? 'text-rose-600 dark:text-rose-400' : 'text-violet-500 dark:text-violet-400'}`}>
+        {side === 'yes' ? '✓ YES' : side === 'no' ? '✕ NO' : 'Watching'}
+      </span>
+      <div className={`flex-1 h-px ${side === 'yes' ? 'bg-emerald-100 dark:bg-emerald-900/40' : side === 'no' ? 'bg-rose-100 dark:bg-rose-900/40' : 'bg-violet-100 dark:bg-violet-900/20'}`} />
+    </div>
+  )
+
   return (
     <Layout>
       <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-4">My Bets</h1>
@@ -135,101 +145,111 @@ export const Bets = () => {
               </Link>
 
               <div className="space-y-2.5">
-                {items.map(({ event, status, bet, isPinned }) => {
-                  const { dominant, pct } = barProps(event.yesPool, event.noPool)
-                  const won = status === 'resolved' && event.outcome === bet?.side
-                  const lost = status === 'resolved' && event.outcome !== null && bet && event.outcome !== bet.side
-                  const flash = swipeFlash?.id === event.id
-                  const isFirstCard = cardIndex === 0
-                  cardIndex++
+                {(() => {
+                  const yesBets = items.filter(x => x.bet?.side === 'yes')
+                  const noBets = items.filter(x => x.bet?.side === 'no')
+                  const pinnedOnly = items.filter(x => !x.bet)
 
-                  if (tab === 'completed') {
-                    return (
-                      <div
-                        key={event.id}
-                        onClick={() => navigate(`/event/${event.id}`)}
-                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-1.5">
-                            {isPinned && <Pin className="w-3 h-3 text-violet-400 fill-violet-400" />}
-                            <span className="text-xs font-medium">
-                              {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
-                              {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
-                              {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
-                              {!bet && <span className="text-gray-400 dark:text-slate-500">Pinned</span>}
-                            </span>
-                          </div>
-                          {bet && (
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                              {bet.side === 'yes' ? '✓ YES' : '✕ NO'} · {bet.amount}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 mb-2">{event.title}</p>
-                        <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                          <div
-                            className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                          <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
-                          {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                        </div>
-                        {status === 'resolved' && event.outcome && bet && (
-                          <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
-                            Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  }
+                  const subGroups: { side: 'yes' | 'no' | 'pinned'; list: typeof items }[] = []
+                  if (yesBets.length) subGroups.push({ side: 'yes', list: yesBets })
+                  if (noBets.length) subGroups.push({ side: 'no', list: noBets })
+                  if (pinnedOnly.length) subGroups.push({ side: 'pinned', list: pinnedOnly })
 
-                  return (
-                    <SwipeCard
-                      key={event.id}
-                      onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
-                      onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                      demoActive={isFirstCard}
-                      onClick={() => navigate(`/event/${event.id}`)}
-                      cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
-                        ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                          flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                          'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{event.title}</p>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {bet ? (
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                              {bet.side === 'yes' ? '✓ YES' : '✕ NO'}
-                            </span>
-                          ) : (
-                            <button
-                              onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
-                              className="text-violet-500 dark:text-violet-400 p-0.5"
+                  return subGroups.map(({ side, list }) => (
+                    <div key={side}>
+                      <SubHeader side={side} />
+                      <div className="space-y-2.5">
+                        {list.map(({ event, status, bet, isPinned }) => {
+                          const { dominant, pct } = barProps(event.yesPool, event.noPool)
+                          const won = status === 'resolved' && event.outcome === bet?.side
+                          const lost = status === 'resolved' && event.outcome !== null && bet && event.outcome !== bet.side
+                          const flash = swipeFlash?.id === event.id
+                          const isFirstCard = cardIndex === 0
+                          cardIndex++
+
+                          if (tab === 'completed') {
+                            return (
+                              <div
+                                key={event.id}
+                                onClick={() => navigate(`/event/${event.id}`)}
+                                className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
+                              >
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    {isPinned && <Pin className="w-3 h-3 text-violet-400 fill-violet-400" />}
+                                    <span className="text-xs font-medium">
+                                      {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
+                                      {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
+                                      {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
+                                      {!bet && <span className="text-gray-400 dark:text-slate-500">Pinned</span>}
+                                    </span>
+                                  </div>
+                                  {bet && (
+                                    <span className="text-xs text-gray-400 dark:text-slate-500">{bet.amount} coins</span>
+                                  )}
+                                </div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 mb-2">{event.title}</p>
+                                <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                                  <div
+                                    className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                  {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                                  <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
+                                  {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                                </div>
+                                {status === 'resolved' && event.outcome && bet && (
+                                  <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
+                                    Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <SwipeCard
+                              key={event.id}
+                              onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                              onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                              demoActive={isFirstCard}
+                              onClick={() => navigate(`/event/${event.id}`)}
+                              cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
+                                ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                                  flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                                  'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                             >
-                              <Pin className="w-3.5 h-3.5 fill-violet-500 dark:fill-violet-400" />
-                            </button>
-                          )}
-                        </div>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{event.title}</p>
+                                {!bet && (
+                                  <button
+                                    onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
+                                    className="text-violet-500 dark:text-violet-400 p-0.5 flex-shrink-0"
+                                  >
+                                    <Pin className="w-3.5 h-3.5 fill-violet-500 dark:fill-violet-400" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                                <div
+                                  className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                                <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
+                                {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                              </div>
+                            </SwipeCard>
+                          )
+                        })}
                       </div>
-                      <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                        <div
-                          className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                        <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
-                        {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                      </div>
-                    </SwipeCard>
-                  )
-                })}
+                    </div>
+                  ))
+                })()}
               </div>
             </section>
           ))}
