@@ -108,7 +108,7 @@ export const CompanyPage = () => {
     const url = window.location.href
     const shareData = {
       title: `${company.name} on Layoff Bet`,
-      text: `Employees are placing anonymous bets on what's really happening at ${company.name} — layoffs, hiring freezes, restructuring, and more. See what insiders are predicting on Layoff Bet.`,
+      text: `What's really happening at ${company.name}? Insiders are betting on it.`,
       url,
     }
     if (navigator.share) {
