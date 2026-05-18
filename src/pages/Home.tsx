@@ -33,6 +33,7 @@ export const Home = () => {
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
+  const bets = useStore(s => s.bets)
   const pinnedEventIds = useStore(s => s.pinnedEventIds)
   const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const companyLastVisit = useStore(s => s.companyLastVisit)
@@ -178,47 +179,35 @@ export const Home = () => {
               </button>
             )}
 
-            {/* Dropdown */}
+            {/* Desktop dropdown */}
             {showDropdown && typeaheadResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
-                {typeaheadResults.map(c => {
-                  const isFav = favoriteCompanyIds.includes(c.id)
-                  const activeBets = activeEventsByCompany[c.id] ?? 0
-                  return (
-                    <div
-                      key={c.id}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer border-b border-gray-100 dark:border-slate-700 last:border-0 transition-colors"
-                      onClick={() => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }}
-                    >
-                      <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</div>
-                        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
-                          <span>{c.industry}</span>
-                          {activeBets > 0 && <span className="text-violet-600 dark:text-violet-400">{activeBets} active</span>}
-                        </div>
-                      </div>
-                      <button
-                        onClick={e => { handleStar(e, c.id); setShowDropdown(false); setQuery('') }}
-                        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
-                      >
-                        <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
-                      </button>
-                    </div>
-                  )
-                })}
-                <div
-                  className="px-4 py-2.5 text-xs text-center text-violet-600 dark:text-violet-400 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors font-medium"
-                  onClick={() => { setShowDropdown(false); navigate('/search') }}
-                >
-                  See all results →
-                </div>
+              <div className="hidden sm:block absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
+                <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
+              </div>
+            )}
+            {showDropdown && query && typeaheadResults.length === 0 && (
+              <div className="hidden sm:block absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
+                No companies found for "{query}"
               </div>
             )}
 
-            {showDropdown && query && typeaheadResults.length === 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
-                No companies found for "{query}"
+            {/* Mobile bottom sheet */}
+            {showDropdown && query && (
+              <div className="sm:hidden">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowDropdown(false)} />
+                <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
+                  <div className="flex justify-center pt-2.5 pb-1">
+                    <div className="w-10 h-1 bg-gray-200 dark:bg-slate-700 rounded-full" />
+                  </div>
+                  <div className="px-4 pb-2 pt-1 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Results for "{query}"</div>
+                  <div className="overflow-y-auto max-h-[60vh] pb-safe">
+                    {typeaheadResults.length > 0
+                      ? <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
+                      : <div className="px-4 py-8 text-sm text-gray-400 dark:text-slate-500 text-center">No companies found</div>
+                    }
+                  </div>
+                  <div className="h-safe-area-inset-bottom" />
+                </div>
               </div>
             )}
           </div>
@@ -268,6 +257,7 @@ export const Home = () => {
                     const anonVote = anonVotedEvents[e.id]
                     const anonCount = anonVote?.count ?? 0
                     const exhausted = !currentUser && anonCount >= 10
+                    const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
                     return (
                       <SwipeCard
                         key={e.id}
@@ -283,6 +273,13 @@ export const Home = () => {
                             anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
                             'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                       >
+                        {userBet && (
+                          <div className="mb-2">
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                              {userBet.amount} Coins · {userBet.side === 'yes' ? '✓ YES' : '✕ NO'}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
                           {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
@@ -395,6 +392,53 @@ export const Home = () => {
     </Layout>
   )
 }
+
+const SearchResultsList = ({
+  results, favoriteCompanyIds, activeEventsByCompany, sentimentByCompany, onSelect, onStar, onSeeAll,
+}: {
+  results: ReturnType<typeof useStore.getState>['companies']
+  favoriteCompanyIds: string[]
+  activeEventsByCompany: Record<string, number>
+  sentimentByCompany: Record<string, number>
+  onSelect: (c: ReturnType<typeof useStore.getState>['companies'][0]) => void
+  onStar: (e: React.MouseEvent, companyId: string) => void
+  onSeeAll: () => void
+}) => (
+  <>
+    {results.map(c => {
+      const isFav = favoriteCompanyIds.includes(c.id)
+      const activeBets = activeEventsByCompany[c.id] ?? 0
+      return (
+        <div
+          key={c.id}
+          className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer border-b border-gray-100 dark:border-slate-800 last:border-0 transition-colors"
+          onClick={() => onSelect(c)}
+        >
+          <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</div>
+            <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
+              <span>{c.industry}</span>
+              {activeBets > 0 && <span className="text-violet-600 dark:text-violet-400">{activeBets} active</span>}
+            </div>
+          </div>
+          <button
+            onClick={e => { e.stopPropagation(); onStar(e, c.id) }}
+            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
+          >
+            <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
+          </button>
+        </div>
+      )
+    })}
+    <div
+      className="px-4 py-3 text-xs text-center text-violet-600 dark:text-violet-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors font-medium"
+      onClick={onSeeAll}
+    >
+      See all results →
+    </div>
+  </>
+)
 
 const ADS = [
   {
