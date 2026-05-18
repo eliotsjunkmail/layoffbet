@@ -356,6 +356,7 @@ interface StoreState {
   removeBet: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount'>) => void
+  updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
   deleteEvent: (eventId: string) => void
@@ -594,6 +595,12 @@ export const useStore = create<StoreState>()(
           createdAt: new Date().toISOString(),
         }
         set(s => ({ events: [event, ...s.events] }))
+      },
+
+      updateEvent: (eventId, data) => {
+        set(s => ({
+          events: s.events.map(e => e.id === eventId ? { ...e, ...data } : e),
+        }))
       },
 
       resolveEvent: (eventId, outcome) => {
