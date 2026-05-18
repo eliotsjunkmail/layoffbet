@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, TrendingUp, Coins, X, MessageSquare } from 'lucide-react'
+import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, ChevronDown, Coins, X, MessageSquare } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
@@ -125,13 +125,8 @@ export const Header = () => {
           <nav className="flex items-center gap-1">
             {currentUser ? (
               <>
-                <Link to="/bets" className={`relative p-2 rounded-lg transition-colors ${isActive('/bets')}`}>
-                  <TrendingUp className="w-5 h-5" />
-                  {activeBetCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-violet-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                      {activeBetCount > 99 ? '99+' : activeBetCount}
-                    </span>
-                  )}
+                <Link to="/bets" className={`px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/bets')}`}>
+                  Bets{activeBetCount > 0 ? ` (${activeBetCount > 99 ? '99+' : activeBetCount})` : ''}
                 </Link>
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />
@@ -144,14 +139,12 @@ export const Header = () => {
                 </button>
                 <button
                   onClick={() => setShowProfile(true)}
-                  className="flex items-center gap-1.5 ml-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full pl-2 pr-3 py-1.5 transition-colors"
+                  className="flex items-center gap-1 ml-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full px-2.5 py-1.5 transition-colors"
                 >
-                  <div className="w-5 h-5 bg-violet-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                    {currentUser.username.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-300 flex items-center gap-0.5">
-                    <Coins className="w-3 h-3" />{currentUser.coins.toLocaleString()}
+                  <span className="text-xs font-bold text-gray-700 dark:text-slate-200">
+                    {currentUser.username.slice(0, 2).toUpperCase()}
                   </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" />
                 </button>
               </>
             ) : (
