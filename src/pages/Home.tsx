@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight, MessageSquare } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight, Send } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -36,6 +36,7 @@ export const Home = () => {
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
+  const addComment = useStore(s => s.addComment)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
@@ -47,6 +48,14 @@ export const Home = () => {
 
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
+
+  const handleAddComment = (eventId: string) => {
+    const text = commentInputs[eventId]?.trim()
+    if (!text) return
+    addComment(eventId, text)
+    setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
+  }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
@@ -289,16 +298,28 @@ export const Home = () => {
                             }
                           </div>
                         </SwipeCard>
-                        {eventComments.length > 0 && (
-                          <div className="mt-1 px-1 py-2 space-y-2">
-                            {eventComments.map(cmt => (
-                              <p key={cmt.id} className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed flex gap-1.5">
-                                <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5 text-gray-300 dark:text-slate-600" />
-                                {cmt.content}
-                              </p>
-                            ))}
+                        <div className="mt-1.5 ml-2 space-y-1.5">
+                          {eventComments.map(cmt => (
+                            <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2">
+                              <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">{cmt.content}</p>
+                            </div>
+                          ))}
+                          <div className="flex gap-1.5 pt-0.5" onClick={ev => ev.stopPropagation()}>
+                            <input
+                              value={commentInputs[e.id] ?? ''}
+                              onChange={ev => setCommentInputs(prev => ({ ...prev, [e.id]: ev.target.value }))}
+                              onKeyDown={ev => { if (ev.key === 'Enter') handleAddComment(e.id) }}
+                              placeholder="Add a comment..."
+                              className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500"
+                            />
+                            <button
+                              onClick={() => handleAddComment(e.id)}
+                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                            </button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     )
                   })}
