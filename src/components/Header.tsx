@@ -75,12 +75,22 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
 export const Header = () => {
   const currentUser = useStore(s => s.currentUser)
   const companies = useStore(s => s.companies)
+  const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
+  const companyLastVisit = useStore(s => s.companyLastVisit)
   const location = useLocation()
   const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
 
   const pathSlug = location.pathname.replace(/^\//, '').split('/')[0]
   const currentCompany = companies.find(c => c.slug === pathSlug)
+
+  const getCreateCompanyId = () => {
+    if (currentCompany) return currentCompany.id
+    if (favoriteCompanyIds.length > 0) return favoriteCompanyIds[0]
+    const lastVisited = Object.entries(companyLastVisit)
+      .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())[0]
+    return lastVisited?.[0]
+  }
 
   const isActive = (path: string) =>
     location.pathname === path
@@ -111,7 +121,7 @@ export const Header = () => {
                   <Search className="w-5 h-5" />
                 </Link>
                 <button
-                  onClick={() => navigate('/create', { state: { companyId: currentCompany?.id } })}
+                  onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
                   className={`p-2 rounded-lg transition-colors ${isActive('/create')}`}
                 >
                   <PlusCircle className="w-5 h-5" />
