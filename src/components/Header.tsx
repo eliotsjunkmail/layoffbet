@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, Receipt, Coins, X, MessageSquare } from 'lucide-react'
+import { Dices, PlusCircle, Search, User, Shield, LogOut, Settings, TrendingUp, Coins, X, MessageSquare } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
@@ -74,9 +74,20 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
 
 export const Header = () => {
   const currentUser = useStore(s => s.currentUser)
+  const bets = useStore(s => s.bets)
+  const events = useStore(s => s.events)
+  const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const companies = useStore(s => s.companies)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
+
+  const activeBetCount = currentUser
+    ? bets.filter(b => {
+        if (b.userId !== currentUser.id) return false
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+    : 0
   const location = useLocation()
   const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
@@ -114,8 +125,13 @@ export const Header = () => {
           <nav className="flex items-center gap-1">
             {currentUser ? (
               <>
-                <Link to="/bets" className={`p-2 rounded-lg transition-colors ${isActive('/bets')}`}>
-                  <Receipt className="w-5 h-5" />
+                <Link to="/bets" className={`relative p-2 rounded-lg transition-colors ${isActive('/bets')}`}>
+                  <TrendingUp className="w-5 h-5" />
+                  {activeBetCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-violet-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                      {activeBetCount > 99 ? '99+' : activeBetCount}
+                    </span>
+                  )}
                 </Link>
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />
