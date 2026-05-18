@@ -63,7 +63,18 @@ const SEED_COMPANIES: Company[] = [
   { id: 'comp-52', name: 'CVS',                         slug: 'CVS',                description: 'American retail pharmacy and health care company operating thousands of retail locations and a pharmacy benefits manager',industry: 'Healthcare Retail',  viewCount: 134445, createdAt: pastDate(60) },
 ]
 
+const ADMIN_USER: User = {
+  id: 'user-admin',
+  username: 'admin',
+  password: 'admin',
+  coins: 9999,
+  isAdmin: true,
+  createdAt: pastDate(60),
+  lastCoinsDate: today(),
+}
+
 const SEED_USERS: User[] = [
+  ADMIN_USER,
   {
     id: 'user-eliot',
     username: 'eliotsjunkmail@gmail.com',
@@ -607,6 +618,7 @@ export const useStore = create<StoreState>()(
       },
 
       banUser: (userId) => {
+        if (userId === 'user-admin') return
         set(s => ({ users: s.users.filter(u => u.id !== userId) }))
       },
     }),
@@ -627,6 +639,15 @@ export const useStore = create<StoreState>()(
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        const idx = state.users.findIndex(u => u.id === 'user-admin')
+        if (idx === -1) {
+          state.users = [ADMIN_USER, ...state.users]
+        } else {
+          state.users[idx] = { ...state.users[idx], username: 'admin', password: 'admin', isAdmin: true }
+        }
+      },
     }
   )
 )
