@@ -211,11 +211,10 @@ export const CompanyPage = () => {
                       }
                     </div>
                   </SwipeCard>
-                  {idx === 2 && <AdBanner />}
                 </div>
               )
             })}
-            {active.length <= 3 && <AdBanner />}
+            <AdBanner />
 
             {/* Add prediction CTA */}
             {currentUser ? (

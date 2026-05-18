@@ -84,9 +84,7 @@ export const Bets = () => {
   const shown = tab === 'active' ? groupByCompany(activeItems) : groupByCompany(completedItems)
   const totalShown = tab === 'active' ? activeItems.length : completedItems.length
 
-  // Global card index for demo (first card) and ad placement (every 5)
   let cardIndex = 0
-  let globalItemIndex = 0
 
   return (
     <Layout>
@@ -141,8 +139,6 @@ export const Bets = () => {
                   const flash = swipeFlash?.id === event.id
                   const isFirstCard = cardIndex === 0
                   cardIndex++
-                  globalItemIndex++
-                  const showAd = globalItemIndex % 5 === 0
 
                   const BetTag = (
                     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
@@ -183,7 +179,6 @@ export const Bets = () => {
                             </div>
                           )}
                         </div>
-                        {showAd && <AdBanner />}
                       </div>
                     )
                   }
@@ -216,7 +211,6 @@ export const Bets = () => {
                           {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
                         </div>
                       </SwipeCard>
-                      {showAd && <AdBanner />}
                     </div>
                   )
                 })}
@@ -225,7 +219,7 @@ export const Bets = () => {
           ))}
         </div>
       )}
-      {totalShown > 0 && totalShown % 5 !== 0 && <AdBanner />}
+      {totalShown > 0 && <AdBanner />}
 
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">

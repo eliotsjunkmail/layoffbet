@@ -316,7 +316,7 @@ export const Home = () => {
                   <Link to="/create" className="text-xs text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">Create one →</Link>
                 </div>
               )}
-              <AdBanner />
+              {cIdx === 0 && <AdBanner />}
             </section>
           )
         })}
@@ -326,8 +326,6 @@ export const Home = () => {
         {/* Industry filter + Browse — hidden once user has favorites */}
         {!hasFavorites && (
           <>
-            <AdBanner />
-
             <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
               {INDUSTRIES.map(ind => (
                 <button
