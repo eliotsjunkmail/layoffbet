@@ -4,7 +4,7 @@ import { CheckCircle, Clock, Pin, ChevronRight } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
-import { timeUntil } from '../utils/odds'
+import { timeUntil, betMovementStr } from '../utils/odds'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -31,10 +31,12 @@ export const Bets = () => {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    const event = events.find(e => e.id === eventId)
+    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
     if (placeBet(eventId, side, 10)) {
       setSwipeFlash({ id: eventId, side })
       setTimeout(() => setSwipeFlash(null), 600)
-      showToast(side === 'yes' ? '✓ YES — 10 coins' : '✕ NO — 10 coins')
+      showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
     } else {
       showToast('Already bet or not enough coins')
     }

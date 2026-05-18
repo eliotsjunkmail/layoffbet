@@ -5,7 +5,7 @@ import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
-import { getProbability } from '../utils/odds'
+import { getProbability, betMovementStr } from '../utils/odds'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
 
@@ -123,11 +123,13 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    const event = events.find(e => e.id === eventId)
+    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
     if (currentUser) {
       if (placeBet(eventId, side, 10)) {
         setSwipeFlash({ id: eventId, side })
         setTimeout(() => setSwipeFlash(null), 600)
-        showToast(side === 'yes' ? '✓ YES — 10 coins' : '✕ NO — 10 coins')
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
       } else {
         showToast('Already bet or not enough coins')
       }
@@ -135,7 +137,7 @@ export const Home = () => {
       if (placeAnonymousVote(eventId, side)) {
         setSwipeFlash({ id: eventId, side })
         setTimeout(() => setSwipeFlash(null), 600)
-        showToast(side === 'yes' ? '✓ YES' : '✕ NO')
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${movement}`)
       } else {
         showToast('10 bets reached — sign in to keep going')
       }

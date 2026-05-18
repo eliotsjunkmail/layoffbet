@@ -33,3 +33,22 @@ export const timeUntil = (iso: string): string => {
 
 export const uid = (): string =>
   Math.random().toString(36).slice(2) + Date.now().toString(36)
+
+/** Returns a formatted string describing how much a bet moved the probability. */
+export const betMovementStr = (
+  yesPool: number,
+  noPool: number,
+  side: 'yes' | 'no',
+  amount: number,
+): string => {
+  const before = getProbability(yesPool, noPool).yes
+  const after  = side === 'yes'
+    ? getProbability(yesPool + amount, noPool).yes
+    : getProbability(yesPool, noPool + amount).yes
+  const delta = after - before            // positive for YES bets, negative for NO bets
+  const abs   = Math.abs(delta)
+  if (abs === 0) return '< 1% change'
+  return delta > 0
+    ? `+${abs}% more likely`
+    : `${abs}% less likely`
+}

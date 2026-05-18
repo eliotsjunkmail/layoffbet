@@ -4,7 +4,7 @@ import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle } from 
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { AuthModal } from '../components/AuthModal'
-import { getProbability, formatDate, timeUntil } from '../utils/odds'
+import { getProbability, formatDate, timeUntil, betMovementStr } from '../utils/odds'
 
 export const EventDetail = () => {
   const { id } = useParams<{ id: string }>()
@@ -53,6 +53,7 @@ export const EventDetail = () => {
   const requiresLogin = !currentUser && (betAmount === 25 || betAmount === 50)
 
   const handleBet = (side: 'yes' | 'no') => {
+    const movement = betMovementStr(event.yesPool, event.noPool, side, betAmount)
     if (!currentUser && (betAmount === 25 || betAmount === 50)) {
       setPendingBet(side)
       setShowAuthModal(true)
@@ -60,14 +61,14 @@ export const EventDetail = () => {
     }
     if (!currentUser) {
       if (placeAnonymousVote(id!, side, betAmount)) {
-        showToast(`Bet ${side.toUpperCase()} placed!`)
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
       } else {
         showToast('10 bets reached — sign in to keep going')
       }
       return
     }
     if (placeBet(id!, side, betAmount)) {
-      showToast(`Bet ${side.toUpperCase()} placed!`)
+      showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
     } else {
       showToast('Not enough Coins or already bet.')
     }
@@ -76,8 +77,9 @@ export const EventDetail = () => {
   const handleAuthClose = () => {
     setShowAuthModal(false)
     if (pendingBet && currentUser) {
+      const movement = betMovementStr(event.yesPool, event.noPool, pendingBet, betAmount)
       if (placeBet(id!, pendingBet, betAmount)) {
-        showToast(`Bet ${pendingBet.toUpperCase()} placed!`)
+        showToast(`${pendingBet === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
       }
       setPendingBet(null)
     }
