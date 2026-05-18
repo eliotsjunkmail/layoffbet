@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, MessageSquare, ChevronDown } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -37,9 +37,16 @@ export const CompanyPage = () => {
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
+  const comments = useStore(s => s.comments)
   const [shareCopied, setShareCopied] = useState(false)
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
+  const toggleComments = (id: string) => setExpandedComments(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
@@ -172,6 +179,8 @@ export const CompanyPage = () => {
               const anonVote = anonVotedEvents[event.id]
               const anonCount = anonVote?.count ?? 0
               const exhausted = !currentUser && anonCount >= 10
+              const eventComments = comments.filter(c => c.eventId === event.id)
+              const isExpanded = expandedComments.has(event.id)
               return (
                 <div key={event.id}>
                   <SwipeCard
@@ -199,7 +208,7 @@ export const CompanyPage = () => {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-xs mb-2">
                       {dominant === 'yes'
                         ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
                         : <span className="text-gray-300 dark:text-slate-700">·</span>
@@ -210,7 +219,26 @@ export const CompanyPage = () => {
                         : <span className="text-gray-300 dark:text-slate-700">·</span>
                       }
                     </div>
+                    <button
+                      onClick={ev => { ev.stopPropagation(); toggleComments(event.id) }}
+                      className="w-full flex items-center gap-1.5 pt-2 border-t border-gray-100 dark:border-slate-700/60 text-xs text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>{eventComments.length} {eventComments.length === 1 ? 'comment' : 'comments'}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 ml-auto transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
                   </SwipeCard>
+                  {isExpanded && (
+                    <div className="mt-1 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 space-y-2.5">
+                      {eventComments.length > 0 ? eventComments.map(cmt => (
+                        <p key={cmt.id} className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
+                          <span className="text-gray-300 dark:text-slate-600 mr-1.5">—</span>{cmt.content}
+                        </p>
+                      )) : (
+                        <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-1">No comments yet — add one from the prediction page.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}

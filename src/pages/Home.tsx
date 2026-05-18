@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight, MessageSquare, ChevronDown } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -35,6 +35,7 @@ export const Home = () => {
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const bets = useStore(s => s.bets)
+  const comments = useStore(s => s.comments)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
@@ -46,6 +47,12 @@ export const Home = () => {
 
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
+  const toggleComments = (id: string) => setExpandedComments(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
 
@@ -178,35 +185,15 @@ export const Home = () => {
               </button>
             )}
 
-            {/* Desktop dropdown */}
+            {/* Dropdown */}
             {showDropdown && typeaheadResults.length > 0 && (
-              <div className="hidden sm:block absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
                 <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
               </div>
             )}
             {showDropdown && query && typeaheadResults.length === 0 && (
-              <div className="hidden sm:block absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
                 No companies found for "{query}"
-              </div>
-            )}
-
-            {/* Mobile bottom sheet */}
-            {showDropdown && query && (
-              <div className="sm:hidden">
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowDropdown(false)} />
-                <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
-                  <div className="flex justify-center pt-2.5 pb-1">
-                    <div className="w-10 h-1 bg-gray-200 dark:bg-slate-700 rounded-full" />
-                  </div>
-                  <div className="px-4 pb-2 pt-1 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Results for "{query}"</div>
-                  <div className="overflow-y-auto max-h-[60vh] pb-safe">
-                    {typeaheadResults.length > 0
-                      ? <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
-                      : <div className="px-4 py-8 text-sm text-gray-400 dark:text-slate-500 text-center">No companies found</div>
-                    }
-                  </div>
-                  <div className="h-safe-area-inset-bottom" />
-                </div>
               </div>
             )}
           </div>
@@ -261,52 +248,74 @@ export const Home = () => {
                     const anonCount = anonVote?.count ?? 0
                     const exhausted = !currentUser && anonCount >= 10
                     const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
+                    const eventComments = comments.filter(c => c.eventId === e.id)
+                    const isExpanded = expandedComments.has(e.id)
                     return (
-                      <SwipeCard
-                        key={e.id}
-                        onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
-                        onSwipeNo={() => handleSwipeBet(e.id, 'no')}
-                        disabled={exhausted}
-                        onClick={() => navigate(`/event/${e.id}`)}
-                        demoActive={cIdx === 0 && eIdx === 0}
-                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none
-                          ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                            flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
-                            anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
-                            'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
-                      >
-                        {userBet && (
-                          <div className="mb-2">
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                              You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
-                            </span>
+                      <div key={e.id}>
+                        <SwipeCard
+                          onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
+                          onSwipeNo={() => handleSwipeBet(e.id, 'no')}
+                          disabled={exhausted}
+                          onClick={() => navigate(`/event/${e.id}`)}
+                          demoActive={cIdx === 0 && eIdx === 0}
+                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none
+                            ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                              flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                              anonVote?.lastSide === 'yes' ? 'border-emerald-200 dark:border-emerald-800' :
+                              anonVote?.lastSide === 'no'  ? 'border-rose-200 dark:border-rose-800' :
+                              'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
+                        >
+                          {userBet && (
+                            <div className="mb-2">
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
+                            {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
+                              <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                            )}
+                          </div>
+                          <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                            <div
+                              className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs mb-2">
+                            {dominant === 'yes'
+                              ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                              : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
+                            }
+                            <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins</span>
+                            {dominant === 'no'
+                              ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                              : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
+                            }
+                          </div>
+                          <button
+                            onClick={ev => { ev.stopPropagation(); toggleComments(e.id) }}
+                            className="w-full flex items-center gap-1.5 pt-2 border-t border-gray-100 dark:border-slate-700/60 text-xs text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>{eventComments.length} {eventComments.length === 1 ? 'comment' : 'comments'}</span>
+                            <ChevronDown className={`w-3.5 h-3.5 ml-auto transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        </SwipeCard>
+                        {isExpanded && (
+                          <div className="mt-1 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 space-y-2.5">
+                            {eventComments.length > 0 ? eventComments.map(cmt => (
+                              <p key={cmt.id} className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
+                                <span className="text-gray-300 dark:text-slate-600 mr-1.5">—</span>{cmt.content}
+                              </p>
+                            )) : (
+                              <p className="text-xs text-gray-400 dark:text-slate-500 text-center py-1">No comments yet — add one from the prediction page.</p>
+                            )}
                           </div>
                         )}
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
-                          {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                            <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
-                          )}
-                        </div>
-                        <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                          <div
-                            className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          {dominant === 'yes'
-                            ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                            : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
-                          }
-                          <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins</span>
-                          {dominant === 'no'
-                            ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                            : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
-                          }
-                        </div>
-                      </SwipeCard>
+                      </div>
                     )
                   })}
                 </div>
