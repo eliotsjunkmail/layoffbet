@@ -482,34 +482,72 @@ export const useStore = create<StoreState>()(
       placeBet: (eventId, side, amount) => {
         const { currentUser, events, bets } = get()
         if (!currentUser) return false
-        if (currentUser.coins < amount) return false
         const event = events.find(e => e.id === eventId)
         if (!event) return false
         if (get().getEffectiveStatus(event) !== 'active') return false
-        const alreadyBet = bets.find(b => b.eventId === eventId && b.userId === currentUser.id)
-        if (alreadyBet) return false
 
-        const bet: Bet = {
-          id: `bet-${uid()}`,
-          eventId,
-          userId: currentUser.id,
-          side,
-          amount,
-          createdAt: new Date().toISOString(),
+        const existing = bets.find(b => b.eventId === eventId && b.userId === currentUser.id)
+
+        // ── No prior bet: simple new position ──────────────────────────────
+        if (!existing) {
+          if (amount > 100 || currentUser.coins < amount) return false
+          const bet: Bet = { id: `bet-${uid()}`, eventId, userId: currentUser.id, side, amount, createdAt: new Date().toISOString() }
+          const newCoins = currentUser.coins - amount
+          set(s => ({
+            bets: [...s.bets, bet],
+            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
+            currentUser: { ...currentUser, coins: newCoins },
+            users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u),
+          }))
+          return true
         }
 
-        const updatedUser = { ...currentUser, coins: currentUser.coins - amount }
-        const updatedEvent = {
-          ...event,
-          yesPool: side === 'yes' ? event.yesPool + amount : event.yesPool,
-          noPool: side === 'no' ? event.noPool + amount : event.noPool,
+        // ── Same side: stack up to 100 total ──────────────────────────────
+        if (existing.side === side) {
+          const newAmount = existing.amount + amount
+          if (newAmount > 100 || currentUser.coins < amount) return false
+          const newCoins = currentUser.coins - amount
+          set(s => ({
+            bets: s.bets.map(b => b.id === existing.id ? { ...b, amount: newAmount } : b),
+            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
+            currentUser: { ...currentUser, coins: newCoins },
+            users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u),
+          }))
+          return true
+        }
+
+        // ── Opposite side: net out the positions ──────────────────────────
+        // cancelled = portion of existing wiped out; remainder = new position on `side`
+        const cancelled = Math.min(amount, existing.amount)
+        const remainder = amount - cancelled   // net new position on opposite side
+        const netCost = remainder              // refund cancelled coins, spend remainder
+        if (currentUser.coins < netCost) return false
+
+        const newCoins = currentUser.coins - netCost
+
+        // Rebuild bets array
+        const withoutExisting = bets.filter(b => b.id !== existing.id)
+        let newBets: Bet[]
+        if (existing.amount > cancelled) {
+          // Partial cancel — shrink existing bet
+          newBets = bets.map(b => b.id === existing.id ? { ...b, amount: b.amount - cancelled } : b)
+        } else if (remainder > 0) {
+          // Full cancel + flip — remove old, add new on opposite side
+          newBets = [...withoutExisting, { id: `bet-${uid()}`, eventId, userId: currentUser.id, side, amount: remainder, createdAt: new Date().toISOString() }]
+        } else {
+          // Exact cancel — just remove
+          newBets = withoutExisting
         }
 
         set(s => ({
-          bets: [...s.bets, bet],
-          events: s.events.map(e => e.id === eventId ? updatedEvent : e),
-          currentUser: updatedUser,
-          users: s.users.map(u => u.id === updatedUser.id ? updatedUser : u),
+          bets: newBets,
+          events: s.events.map(e => e.id !== eventId ? e : {
+            ...e,
+            yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? cancelled : 0) + (side === 'yes' ? remainder : 0)),
+            noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? cancelled : 0) + (side === 'no'  ? remainder : 0)),
+          }),
+          currentUser: { ...currentUser, coins: newCoins },
+          users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u),
         }))
         return true
       },

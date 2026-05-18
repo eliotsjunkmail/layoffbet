@@ -38,7 +38,7 @@ export const Bets = () => {
       setTimeout(() => setSwipeFlash(null), 600)
       showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
     } else {
-      showToast('Already bet or not enough coins')
+      showToast('Not enough coins or 100-coin limit reached')
     }
   }
 
