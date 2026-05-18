@@ -216,6 +216,33 @@ export const CompanyPage = () => {
               )
             })}
             {active.length <= 3 && <AdBanner />}
+
+            {/* Add prediction CTA */}
+            {currentUser ? (
+              <button
+                onClick={() => navigate('/create', { state: { companyId: company.id } })}
+                className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+              >
+                <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  What else is happening at {company.name}?
+                </span>
+                <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
+                  + Add a prediction
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+              >
+                <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  Know something? Sign in to add a prediction.
+                </span>
+                <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
+                  Sign in free →
+                </span>
+              </button>
+            )}
           </div>
         </section>
       )}
