@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { CheckCircle, Clock, Pin, ChevronRight } from 'lucide-react'
+import { CheckCircle, Clock, ChevronRight } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
@@ -22,8 +22,6 @@ export const Bets = () => {
   const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const placeBet = useStore(s => s.placeBet)
-  const pinnedEventIds = useStore(s => s.pinnedEventIds)
-  const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
@@ -45,32 +43,31 @@ export const Bets = () => {
 
   const myBets = bets.filter(b => b.userId === currentUser?.id)
 
-  // Union of bet events + pinned events
-  const allEventIds = Array.from(new Set([
-    ...myBets.map(b => b.eventId),
-    ...pinnedEventIds,
-  ]))
-
-  const allItems = allEventIds
-    .map(eventId => {
-      const event = events.find(e => e.id === eventId)
+  const allItems = myBets
+    .map(bet => {
+      const event = events.find(e => e.id === bet.eventId)
       if (!event) return null
       const status = getEffectiveStatus(event)
-      const bet = myBets.find(b => b.eventId === eventId)
-      const isPinned = pinnedEventIds.includes(eventId)
-      return { event, status, bet, isPinned }
+      return { event, status, bet }
     })
     .filter((x): x is NonNullable<typeof x> => x !== null)
 
-  const activeItems = allItems.filter(x => x.status === 'active')
-  const completedItems = allItems.filter(x => x.status !== 'active')
+  // Within each tab, YES bets first, then NO bets
+  const betSideOrder = (side: 'yes' | 'no') => side === 'yes' ? 0 : 1
+
+  const activeItems = allItems
+    .filter(x => x.status === 'active')
+    .sort((a, b) => betSideOrder(a.bet.side) - betSideOrder(b.bet.side))
+
+  const completedItems = allItems
+    .filter(x => x.status !== 'active')
     .sort((a, b) => {
-      const aTime = a.bet?.createdAt ?? a.event.createdAt
-      const bTime = b.bet?.createdAt ?? b.event.createdAt
-      return new Date(bTime).getTime() - new Date(aTime).getTime()
+      const sideDiff = betSideOrder(a.bet.side) - betSideOrder(b.bet.side)
+      if (sideDiff !== 0) return sideDiff
+      return new Date(b.bet.createdAt).getTime() - new Date(a.bet.createdAt).getTime()
     })
 
-  // Group by company, preserving insertion order
+  // Group by company, preserving bet-side order
   const groupByCompany = (items: typeof allItems) => {
     const map = new Map<string, { companyName: string; slug: string; items: typeof allItems }>()
     items.forEach(item => {
@@ -137,24 +134,19 @@ export const Bets = () => {
               </Link>
 
               <div className="space-y-2.5">
-                {items.map(({ event, status, bet, isPinned }) => {
+                {items.map(({ event, status, bet }) => {
                   const { dominant, pct } = barProps(event.yesPool, event.noPool)
-                  const won = status === 'resolved' && event.outcome === bet?.side
-                  const lost = status === 'resolved' && event.outcome !== null && bet && event.outcome !== bet.side
+                  const won = status === 'resolved' && event.outcome === bet.side
+                  const lost = status === 'resolved' && event.outcome !== null && event.outcome !== bet.side
                   const flash = swipeFlash?.id === event.id
                   const isFirstCard = cardIndex === 0
                   cardIndex++
                   globalItemIndex++
                   const showAd = globalItemIndex % 5 === 0
 
-                  // Coin + side tag shown top-left of every card
-                  const BetTag = bet ? (
+                  const BetTag = (
                     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
                       You bet {bet.amount} coins {bet.side === 'yes' ? 'YES' : 'NO'}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-500 dark:text-violet-400">
-                      <Pin className="w-3 h-3 fill-violet-500 dark:fill-violet-400" /> Watching
                     </span>
                   )
 
@@ -171,7 +163,6 @@ export const Bets = () => {
                               {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
                               {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
                               {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
-                              {!bet && <span className="text-gray-400 dark:text-slate-500" />}
                             </span>
                           </div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
@@ -209,16 +200,8 @@ export const Bets = () => {
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
                             'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="mb-2">
                           {BetTag}
-                          {!bet && (
-                            <button
-                              onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
-                              className="text-gray-300 dark:text-slate-600 hover:text-violet-400 p-0.5 flex-shrink-0 -mt-0.5"
-                            >
-                              <Pin className="w-3.5 h-3.5" />
-                            </button>
-                          )}
                         </div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
                         <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">

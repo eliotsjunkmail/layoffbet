@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, Pin, ChevronRight } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -35,8 +35,6 @@ export const Home = () => {
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const bets = useStore(s => s.bets)
-  const pinnedEventIds = useStore(s => s.pinnedEventIds)
-  const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
@@ -222,12 +220,17 @@ export const Home = () => {
 
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
+          const betOrder = (eventId: string) => {
+            if (!currentUser) return 2
+            const b = bets.find(bet => bet.eventId === eventId && bet.userId === currentUser.id)
+            if (!b) return 2
+            return b.side === 'yes' ? 0 : 1
+          }
           const activeEvents = events
             .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             .sort((a, b) => {
-              const aPinned = pinnedEventIds.includes(a.id)
-              const bPinned = pinnedEventIds.includes(b.id)
-              if (aPinned !== bPinned) return aPinned ? -1 : 1
+              const diff = betOrder(a.id) - betOrder(b.id)
+              if (diff !== 0) return diff
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
@@ -253,7 +256,6 @@ export const Home = () => {
                 <div className="space-y-2.5">
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
-                    const isPinned = pinnedEventIds.includes(e.id)
                     const flash = swipeFlash?.id === e.id
                     const anonVote = anonVotedEvents[e.id]
                     const anonCount = anonVote?.count ?? 0
@@ -286,12 +288,6 @@ export const Home = () => {
                           {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
                             <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                           )}
-                          <button
-                            onClick={ev => { ev.stopPropagation(); togglePinnedEvent(e.id) }}
-                            className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
-                          >
-                            <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
-                          </button>
                         </div>
                         <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                           <div

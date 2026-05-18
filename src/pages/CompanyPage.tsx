@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Pin } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -31,8 +31,7 @@ export const CompanyPage = () => {
   const currentUser = useStore(s => s.currentUser)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
-  const pinnedEventIds = useStore(s => s.pinnedEventIds)
-  const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
+  const bets = useStore(s => s.bets)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const markCompanyVisited = useStore(s => s.markCompanyVisited)
   const placeBet = useStore(s => s.placeBet)
@@ -83,12 +82,17 @@ export const CompanyPage = () => {
 
   const isFavorite = favoriteCompanyIds.includes(company.id)
   const companyEvents = events.filter(e => e.companyId === company.id)
+  const betOrder = (eventId: string) => {
+    if (!currentUser) return 2
+    const b = bets.find(bet => bet.eventId === eventId && bet.userId === currentUser.id)
+    if (!b) return 2
+    return b.side === 'yes' ? 0 : 1
+  }
   const active = companyEvents
     .filter(e => getEffectiveStatus(e) === 'active')
     .sort((a, b) => {
-      const aPinned = pinnedEventIds.includes(a.id)
-      const bPinned = pinnedEventIds.includes(b.id)
-      if (aPinned !== bPinned) return aPinned ? -1 : 1
+      const diff = betOrder(a.id) - betOrder(b.id)
+      if (diff !== 0) return diff
       return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
     })
   const past = companyEvents.filter(e => ['expired', 'resolved', 'archived'].includes(getEffectiveStatus(e)))
@@ -164,7 +168,6 @@ export const CompanyPage = () => {
           <div className="space-y-3">
             {active.map((event, idx) => {
               const { dominant, pct } = barProps(event.yesPool, event.noPool)
-              const isPinned = pinnedEventIds.includes(event.id)
               const flash = swipeFlash?.id === event.id
               const anonVote = anonVotedEvents[event.id]
               const anonCount = anonVote?.count ?? 0
@@ -189,12 +192,6 @@ export const CompanyPage = () => {
                       {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
                         <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                       )}
-                      <button
-                        onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
-                        className={`flex-shrink-0 p-1 rounded transition-colors ${isPinned ? 'text-violet-500 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-400'}`}
-                      >
-                        <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-violet-500 dark:fill-violet-400' : ''}`} />
-                      </button>
                     </div>
                     <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                       <div
