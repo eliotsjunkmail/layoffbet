@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Clock } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { CheckCircle, Clock, Pin, ChevronRight } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
-import { getProbability, timeUntil } from '../utils/odds'
+import { timeUntil } from '../utils/odds'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -18,8 +18,11 @@ export const Bets = () => {
   const currentUser = useStore(s => s.currentUser)
   const bets = useStore(s => s.bets)
   const events = useStore(s => s.events)
+  const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const placeBet = useStore(s => s.placeBet)
+  const pinnedEventIds = useStore(s => s.pinnedEventIds)
+  const togglePinnedEvent = useStore(s => s.togglePinnedEvent)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
@@ -39,24 +42,50 @@ export const Bets = () => {
 
   const myBets = bets.filter(b => b.userId === currentUser?.id)
 
-  const betsWithEvents = myBets
-    .map(bet => {
-      const event = events.find(e => e.id === bet.eventId)
+  // Union of bet events + pinned events
+  const allEventIds = Array.from(new Set([
+    ...myBets.map(b => b.eventId),
+    ...pinnedEventIds,
+  ]))
+
+  const allItems = allEventIds
+    .map(eventId => {
+      const event = events.find(e => e.id === eventId)
       if (!event) return null
       const status = getEffectiveStatus(event)
-      return { bet, event, status }
+      const bet = myBets.find(b => b.eventId === eventId)
+      const isPinned = pinnedEventIds.includes(eventId)
+      return { event, status, bet, isPinned }
     })
     .filter((x): x is NonNullable<typeof x> => x !== null)
 
-  const activeBets = betsWithEvents
-    .filter(b => b.status === 'active')
-    .sort((a, b) => new Date(b.bet.createdAt).getTime() - new Date(a.bet.createdAt).getTime())
+  const activeItems = allItems.filter(x => x.status === 'active')
+  const completedItems = allItems.filter(x => x.status !== 'active')
+    .sort((a, b) => {
+      const aTime = a.bet?.createdAt ?? a.event.createdAt
+      const bTime = b.bet?.createdAt ?? b.event.createdAt
+      return new Date(bTime).getTime() - new Date(aTime).getTime()
+    })
 
-  const completedBets = betsWithEvents
-    .filter(b => b.status !== 'active')
-    .sort((a, b) => new Date(b.bet.createdAt).getTime() - new Date(a.bet.createdAt).getTime())
+  // Group by company, preserving insertion order
+  const groupByCompany = (items: typeof allItems) => {
+    const map = new Map<string, { companyName: string; slug: string; items: typeof allItems }>()
+    items.forEach(item => {
+      const cid = item.event.companyId
+      if (!map.has(cid)) {
+        const company = companies.find(c => c.id === cid)
+        map.set(cid, { companyName: item.event.companyName, slug: company?.slug ?? cid, items: [] })
+      }
+      map.get(cid)!.items.push(item)
+    })
+    return Array.from(map.values())
+  }
 
-  const shown = tab === 'active' ? activeBets : completedBets
+  const shown = tab === 'active' ? groupByCompany(activeItems) : groupByCompany(completedItems)
+  const totalShown = tab === 'active' ? activeItems.length : completedItems.length
+
+  // Global card index for demo (first card across all companies)
+  let cardIndex = 0
 
   return (
     <Layout>
@@ -64,8 +93,8 @@ export const Bets = () => {
 
       <div className="flex bg-gray-100 dark:bg-slate-800/60 rounded-xl p-1 mb-5 gap-1">
         {([
-          { id: 'active' as const, label: 'Active', count: activeBets.length },
-          { id: 'completed' as const, label: 'Completed', count: completedBets.length },
+          { id: 'active' as const, label: 'Active', count: activeItems.length },
+          { id: 'completed' as const, label: 'Completed', count: completedItems.length },
         ]).map(t => (
           <button
             key={t.id}
@@ -80,108 +109,128 @@ export const Bets = () => {
         ))}
       </div>
 
-      {shown.length === 0 ? (
+      {totalShown === 0 ? (
         <div className="text-center py-16">
           <div className="text-4xl mb-3">{tab === 'active' ? '🎲' : '📋'}</div>
           <p className="text-gray-500 dark:text-slate-400 text-sm mb-3">
-            {tab === 'active' ? 'No active bets yet.' : 'No completed bets yet.'}
+            {tab === 'active' ? 'No active bets or pinned predictions.' : 'No completed bets yet.'}
           </p>
           {tab === 'active' && (
             <button onClick={() => navigate('/')} className="text-violet-600 dark:text-violet-400 text-sm hover:underline">Browse predictions →</button>
           )}
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {shown.map(({ bet, event, status }, idx) => {
-            const { dominant, pct } = barProps(event.yesPool, event.noPool)
-            const won = status === 'resolved' && event.outcome === bet.side
-            const lost = status === 'resolved' && event.outcome !== null && event.outcome !== bet.side
-            const flash = swipeFlash?.id === event.id
-
-            if (tab === 'completed') {
-              return (
-                <div
-                  key={bet.id}
-                  onClick={() => navigate(`/event/${event.id}`)}
-                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
-                    <span className="text-xs font-medium">
-                      {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
-                      {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
-                      {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
-                    </span>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 mb-2">{event.title}</p>
-                  <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                    <div
-                      className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    {dominant === 'yes'
-                      ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                      : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                      {bet.side === 'yes' ? '✓ YES' : '✕ NO'} · {bet.amount}
-                    </span>
-                    {dominant === 'no'
-                      ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                      : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                  </div>
-                  {status === 'resolved' && event.outcome && (
-                    <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
-                      Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
-                    </div>
-                  )}
-                </div>
-              )
-            }
-
-            return (
-              <SwipeCard
-                key={bet.id}
-                onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
-                onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                demoActive={idx === 0}
-                onClick={() => navigate(`/event/${event.id}`)}
-                cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
-                  ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                    flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                    'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
+        <div className="space-y-6">
+          {shown.map(({ companyName, slug, items }) => (
+            <section key={slug}>
+              {/* Company header */}
+              <Link
+                to={`/${slug}`}
+                className="flex items-center gap-1 mb-2.5 group w-fit"
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
-                  <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5 text-xs">
-                    <Clock className="w-3 h-3" /> {timeUntil(event.expiresAt)}
-                  </span>
-                </div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{event.title}</p>
-                  <span className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                    {bet.side === 'yes' ? '✓ YES' : '✕ NO'}
-                  </span>
-                </div>
-                <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                  <div
-                    className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs">
-                  {dominant === 'yes'
-                    ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                    : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                  <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
-                  {dominant === 'no'
-                    ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                    : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                </div>
-              </SwipeCard>
-            )
-          })}
+                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{companyName}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors" />
+              </Link>
+
+              <div className="space-y-2.5">
+                {items.map(({ event, status, bet, isPinned }) => {
+                  const { dominant, pct } = barProps(event.yesPool, event.noPool)
+                  const won = status === 'resolved' && event.outcome === bet?.side
+                  const lost = status === 'resolved' && event.outcome !== null && bet && event.outcome !== bet.side
+                  const flash = swipeFlash?.id === event.id
+                  const isFirstCard = cardIndex === 0
+                  cardIndex++
+
+                  if (tab === 'completed') {
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() => navigate(`/event/${event.id}`)}
+                        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-1.5">
+                            {isPinned && <Pin className="w-3 h-3 text-violet-400 fill-violet-400" />}
+                            <span className="text-xs font-medium">
+                              {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
+                              {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
+                              {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
+                              {!bet && <span className="text-gray-400 dark:text-slate-500">Pinned</span>}
+                            </span>
+                          </div>
+                          {bet && (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                              {bet.side === 'yes' ? '✓ YES' : '✕ NO'} · {bet.amount}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 mb-2">{event.title}</p>
+                        <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                          <div
+                            className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                          <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
+                          {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                        </div>
+                        {status === 'resolved' && event.outcome && bet && (
+                          <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
+                            Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <SwipeCard
+                      key={event.id}
+                      onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                      onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                      demoActive={isFirstCard}
+                      onClick={() => navigate(`/event/${event.id}`)}
+                      cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
+                        ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                          flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                          'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{event.title}</p>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {bet ? (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                              {bet.side === 'yes' ? '✓ YES' : '✕ NO'}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
+                              className="text-violet-500 dark:text-violet-400 p-0.5"
+                            >
+                              <Pin className="w-3.5 h-3.5 fill-violet-500 dark:fill-violet-400" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                        <div
+                          className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                        <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
+                        {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                      </div>
+                    </SwipeCard>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 
