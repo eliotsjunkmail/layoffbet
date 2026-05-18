@@ -188,7 +188,7 @@ export const Bets = () => {
                                     <span className="text-xs text-gray-400 dark:text-slate-500">{bet.amount} coins</span>
                                   )}
                                 </div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 mb-2">{event.title}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
                                 <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                                   <div
                                     className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
@@ -222,7 +222,7 @@ export const Bets = () => {
                                   'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                             >
                               <div className="flex items-start justify-between gap-2 mb-2">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{event.title}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{event.title}</p>
                                 {!bet && (
                                   <button
                                     onClick={ev => { ev.stopPropagation(); togglePinnedEvent(event.id) }}
