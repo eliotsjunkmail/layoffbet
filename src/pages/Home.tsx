@@ -284,7 +284,7 @@ export const Home = () => {
                             'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
                       >
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{e.title}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
                           {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
                             <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                           )}
