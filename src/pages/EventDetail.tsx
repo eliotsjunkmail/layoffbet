@@ -15,6 +15,7 @@ export const EventDetail = () => {
   const comments = useStore(s => s.comments)
   const currentUser = useStore(s => s.currentUser)
   const placeBet = useStore(s => s.placeBet)
+  const removeBet = useStore(s => s.removeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const addComment = useStore(s => s.addComment)
@@ -151,9 +152,17 @@ export const EventDetail = () => {
       {status === 'active' && (
         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
           {userBet ? (
-            <div className={`flex items-center gap-2 justify-center rounded-xl py-3 ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
-              <CheckCircle className="w-4 h-4" />
-              <span className="font-semibold text-sm">You bet {userBet.side.toUpperCase()} with {userBet.amount} Coins</span>
+            <div>
+              <div className={`flex items-center gap-2 justify-center rounded-xl py-3 ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-semibold text-sm">You bet {userBet.side.toUpperCase()} with {userBet.amount} Coins</span>
+              </div>
+              <button
+                onClick={() => { removeBet(id!); showToast(`Bet removed · ${userBet.amount} coins refunded`) }}
+                className="w-full mt-2 text-xs text-gray-400 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors text-center py-1"
+              >
+                Remove bet
+              </button>
             </div>
           ) : (
             <>

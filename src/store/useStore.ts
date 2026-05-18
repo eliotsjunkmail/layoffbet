@@ -351,6 +351,7 @@ interface StoreState {
 
   placeAnonymousVote: (eventId: string, side: 'yes' | 'no', amount?: number) => boolean
   placeBet: (eventId: string, side: 'yes' | 'no', amount: number) => boolean
+  removeBet: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount'>) => void
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
@@ -503,6 +504,26 @@ export const useStore = create<StoreState>()(
           users: s.users.map(u => u.id === updatedUser.id ? updatedUser : u),
         }))
         return true
+      },
+
+      removeBet: (eventId) => {
+        const { currentUser, bets, events, getEffectiveStatus } = get()
+        if (!currentUser) return
+        const bet = bets.find(b => b.eventId === eventId && b.userId === currentUser.id)
+        if (!bet) return
+        const event = events.find(e => e.id === eventId)
+        if (!event || getEffectiveStatus(event) !== 'active') return
+        const updatedUser = { ...currentUser, coins: currentUser.coins + bet.amount }
+        set(s => ({
+          bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === currentUser.id)),
+          events: s.events.map(e => e.id === eventId ? {
+            ...e,
+            yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
+            noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
+          } : e),
+          currentUser: updatedUser,
+          users: s.users.map(u => u.id === updatedUser.id ? updatedUser : u),
+        }))
       },
 
       getUserBet: (eventId) => {

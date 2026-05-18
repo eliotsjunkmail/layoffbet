@@ -1,17 +1,41 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { CheckCircle, Clock, Building2, TrendingUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { CheckCircle, Clock } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { getProbability, timeUntil, formatDate } from '../utils/odds'
+import { SwipeCard } from '../components/SwipeCard'
+import { getProbability, timeUntil } from '../utils/odds'
+
+const barProps = (yesPool: number, noPool: number) => {
+  const total = yesPool + noPool
+  if (total === 0) return { dominant: 'yes' as const, pct: 50 }
+  const yesPct = Math.round((yesPool / total) * 100)
+  if (yesPct >= 50) return { dominant: 'yes' as const, pct: yesPct }
+  return { dominant: 'no' as const, pct: 100 - yesPct }
+}
 
 export const Bets = () => {
   const currentUser = useStore(s => s.currentUser)
   const bets = useStore(s => s.bets)
   const events = useStore(s => s.events)
-  const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const placeBet = useStore(s => s.placeBet)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
+  const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
+  const [toast, setToast] = useState('')
+  const navigate = useNavigate()
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
+
+  const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    if (placeBet(eventId, side, 10)) {
+      setSwipeFlash({ id: eventId, side })
+      setTimeout(() => setSwipeFlash(null), 600)
+      showToast(side === 'yes' ? '✓ YES — 10 coins' : '✕ NO — 10 coins')
+    } else {
+      showToast('Already bet or not enough coins')
+    }
+  }
 
   const myBets = bets.filter(b => b.userId === currentUser?.id)
 
@@ -63,53 +87,107 @@ export const Bets = () => {
             {tab === 'active' ? 'No active bets yet.' : 'No completed bets yet.'}
           </p>
           {tab === 'active' && (
-            <Link to="/" className="text-violet-600 dark:text-violet-400 text-sm hover:underline">Browse predictions →</Link>
+            <button onClick={() => navigate('/')} className="text-violet-600 dark:text-violet-400 text-sm hover:underline">Browse predictions →</button>
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {shown.map(({ bet, event, status }) => {
-            const prob = getProbability(event.yesPool, event.noPool)
+        <div className="space-y-2.5">
+          {shown.map(({ bet, event, status }, idx) => {
+            const { dominant, pct } = barProps(event.yesPool, event.noPool)
             const won = status === 'resolved' && event.outcome === bet.side
             const lost = status === 'resolved' && event.outcome !== null && event.outcome !== bet.side
-            const company = companies.find(c => c.id === event.companyId)
+            const flash = swipeFlash?.id === event.id
+
+            if (tab === 'completed') {
+              return (
+                <div
+                  key={bet.id}
+                  onClick={() => navigate(`/event/${event.id}`)}
+                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
+                    <span className="text-xs font-medium">
+                      {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
+                      {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
+                      {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 mb-2">{event.title}</p>
+                  <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                    <div
+                      className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    {dominant === 'yes'
+                      ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                      : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                      {bet.side === 'yes' ? '✓ YES' : '✕ NO'} · {bet.amount}
+                    </span>
+                    {dominant === 'no'
+                      ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                      : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                  </div>
+                  {status === 'resolved' && event.outcome && (
+                    <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
+                      Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
+                    </div>
+                  )}
+                </div>
+              )
+            }
 
             return (
-              <Link key={bet.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+              <SwipeCard
+                key={bet.id}
+                onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                demoActive={idx === 0}
+                onClick={() => navigate(`/event/${event.id}`)}
+                cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
+                  ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                    flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                    'border-gray-200 dark:border-slate-600 hover:border-violet-400 dark:hover:border-violet-600'}`}
+              >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
-                    <Building2 className="w-3 h-3" /> {event.companyName}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs">
-                    {won && <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
-                    {lost && <span className="text-rose-500 dark:text-rose-400 font-semibold">Lost</span>}
-                    {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
-                    {status === 'active' && <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" /> {timeUntil(event.expiresAt)}</span>}
+                  <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
+                  <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5 text-xs">
+                    <Clock className="w-3 h-3" /> {timeUntil(event.expiresAt)}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug mb-3 line-clamp-2">{event.title}</p>
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'}`}>
-                    {bet.side === 'yes' ? '✓ YES' : '✕ NO'} · {bet.amount} coins
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-1 flex-1">{event.title}</p>
+                  <span className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                    {bet.side === 'yes' ? '✓ YES' : '✕ NO'}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-600 mt-0.5">
-                      <span>YES {prob.yes}%</span>
-                      <span>NO {prob.no}%</span>
-                    </div>
-                  </div>
                 </div>
-                {status === 'resolved' && event.outcome && (
-                  <div className={`mt-2.5 text-xs text-center font-medium py-1.5 rounded-lg ${won ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'}`}>
-                    Resolved {event.outcome.toUpperCase()} {won ? '— you won! 🎉' : '— better luck next time'}
-                  </div>
-                )}
-              </Link>
+                <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                  <div
+                    className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs">
+                  {dominant === 'yes'
+                    ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                    : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                  <span className="text-gray-400 dark:text-slate-500">{event.yesPool + event.noPool} coins</span>
+                  {dominant === 'no'
+                    ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                    : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                </div>
+              </SwipeCard>
             )
           })}
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+          {toast}
         </div>
       )}
     </Layout>
