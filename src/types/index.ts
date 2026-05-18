@@ -51,6 +51,7 @@ export interface Comment {
   eventId: string
   content: string
   createdAt: string
+  upvotes?: number
 }
 
 export type Theme = 'light' | 'dark'

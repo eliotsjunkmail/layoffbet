@@ -367,6 +367,8 @@ interface StoreState {
 
   addComment: (eventId: string, content: string) => void
   deleteComment: (id: string) => void
+  upvoteComment: (commentId: string) => void
+  upvotedCommentIds: string[]
 
   getEffectiveStatus: (event: Event) => Event['status']
   banUser: (userId: string) => void
@@ -388,6 +390,7 @@ export const useStore = create<StoreState>()(
       feedback: [],
       anonVotedEvents: {},
       companyLastVisit: {},
+      upvotedCommentIds: [],
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -685,6 +688,15 @@ export const useStore = create<StoreState>()(
         set(s => ({ comments: s.comments.filter(c => c.id !== id) }))
       },
 
+      upvoteComment: (commentId) => {
+        const { upvotedCommentIds } = get()
+        if (upvotedCommentIds.includes(commentId)) return
+        set(s => ({
+          comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: (c.upvotes ?? 0) + 1 } : c),
+          upvotedCommentIds: [...s.upvotedCommentIds, commentId],
+        }))
+      },
+
       getEffectiveStatus: (event) => {
         if (event.status === 'resolved' || event.status === 'archived') return event.status
         if (isExpired(event.expiresAt)) return 'expired'
@@ -712,6 +724,7 @@ export const useStore = create<StoreState>()(
         feedback: s.feedback,
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
+        upvotedCommentIds: s.upvotedCommentIds,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return

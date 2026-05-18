@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight, Send } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight, Send, ThumbsUp } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -37,6 +37,8 @@ export const Home = () => {
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
   const addComment = useStore(s => s.addComment)
+  const upvoteComment = useStore(s => s.upvoteComment)
+  const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
@@ -49,12 +51,14 @@ export const Home = () => {
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
+  const [focusedInput, setFocusedInput] = useState<string | null>(null)
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
     if (!text) return
     addComment(eventId, text)
     setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
+    setFocusedInput(null)
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
@@ -298,26 +302,41 @@ export const Home = () => {
                             }
                           </div>
                         </SwipeCard>
-                        <div className="mt-1.5 ml-2 space-y-1.5">
-                          {eventComments.map(cmt => (
-                            <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2">
-                              <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">{cmt.content}</p>
-                            </div>
-                          ))}
-                          <div className="flex gap-1.5 pt-0.5" onClick={ev => ev.stopPropagation()}>
+                        <div className="mt-1.5 ml-2 space-y-1.5" onClick={ev => ev.stopPropagation()}>
+                          {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
+                            const hasUpvoted = upvotedCommentIds.includes(cmt.id)
+                            return (
+                              <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2 flex items-start gap-2">
+                                <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed flex-1">{cmt.content}</p>
+                                <button
+                                  onClick={() => upvoteComment(cmt.id)}
+                                  className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-violet-600 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-500'}`}
+                                >
+                                  <ThumbsUp className="w-3 h-3" />
+                                  {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
+                                </button>
+                              </div>
+                            )
+                          })}
+                          <div className="flex gap-1.5 pt-0.5">
                             <input
                               value={commentInputs[e.id] ?? ''}
                               onChange={ev => setCommentInputs(prev => ({ ...prev, [e.id]: ev.target.value }))}
                               onKeyDown={ev => { if (ev.key === 'Enter') handleAddComment(e.id) }}
+                              onFocus={() => setFocusedInput(e.id)}
+                              onBlur={() => setTimeout(() => setFocusedInput(f => f === e.id ? null : f), 150)}
                               placeholder="Add a comment..."
                               className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500"
                             />
-                            <button
-                              onClick={() => handleAddComment(e.id)}
-                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                            </button>
+                            {focusedInput === e.id && (
+                              <button
+                                onMouseDown={ev => ev.preventDefault()}
+                                onClick={() => handleAddComment(e.id)}
+                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
