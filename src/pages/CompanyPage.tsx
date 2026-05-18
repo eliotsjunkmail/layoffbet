@@ -179,7 +179,7 @@ export const CompanyPage = () => {
                     onSwipeNo={() => handleSwipeBet(event.id, 'no')}
                     disabled={exhausted}
                     onClick={() => navigate(`/event/${event.id}`)}
-                    demoActive={idx === 0}
+                    demoActive={false}
                     cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md select-none transition-colors
                       ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                         flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :

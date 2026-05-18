@@ -98,7 +98,7 @@ export const FeedbackAdmin = () => {
               key={item.id}
               onSwipeYes={() => markFeedback(item.id, 'completed')}
               onSwipeNo={() => markFeedback(item.id, 'ignored')}
-              demoActive={idx === 0}
+              demoActive={false}
               rightHint={{ label: '✓ Done', sublabel: 'Mark complete' }}
               leftHint={{ label: '✕ Ignore', sublabel: 'Dismiss' }}
               cardClassName="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 select-none cursor-grab"

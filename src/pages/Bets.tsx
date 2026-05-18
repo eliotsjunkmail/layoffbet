@@ -193,7 +193,7 @@ export const Bets = () => {
                       <SwipeCard
                         onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                         onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                        demoActive={isFirstCard}
+                        demoActive={false}
                         onClick={() => navigate(`/event/${event.id}`)}
                         cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm hover:shadow-md select-none transition-colors
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
