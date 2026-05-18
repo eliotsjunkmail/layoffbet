@@ -60,4 +60,5 @@ export interface FeedbackItem {
   text: string
   type: 'bug' | 'feature' | 'other'
   createdAt: string
+  status: 'active' | 'completed' | 'ignored'
 }

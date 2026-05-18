@@ -347,6 +347,8 @@ interface StoreState {
   toggleFavoriteCompany: (companyId: string) => void
   togglePinnedEvent: (eventId: string) => void
   addFeedback: (text: string, type: string) => void
+  markFeedback: (id: string, status: 'completed' | 'ignored') => void
+  clearAllFeedback: () => void
   deleteFeedback: (id: string) => void
 
   placeAnonymousVote: (eventId: string, side: 'yes' | 'no', amount?: number) => boolean
@@ -425,8 +427,14 @@ export const useStore = create<StoreState>()(
       },
 
       addFeedback: (text, type) => set(s => ({
-        feedback: [...s.feedback, { id: `fb-${uid()}`, text: text.trim(), type: type as FeedbackItem['type'], createdAt: new Date().toISOString() }]
+        feedback: [...s.feedback, { id: `fb-${uid()}`, text: text.trim(), type: type as FeedbackItem['type'], createdAt: new Date().toISOString(), status: 'active' }]
       })),
+
+      markFeedback: (id, status) => set(s => ({
+        feedback: s.feedback.map(f => f.id === id ? { ...f, status } : f),
+      })),
+
+      clearAllFeedback: () => set({ feedback: [] }),
 
       deleteFeedback: (id) => set(s => ({ feedback: s.feedback.filter(f => f.id !== id) })),
 

@@ -209,6 +209,7 @@ import { CompanyPage } from './pages/CompanyPage'
 import { Search } from './pages/Search'
 import { Profile } from './pages/Profile'
 import { Admin } from './pages/Admin'
+import { FeedbackAdmin } from './pages/FeedbackAdmin'
 import { Settings } from './pages/Settings'
 import { ContentGuidelines } from './pages/ContentGuidelines'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
@@ -253,6 +254,7 @@ export const App = () => (
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />
       <Route path="/admin" element={<AdminOnly><Admin /></AdminOnly>} />
+      <Route path="/feedback-admin" element={<AdminOnly><FeedbackAdmin /></AdminOnly>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

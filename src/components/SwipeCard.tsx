@@ -1,5 +1,10 @@
 import { useRef, useState, useEffect } from 'react'
 
+interface HintConfig {
+  label: string
+  sublabel?: string
+}
+
 interface SwipeCardProps {
   onSwipeYes: () => void
   onSwipeNo: () => void
@@ -8,11 +13,13 @@ interface SwipeCardProps {
   cardClassName?: string
   onClick?: () => void
   demoActive?: boolean
+  rightHint?: HintConfig
+  leftHint?: HintConfig
 }
 
 const THRESHOLD = 80
 
-export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClassName = '', onClick, demoActive }: SwipeCardProps) => {
+export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClassName = '', onClick, demoActive, rightHint, leftHint }: SwipeCardProps) => {
   const [dx, setDx] = useState(0)
   const [active, setActive] = useState(false)
   const startX = useRef(0)
@@ -111,8 +118,10 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
           style={{ opacity: isRight ? progress : 0 }}
         >
           <div>
-            <div className="text-emerald-600 dark:text-emerald-400 font-black text-sm leading-none">✓ YES</div>
-            <div className="text-emerald-500/80 dark:text-emerald-500/70 text-xs mt-0.5">10 coins</div>
+            <div className="text-emerald-600 dark:text-emerald-400 font-black text-sm leading-none">{rightHint?.label ?? '✓ YES'}</div>
+            {(rightHint?.sublabel ?? '10 coins') && (
+              <div className="text-emerald-500/80 dark:text-emerald-500/70 text-xs mt-0.5">{rightHint?.sublabel ?? '10 coins'}</div>
+            )}
           </div>
         </div>
         <div
@@ -120,8 +129,10 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
           style={{ opacity: !isRight && dx !== 0 ? progress : 0 }}
         >
           <div className="text-right">
-            <div className="text-rose-600 dark:text-rose-400 font-black text-sm leading-none">✕ NO</div>
-            <div className="text-rose-500/80 dark:text-rose-500/70 text-xs mt-0.5">10 coins</div>
+            <div className="text-rose-600 dark:text-rose-400 font-black text-sm leading-none">{leftHint?.label ?? '✕ NO'}</div>
+            {(leftHint?.sublabel ?? '10 coins') && (
+              <div className="text-rose-500/80 dark:text-rose-500/70 text-xs mt-0.5">{leftHint?.sublabel ?? '10 coins'}</div>
+            )}
           </div>
         </div>
       </div>
