@@ -150,7 +150,7 @@ export const Bets = () => {
                   // Coin + side tag shown top-left of every card
                   const BetTag = bet ? (
                     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                      {bet.amount} Coins · {bet.side === 'yes' ? '✓ YES' : '✕ NO'}
+                      You bet {bet.amount} coins {bet.side === 'yes' ? 'YES' : 'NO'}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-violet-500 dark:text-violet-400">

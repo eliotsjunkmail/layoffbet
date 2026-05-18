@@ -277,7 +277,7 @@ export const Home = () => {
                         {userBet && (
                           <div className="mb-2">
                             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                              {userBet.amount} Coins · {userBet.side === 'yes' ? '✓ YES' : '✕ NO'}
+                              You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
                             </span>
                           </div>
                         )}
