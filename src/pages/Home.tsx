@@ -53,6 +53,7 @@ export const Home = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
+  const [showComments, setShowComments] = useState(true)
   const updateCoins = useStore(s => s.updateCoins)
 
   const handleAddComment = (eventId: string) => {
@@ -68,19 +69,16 @@ export const Home = () => {
   const userStats = useMemo(() => {
     if (!currentUser) return null
     const userBets = bets.filter(b => b.userId === currentUser.id)
-    const userEvents = userBets.map(b => events.find(e => e.id === b.eventId)).filter(Boolean) as typeof events
     const activeBetCount = userBets.filter(b => {
       const event = events.find(e => e.id === b.eventId)
       return event && getEffectiveStatus(event) === 'active'
     }).length
     const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-    const totalShares = userEvents.reduce((sum, e) => sum + (e.shareCount ?? 0), 0)
     return {
       coins: currentUser.coins,
       totalBets: userBets.length,
       activeBets: activeBetCount,
       totalBetAmount,
-      totalShares,
     }
   }, [currentUser, bets, events, getEffectiveStatus])
 
@@ -192,38 +190,31 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) */}
         {currentUser && userStats && (
-          <div className="pt-3 pb-3 -mx-4 px-4 mb-8">
+          <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.coins}</div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
-              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Bets</div>
+              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
               </button>
-              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
               </button>
-              {userStats.totalShares > 0 && (
-                <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Shares</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalShares}</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">shared</div>
-                </button>
-              )}
             </div>
           </div>
         )}
 
         {/* Hero */}
-        <div className={`${(currentUser || hasFavorites) ? 'pt-4 pb-4' : 'pt-10 pb-8'} text-center`}>
+        <div className={`${(currentUser || hasFavorites) ? 'pt-2 pb-2' : 'pt-6 pb-4'} text-center`}>
           {/* Title + subtitle: always on desktop, hidden on mobile once logged in or has favorites */}
-          <div className={`${(currentUser || hasFavorites) ? 'hidden sm:block' : 'block'} mb-6`}>
+          <div className={`${(currentUser || hasFavorites) ? 'hidden sm:block' : 'block'} mb-3`}>
             <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
               <span className="sm:hidden">What's really happening at work</span>
               <span className="hidden sm:block">Find out what's really<br />happening at your company</span>
@@ -234,8 +225,9 @@ export const Home = () => {
             </p>
           </div>
 
-          {/* Search with typeahead */}
-          <div ref={searchRef} className="relative max-w-md mx-auto mb-4">
+          {/* Search with typeahead - only show if no favorites */}
+          {!hasFavorites && (
+          <div ref={searchRef} className="relative max-w-md mx-auto mb-2">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="text"
@@ -263,6 +255,7 @@ export const Home = () => {
               </div>
             )}
           </div>
+          )}
 
           {!currentUser && (
             <p className="text-xs text-gray-400 dark:text-slate-500">
@@ -287,7 +280,7 @@ export const Home = () => {
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
-            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-5 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
+            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-2 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group min-w-0">
                   <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
@@ -299,11 +292,25 @@ export const Home = () => {
                     <div className="text-xs text-gray-400 dark:text-slate-500 leading-none mt-0.5">{c.industry}</div>
                   </div>
                 </Link>
-                {activeEvents.length > 0 && (
-                  <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
-                    {activeEvents.length} active
-                  </span>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {activeEvents.length > 0 && (
+                    <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800">
+                      {activeEvents.length} active
+                    </span>
+                  )}
+                  {activeEvents.length > 0 && (
+                    <button
+                      onClick={() => setShowComments(!showComments)}
+                      className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                        showComments
+                          ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
+                          : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
+                      }`}
+                    >
+                      <span>{showComments ? 'Hide' : 'Show'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
@@ -359,6 +366,7 @@ export const Home = () => {
                             }
                           </div>
                         </SwipeCard>
+                        {showComments && (
                         <div className="mt-1.5 ml-2 space-y-1.5" onClick={ev => ev.stopPropagation()}>
                           {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
                             const hasUpvoted = upvotedCommentIds.includes(cmt.id)
@@ -396,6 +404,7 @@ export const Home = () => {
                             )}
                           </div>
                         </div>
+                        )}
                       </div>
                     )
                   })}
@@ -411,7 +420,7 @@ export const Home = () => {
           )
         })}
 
-        {hasFavorites && <div className="mb-6" />}
+        {hasFavorites && <div className="mb-2" />}
 
         {/* Industry filter + Browse — hidden once user has favorites */}
         {!hasFavorites && (
@@ -432,7 +441,7 @@ export const Home = () => {
               ))}
             </div>
 
-            <section className="mb-6">
+            <section className="mb-4">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
@@ -451,7 +460,7 @@ export const Home = () => {
 
         {/* Login Banner for guests */}
         {!currentUser && !dismissedLoginBanner && (
-          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-8 flex items-start justify-between gap-4">
+          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-4 flex items-start justify-between gap-4">
             <div className="flex-1 text-center sm:text-left">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
               <p className="text-sm text-gray-500 dark:text-slate-400 mb-3 sm:mb-0">
@@ -474,7 +483,7 @@ export const Home = () => {
 
         {/* CTA for guests (hidden when banner shown) */}
         {!currentUser && dismissedLoginBanner && (
-          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-8 text-center">
+          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-4 text-center">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
             <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
               Create a free anonymous account and get <strong className="text-violet-600 dark:text-violet-400">100 Coins daily</strong> to wager on predictions.

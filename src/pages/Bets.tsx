@@ -22,6 +22,8 @@ export const Bets = () => {
   const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const placeBet = useStore(s => s.placeBet)
+  const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
+  const companyLastVisit = useStore(s => s.companyLastVisit)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
@@ -83,6 +85,32 @@ export const Bets = () => {
 
   const shown = tab === 'active' ? groupByCompany(activeItems) : groupByCompany(completedItems)
   const totalShown = tab === 'active' ? activeItems.length : completedItems.length
+
+  // Get suggested bets from same companies, favorites, or viewed companies
+  const userBetCompanyIds = new Set(myBets.map(b => events.find(e => e.id === b.eventId)?.companyId).filter(Boolean))
+  const suggestedCompanyIds = new Set([
+    ...userBetCompanyIds,
+    ...favoriteCompanyIds,
+    ...Object.keys(companyLastVisit),
+  ])
+
+  const suggestedEvents = events
+    .filter(e => {
+      const status = getEffectiveStatus(e)
+      const hasUserBet = myBets.some(b => b.eventId === e.id)
+      const inSuggestedCompany = suggestedCompanyIds.has(e.companyId)
+      return status === 'active' && !hasUserBet && inSuggestedCompany
+    })
+    .sort((a, b) => (b.yesPool + b.noPool) - (a.yesPool + a.noPool))
+    .slice(0, 10)
+
+  const suggestedByCompany = groupByCompany(
+    suggestedEvents.map(event => ({
+      event,
+      status: 'active' as const,
+      bet: { amount: 0, side: 'yes' as const, id: '', eventId: '', userId: '', createdAt: '' }
+    }))
+  )
 
   let cardIndex = 0
 
@@ -220,6 +248,63 @@ export const Bets = () => {
         </div>
       )}
       {totalShown > 0 && <AdBanner />}
+
+      {/* Suggested bets */}
+      {tab === 'active' && suggestedByCompany.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Suggested for you</h2>
+          <div className="space-y-6">
+            {suggestedByCompany.map(({ companyName, slug, items }) => (
+              <section key={slug}>
+                <Link
+                  to={`/${slug}`}
+                  className="flex items-center gap-1 mb-2.5 group w-fit"
+                >
+                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{companyName}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors" />
+                </Link>
+
+                <div className="space-y-2.5">
+                  {items.map(({ event }) => {
+                    const { dominant, pct } = barProps(event.yesPool, event.noPool)
+                    const flash = swipeFlash?.id === event.id
+
+                    return (
+                      <div key={event.id}>
+                        <SwipeCard
+                          onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
+                          onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                          demoActive={false}
+                          onClick={() => navigate(`/event/${event.id}`)}
+                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
+                            ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                              flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                              'border-violet-200 dark:border-violet-800'}`}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{event.title}</p>
+                          </div>
+                          <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                            <div
+                              className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                            <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
+                            {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
+                          </div>
+                        </SwipeCard>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
