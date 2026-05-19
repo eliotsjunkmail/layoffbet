@@ -190,7 +190,7 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) */}
         {currentUser && userStats && (
-          <div className="pt-3 pb-3 -mx-4 px-4 mb-3">
+          <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
               <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
@@ -264,15 +264,6 @@ export const Home = () => {
           )}
         </div>
 
-        {/* Comments toggle */}
-        {hasFavorites && (
-          <div className="mb-2 flex justify-end px-2">
-            <button onClick={() => setShowComments(!showComments)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors">
-              {showComments ? 'Hide' : 'Show'} Comments
-            </button>
-          </div>
-        )}
-
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
           const betOrder = (eventId: string) => {
@@ -301,11 +292,25 @@ export const Home = () => {
                     <div className="text-xs text-gray-400 dark:text-slate-500 leading-none mt-0.5">{c.industry}</div>
                   </div>
                 </Link>
-                {activeEvents.length > 0 && (
-                  <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
-                    {activeEvents.length} active
-                  </span>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {activeEvents.length > 0 && (
+                    <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800">
+                      {activeEvents.length} active
+                    </span>
+                  )}
+                  {activeEvents.length > 0 && (
+                    <button
+                      onClick={() => setShowComments(!showComments)}
+                      className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                        showComments
+                          ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
+                          : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
+                      }`}
+                    >
+                      <span>{showComments ? 'Hide' : 'Show'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
