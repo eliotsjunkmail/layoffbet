@@ -53,6 +53,7 @@ export const Home = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
+  const [showComments, setShowComments] = useState(true)
   const updateCoins = useStore(s => s.updateCoins)
 
   const handleAddComment = (eventId: string) => {
@@ -261,6 +262,15 @@ export const Home = () => {
           )}
         </div>
 
+        {/* Comments toggle */}
+        {hasFavorites && (
+          <div className="mb-4 flex justify-end px-2">
+            <button onClick={() => setShowComments(!showComments)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors">
+              {showComments ? 'Hide' : 'Show'} Comments
+            </button>
+          </div>
+        )}
+
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
           const betOrder = (eventId: string) => {
@@ -349,6 +359,7 @@ export const Home = () => {
                             }
                           </div>
                         </SwipeCard>
+                        {showComments && (
                         <div className="mt-1.5 ml-2 space-y-1.5" onClick={ev => ev.stopPropagation()}>
                           {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
                             const hasUpvoted = upvotedCommentIds.includes(cmt.id)
@@ -386,6 +397,7 @@ export const Home = () => {
                             )}
                           </div>
                         </div>
+                        )}
                       </div>
                     )
                   })}
