@@ -179,37 +179,34 @@ export const Home = () => {
 
   useEffect(() => {
     const COIN_INTERVAL = 10000
-    let coinAddedThisInterval = false
 
-    const updateProgress = () => {
+    const coinInterval = setInterval(() => {
+      lastCoinTimeRef.current = Date.now()
+
+      if (currentUser) {
+        updateCoins(1)
+      } else {
+        setAnonCoins((prev: number) => prev + 1)
+      }
+
+      setCoinPuff(true)
+      setTimeout(() => setCoinPuff(false), 600)
+    }, COIN_INTERVAL)
+
+    return () => clearInterval(coinInterval)
+  }, [currentUser, updateCoins])
+
+  useEffect(() => {
+    const COIN_INTERVAL = 10000
+    const progressInterval = setInterval(() => {
       const now = Date.now()
       const elapsed = now - lastCoinTimeRef.current
-      const progress = elapsed / COIN_INTERVAL
+      const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
+      setCoinProgress(progress)
+    }, 50)
 
-      if (progress >= 1) {
-        if (!coinAddedThisInterval) {
-          coinAddedThisInterval = true
-          lastCoinTimeRef.current = now
-
-          if (currentUser) {
-            updateCoins(1)
-          } else {
-            setAnonCoins((prev: number) => prev + 1)
-          }
-
-          setCoinPuff(true)
-          setTimeout(() => setCoinPuff(false), 600)
-        }
-        setCoinProgress((elapsed % COIN_INTERVAL) / COIN_INTERVAL)
-      } else {
-        coinAddedThisInterval = false
-        setCoinProgress(progress)
-      }
-    }
-
-    const animationFrame = setInterval(updateProgress, 50)
-    return () => clearInterval(animationFrame)
-  }, [currentUser, updateCoins])
+    return () => clearInterval(progressInterval)
+  }, [])
 
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
