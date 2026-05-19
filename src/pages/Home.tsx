@@ -61,7 +61,7 @@ export const Home = () => {
     setFocusedInput(null)
   }
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0

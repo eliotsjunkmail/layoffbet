@@ -58,7 +58,7 @@ export const Admin = () => {
     <Layout><div className="text-center py-20 text-gray-400 dark:text-slate-400">Access denied.</div></Layout>
   )
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
 
   const inputCls = "w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
 

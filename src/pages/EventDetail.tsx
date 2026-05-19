@@ -46,7 +46,7 @@ export const EventDetail = () => {
   const isCreator = event.creatorId === currentUser?.id
   const isAdmin = currentUser?.isAdmin
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
 
   const anonVote = anonVotedEvents[id!]
   const anonExhausted = !currentUser && (anonVote?.count ?? 0) >= 10
