@@ -178,13 +178,6 @@ export const Home = () => {
   }, [location.key])
 
   useEffect(() => {
-    if (!currentUser) return
-    if (currentUser.isAdmin) {
-      updateCoins(-currentUser.coins)
-    }
-  }, [currentUser?.id])
-
-  useEffect(() => {
     const COIN_INTERVAL = 10000
 
     const updateProgress = () => {
