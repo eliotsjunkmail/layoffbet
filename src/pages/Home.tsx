@@ -59,11 +59,21 @@ export const Home = () => {
   })
   const [coinPuff, setCoinPuff] = useState(false)
   const [coinProgress, setCoinProgress] = useState(0)
+  const [anonCoins, setAnonCoins] = useState(() => {
+    const stored = localStorage.getItem('anonCoins')
+    return stored ? JSON.parse(stored) : 0
+  })
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
   }, [showComments])
+
+  useEffect(() => {
+    if (!currentUser) {
+      localStorage.setItem('anonCoins', JSON.stringify(anonCoins))
+    }
+  }, [anonCoins, currentUser])
 
   useEffect(() => {
     if (currentUser?.coins) {
@@ -174,19 +184,27 @@ export const Home = () => {
   }, [currentUser?.id])
 
   useEffect(() => {
-    if (!currentUser) return
     const COIN_INTERVAL = 10000
     let startTime = Date.now()
 
     const updateProgress = () => {
       const elapsed = Date.now() - startTime
-      const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
-      setCoinProgress(progress)
+      const progress = elapsed / COIN_INTERVAL
 
-      if (elapsed % COIN_INTERVAL < 100) {
-        updateCoins(1)
+      if (progress >= 1) {
+        setCoinProgress(0)
+        startTime = Date.now()
+
+        if (currentUser) {
+          updateCoins(1)
+        } else {
+          setAnonCoins((prev: number) => prev + 1)
+        }
+
         setCoinPuff(true)
         setTimeout(() => setCoinPuff(false), 600)
+      } else {
+        setCoinProgress(progress)
       }
     }
 
@@ -254,14 +272,14 @@ export const Home = () => {
       `}</style>
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
-        {/* User Stats (logged in) */}
-        {currentUser && userStats && (
+        {/* User Stats (logged in) or Coins for anonymous */}
+        {(currentUser && userStats || !currentUser) && (
           <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative">
+              <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block">
-                  {userStats.coins}
+                  {currentUser && userStats ? userStats.coins : anonCoins}
                   {coinPuff && (
                     <div
                       className="absolute inset-0 pointer-events-none"
@@ -281,16 +299,20 @@ export const Home = () => {
                   />
                 </div>
               </button>
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
-              </button>
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-              </button>
+              {currentUser && userStats && (
+                <>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+                  </button>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
