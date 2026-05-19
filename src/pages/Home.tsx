@@ -58,7 +58,6 @@ export const Home = () => {
     return stored ? JSON.parse(stored) : true
   })
   const [coinPuff, setCoinPuff] = useState(false)
-  const [coinProgress, setCoinProgress] = useState(0)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? JSON.parse(stored) : 0
@@ -200,20 +199,6 @@ export const Home = () => {
     return () => clearInterval(coinInterval)
   }, [currentUser, updateCoins])
 
-  useEffect(() => {
-    const COIN_INTERVAL = 10000
-    const progressInterval = setInterval(() => {
-      if (lastCoinTimeRef.current !== null) {
-        const now = Date.now()
-        const elapsed = now - lastCoinTimeRef.current
-        const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
-        setCoinProgress(progress)
-      }
-    }, 50)
-
-    return () => clearInterval(progressInterval)
-  }, [])
-
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -294,12 +279,6 @@ export const Home = () => {
                   )}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
-                <div className="w-full h-1 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all"
-                    style={{ width: `${coinProgress * 100}%` }}
-                  />
-                </div>
               </button>
               {currentUser && userStats && (
                 <>
