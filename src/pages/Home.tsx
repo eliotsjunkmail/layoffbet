@@ -175,7 +175,7 @@ export const Home = () => {
 
   useEffect(() => {
     if (!currentUser) return
-    const COIN_INTERVAL = 6000
+    const COIN_INTERVAL = 10000
     let startTime = Date.now()
 
     const updateProgress = () => {
