@@ -35,6 +35,7 @@ export interface Event {
   outcome: 'yes' | 'no' | null
   createdAt: string
   viewCount: number
+  shareCount: number
 }
 
 export interface Bet {
