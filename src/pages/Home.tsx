@@ -53,6 +53,7 @@ export const Home = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
+  const updateCoins = useStore(s => s.updateCoins)
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -150,6 +151,14 @@ export const Home = () => {
     setShowDropdown(false)
   }, [location.key])
 
+  useEffect(() => {
+    if (!currentUser) return
+    const interval = setInterval(() => {
+      updateCoins(1)
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [currentUser, updateCoins])
+
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -180,9 +189,39 @@ export const Home = () => {
 
   return (
     <Layout fullWidth>
-      <div className="w-full sm:max-w-2xl sm:mx-auto px-4 sm:px-4">
+      <div className="max-w-2xl mx-auto px-4">
+        {/* User Stats (logged in) */}
+        {currentUser && userStats && (
+          <div className="pt-3 pb-3 -mx-4 px-4 mb-8">
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.coins}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
+              </button>
+              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Bets</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+              </button>
+              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+              </button>
+              {userStats.totalShares > 0 && (
+                <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Shares</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalShares}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">shared</div>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Hero */}
-        <div className={`${(currentUser || hasFavorites) ? 'pt-3 pb-3' : 'pt-10 pb-3'} text-center`}>
+        <div className={`${(currentUser || hasFavorites) ? 'pt-4 pb-4' : 'pt-10 pb-8'} text-center`}>
           {/* Title + subtitle: always on desktop, hidden on mobile once logged in or has favorites */}
           <div className={`${(currentUser || hasFavorites) ? 'hidden sm:block' : 'block'} mb-6`}>
             <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
@@ -194,10 +233,9 @@ export const Home = () => {
               <span className="hidden sm:inline"> — track signals, bet on outcomes</span>
             </p>
           </div>
-        </div>
 
-        {/* Search with typeahead */}
-        <div ref={searchRef} className="relative max-w-md mx-auto mb-3">
+          {/* Search with typeahead */}
+          <div ref={searchRef} className="relative max-w-md mx-auto mb-4">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="text"
@@ -224,43 +262,14 @@ export const Home = () => {
                 No companies found for "{query}"
               </div>
             )}
-        </div>
-
-        {!currentUser && (
-          <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
-            Swipe left or right to bet — no sign-in needed.
-          </p>
-        )}
-
-        {/* User Stats (logged in) */}
-        {currentUser && userStats && (
-          <div className="pt-3 pb-3 -mx-4 px-4 mb-8">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-violet-600 dark:text-violet-400">{userStats.coins}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
-              </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Bets</div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{userStats.totalBets}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
-              </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.totalBetAmount}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-              </div>
-              {userStats.totalShares > 0 && (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
-                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Shares</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-sky-600 dark:text-sky-400">{userStats.totalShares}</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">shared</div>
-                </div>
-              )}
-            </div>
           </div>
-        )}
+
+          {!currentUser && (
+            <p className="text-xs text-gray-400 dark:text-slate-500">
+              Swipe left or right to bet — no sign-in needed.
+            </p>
+          )}
+        </div>
 
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
