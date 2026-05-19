@@ -57,7 +57,6 @@ export const Home = () => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
-  const [coinPuff, setCoinPuff] = useState(false)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? JSON.parse(stored) : 0
@@ -74,14 +73,6 @@ export const Home = () => {
       localStorage.setItem('anonCoins', JSON.stringify(anonCoins))
     }
   }, [anonCoins, currentUser])
-
-  useEffect(() => {
-    if (currentUser?.coins) {
-      setCoinPuff(true)
-      const timer = setTimeout(() => setCoinPuff(false), 600)
-      return () => clearTimeout(timer)
-    }
-  }, [currentUser?.coins])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -191,9 +182,6 @@ export const Home = () => {
       } else {
         setAnonCoins((prev: number) => prev + 1)
       }
-
-      setCoinPuff(true)
-      setTimeout(() => setCoinPuff(false), 600)
     }, COIN_INTERVAL)
 
     return () => clearInterval(coinInterval)
@@ -230,18 +218,6 @@ export const Home = () => {
   return (
     <>
       <style>{`
-        @keyframes puff-smoke {
-          0% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            filter: blur(0px);
-          }
-          100% {
-            opacity: 0;
-            transform: scale(1.5) translateY(-12px);
-            filter: blur(8px);
-          }
-        }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -267,16 +243,6 @@ export const Home = () => {
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
                   {currentUser && userStats ? userStats.coins : anonCoins}
-                  {coinPuff && (
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        animation: 'puff-smoke 0.6s ease-out forwards',
-                        background: 'radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(168, 85, 247, 0) 70%)',
-                        borderRadius: '50%',
-                      }}
-                    />
-                  )}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
