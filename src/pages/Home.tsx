@@ -57,11 +57,20 @@ export const Home = () => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
+  const [animatingCoins, setAnimatingCoins] = useState(false)
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
   }, [showComments])
+
+  useEffect(() => {
+    if (currentUser?.coins) {
+      setAnimatingCoins(true)
+      const timer = setTimeout(() => setAnimatingCoins(false), 600)
+      return () => clearTimeout(timer)
+    }
+  }, [currentUser?.coins])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -193,7 +202,15 @@ export const Home = () => {
   }
 
   return (
-    <Layout fullWidth>
+    <>
+      <style>{`
+        @keyframes spin-flip {
+          0% { transform: rotateY(0deg) scale(1); }
+          50% { transform: rotateY(90deg) scale(1.1); }
+          100% { transform: rotateY(0deg) scale(1); }
+        }
+      `}</style>
+      <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) */}
         {currentUser && userStats && (
@@ -201,7 +218,12 @@ export const Home = () => {
             <div className="grid grid-cols-3 gap-3">
               <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.coins}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
+                  {userStats.coins >= 10 ? String(userStats.coins).slice(0, -1) : ''}
+                  <span className={`inline-block transition-transform ${animatingCoins ? 'animate-pulse' : ''}`} style={animatingCoins ? { animation: 'spin-flip 0.6s ease-out' } : {}}>
+                    {String(userStats.coins).slice(-1)}
+                  </span>
+                </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
               <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
@@ -504,6 +526,7 @@ export const Home = () => {
         </div>
       )}
     </Layout>
+    </>
   )
 }
 
