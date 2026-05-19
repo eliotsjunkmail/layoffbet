@@ -269,9 +269,9 @@ export const Home = () => {
         {(currentUser && userStats || !currentUser) && (
           <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative">
+              <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block">
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
                   {currentUser && userStats ? userStats.coins : anonCoins}
                   {coinPuff && (
                     <div
@@ -284,7 +284,7 @@ export const Home = () => {
                     />
                   )}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-2 sm:mt-1">remaining</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
                 <div className="w-full h-1 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
                   <div
                     className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all"
@@ -294,14 +294,14 @@ export const Home = () => {
               </button>
               {currentUser && userStats && (
                 <>
-                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
                     <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
                   </button>
-                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
                     <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
                   </button>
                 </>
