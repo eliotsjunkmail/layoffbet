@@ -79,6 +79,7 @@ export const Home = () => {
       return event && getEffectiveStatus(event) === 'active'
     }).length
     const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+    const totalShares = userEvents.reduce((sum, e) => sum + (e.shareCount ?? 0), 0)
     return {
       coins: currentUser.coins,
       totalBets: userBets.length,
@@ -86,6 +87,7 @@ export const Home = () => {
       totalBetAmount,
       winRate,
       resolvedBets: resolvedEvents.length,
+      totalShares,
     }
   }, [currentUser, bets, events, getEffectiveStatus])
 
@@ -264,6 +266,13 @@ export const Home = () => {
                 <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.totalBetAmount}</div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
               </div>
+              {userStats.totalShares > 0 && (
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Shares</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-sky-600 dark:text-sky-400">{userStats.totalShares}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">shared</div>
+                </div>
+              )}
             </div>
           </div>
         )}

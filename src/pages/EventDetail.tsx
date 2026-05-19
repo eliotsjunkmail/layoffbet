@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
-import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle } from 'lucide-react'
+import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2, Check } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { AuthModal } from '../components/AuthModal'
@@ -28,6 +28,8 @@ export const EventDetail = () => {
   const [toast, setToast] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
+  const [shareCopied, setShareCopied] = useState(false)
+  const recordShare = useStore(s => s.recordShare)
 
   const event = events.find(e => e.id === id)
 
@@ -93,6 +95,25 @@ export const EventDetail = () => {
     setCommentText('')
   }
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/event/${id}`
+    const shareText = `"${event.title}" — ${prob.yes}% likely on Layoff Bet`
+    const shareData = {
+      title: event.companyName,
+      text: shareText,
+      url,
+    }
+    recordShare(id!)
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${shareText}\n${url}`)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2500)
+      showToast('Copied to clipboard')
+    }
+  }
+
   const statusColors = {
     active: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
     expired: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
@@ -112,9 +133,18 @@ export const EventDetail = () => {
             <Building2 className="w-3.5 h-3.5" />
             {event.companyName}
           </Link>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColors[status]}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              title="Share this prediction"
+              className="p-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+            >
+              {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+            </button>
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColors[status]}`}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+          </div>
         </div>
         <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">{event.title}</h1>
         <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
