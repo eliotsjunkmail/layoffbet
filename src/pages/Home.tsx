@@ -57,22 +57,11 @@ export const Home = () => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
-  const [anonCoins, setAnonCoins] = useState(() => {
-    const stored = localStorage.getItem('anonCoins')
-    return stored ? JSON.parse(stored) : 0
-  })
-  const lastCoinTimeRef = useRef<number | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
   }, [showComments])
-
-  useEffect(() => {
-    if (!currentUser) {
-      localStorage.setItem('anonCoins', JSON.stringify(anonCoins))
-    }
-  }, [anonCoins, currentUser])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -167,26 +156,6 @@ export const Home = () => {
     setShowDropdown(false)
   }, [location.key])
 
-  useEffect(() => {
-    const COIN_INTERVAL = 10000
-
-    if (lastCoinTimeRef.current === null) {
-      lastCoinTimeRef.current = Date.now()
-    }
-
-    const coinInterval = setInterval(() => {
-      lastCoinTimeRef.current = Date.now()
-
-      if (currentUser) {
-        updateCoins(1)
-      } else {
-        setAnonCoins((prev: number) => prev + 1)
-      }
-    }, COIN_INTERVAL)
-
-    return () => clearInterval(coinInterval)
-  }, [currentUser, updateCoins])
-
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -236,13 +205,13 @@ export const Home = () => {
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
-        {(currentUser && userStats || !currentUser) && (
+        {currentUser && userStats && (
           <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
+              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
-                  {currentUser && userStats ? userStats.coins : anonCoins}
+                  {userStats.coins}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
