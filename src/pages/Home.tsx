@@ -187,30 +187,31 @@ export const Home = () => {
   return (
     <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
-        {/* User Stats Banner (logged in) */}
+        {/* User Stats (logged in) */}
         {currentUser && userStats && (
-          <div className="mb-6 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/30 dark:to-indigo-900/30 border border-violet-200 dark:border-violet-800 rounded-2xl p-4">
+          <div className="pt-8 pb-6 -px-4 mb-8">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="text-center">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Coins</div>
-                <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">{userStats.coins}</div>
+              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-center shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-2">Coins</div>
+                <div className="text-3xl font-bold text-violet-600 dark:text-violet-400">{userStats.coins}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">remaining</div>
               </div>
-              <div className="text-center">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Bets</div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{userStats.totalBets}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{userStats.activeBets} active</div>
+              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-center shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-2">Bets</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{userStats.totalBets}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">{userStats.activeBets} active</div>
               </div>
               {userStats.resolvedBets > 0 && (
-                <div className="text-center">
-                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Win Rate</div>
-                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.winRate}%</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{userStats.resolvedBets} resolved</div>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-center shadow-sm">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-2">Win Rate</div>
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.winRate}%</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">{userStats.resolvedBets} resolved</div>
                 </div>
               )}
-              <div className="text-center">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Wagered</div>
-                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{userStats.totalBetAmount}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">coins</div>
+              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-center shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-2">Wagered</div>
+                <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.totalBetAmount}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">coins</div>
               </div>
             </div>
           </div>
