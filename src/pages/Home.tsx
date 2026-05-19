@@ -68,12 +68,6 @@ export const Home = () => {
     if (!currentUser) return null
     const userBets = bets.filter(b => b.userId === currentUser.id)
     const userEvents = userBets.map(b => events.find(e => e.id === b.eventId)).filter(Boolean) as typeof events
-    const resolvedEvents = userEvents.filter(e => getEffectiveStatus(e) === 'resolved')
-    const winningBets = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && event.outcome === b.side
-    })
-    const winRate = resolvedEvents.length > 0 ? Math.round((winningBets.length / resolvedEvents.length) * 100) : 0
     const activeBetCount = userBets.filter(b => {
       const event = events.find(e => e.id === b.eventId)
       return event && getEffectiveStatus(event) === 'active'
@@ -85,8 +79,6 @@ export const Home = () => {
       totalBets: userBets.length,
       activeBets: activeBetCount,
       totalBetAmount,
-      winRate,
-      resolvedBets: resolvedEvents.length,
       totalShares,
     }
   }, [currentUser, bets, events, getEffectiveStatus])
@@ -254,13 +246,6 @@ export const Home = () => {
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{userStats.totalBets}</div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
               </div>
-              {userStats.resolvedBets > 0 && (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
-                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Win Rate</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.winRate}%</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.resolvedBets} resolved</div>
-                </div>
-              )}
               <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
                 <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.totalBetAmount}</div>
