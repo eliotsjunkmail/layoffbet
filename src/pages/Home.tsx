@@ -57,11 +57,20 @@ export const Home = () => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
+  const [coinPuff, setCoinPuff] = useState(false)
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
   }, [showComments])
+
+  useEffect(() => {
+    if (currentUser?.coins) {
+      setCoinPuff(true)
+      const timer = setTimeout(() => setCoinPuff(false), 600)
+      return () => clearTimeout(timer)
+    }
+  }, [currentUser?.coins])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -193,15 +202,42 @@ export const Home = () => {
   }
 
   return (
-    <Layout fullWidth>
+    <>
+      <style>{`
+        @keyframes puff-smoke {
+          0% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            filter: blur(0px);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.5) translateY(-12px);
+            filter: blur(8px);
+          }
+        }
+      `}</style>
+      <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) */}
         {currentUser && userStats && (
           <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.coins}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block">
+                  {userStats.coins}
+                  {coinPuff && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        animation: 'puff-smoke 0.6s ease-out forwards',
+                        background: 'radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(168, 85, 247, 0) 70%)',
+                        borderRadius: '50%',
+                      }}
+                    />
+                  )}
+                </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
               <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
@@ -504,6 +540,7 @@ export const Home = () => {
         </div>
       )}
     </Layout>
+    </>
   )
 }
 
