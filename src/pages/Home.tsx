@@ -204,12 +204,10 @@ export const Home = () => {
   return (
     <>
       <style>{`
-        @keyframes spin-flip {
-          0% { transform: rotateY(0deg) scale(1); }
-          25% { transform: rotateY(90deg) scale(1.05); }
-          50% { transform: rotateY(180deg) scale(1); }
-          75% { transform: rotateY(270deg) scale(1.05); }
-          100% { transform: rotateY(360deg) scale(1); }
+        @keyframes flip-clock {
+          0% { transform: rotateX(0deg); }
+          50% { transform: rotateX(-180deg); }
+          100% { transform: rotateX(-360deg); }
         }
       `}</style>
       <Layout fullWidth>
@@ -222,7 +220,7 @@ export const Home = () => {
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
                   {userStats.coins >= 10 ? String(userStats.coins).slice(0, -1) : ''}
-                  <span className="inline-block" style={animatingCoins ? { animation: 'spin-flip 15s linear infinite' } : {}}>
+                  <span className="inline-block" style={animatingCoins ? { animation: 'flip-clock 15s linear infinite', perspective: '1000px' } : {}}>
                     {String(userStats.coins).slice(-1)}
                   </span>
                 </div>
