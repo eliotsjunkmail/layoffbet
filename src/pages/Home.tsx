@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -289,11 +289,9 @@ export const Home = () => {
           return (
             <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-2 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
-                <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group min-w-0">
-                  <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
-                  <div className="min-w-0">
-                    <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
-                  </div>
+                <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
+                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
                 </Link>
                 {hasFavorites && (
                   <button
