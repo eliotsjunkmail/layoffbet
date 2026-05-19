@@ -74,20 +74,10 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
 
 export const Header = () => {
   const currentUser = useStore(s => s.currentUser)
-  const bets = useStore(s => s.bets)
-  const events = useStore(s => s.events)
-  const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const companies = useStore(s => s.companies)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
 
-  const activeBetCount = currentUser
-    ? bets.filter(b => {
-        if (b.userId !== currentUser.id) return false
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'active'
-      }).length
-    : 0
   const location = useLocation()
   const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
@@ -125,14 +115,6 @@ export const Header = () => {
           <nav className="flex items-center gap-1">
             {currentUser ? (
               <>
-                <Link to="/bets" className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/bets')}`}>
-                  Bets
-                  {activeBetCount > 0 && (
-                    <span className="bg-violet-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                      {activeBetCount > 99 ? '99+' : activeBetCount}
-                    </span>
-                  )}
-                </Link>
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />
                 </Link>
