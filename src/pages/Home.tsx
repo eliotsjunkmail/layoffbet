@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, ChevronRight, Send, ThumbsUp } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -53,8 +53,15 @@ export const Home = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
-  const [showComments, setShowComments] = useState(true)
+  const [showComments, setShowComments] = useState(() => {
+    const stored = localStorage.getItem('showComments')
+    return stored ? JSON.parse(stored) : true
+  })
   const updateCoins = useStore(s => s.updateCoins)
+
+  useEffect(() => {
+    localStorage.setItem('showComments', JSON.stringify(showComments))
+  }, [showComments])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -149,14 +156,6 @@ export const Home = () => {
     setShowDropdown(false)
   }, [location.key])
 
-  useEffect(() => {
-    if (!currentUser) return
-    const interval = setInterval(() => {
-      updateCoins(1)
-    }, 15000)
-    return () => clearInterval(interval)
-  }, [currentUser, updateCoins])
-
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -186,27 +185,50 @@ export const Home = () => {
   }
 
   return (
-    <Layout fullWidth>
+    <>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        .comments-enter {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .comments-exit {
+          animation: fadeOut 0.3s ease-in;
+        }
+      `}</style>
+      <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
-        {/* User Stats (logged in) */}
+        {/* User Stats (logged in) or Coins for anonymous */}
         {currentUser && userStats && (
           <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.coins}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
+                  {userStats.coins}
+                </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
-              </button>
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-              </button>
+              {currentUser && userStats && (
+                <>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+                  </button>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -282,35 +304,31 @@ export const Home = () => {
           return (
             <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-2 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
-                <Link to={`/${c.slug}`} className="flex items-center gap-2.5 group min-w-0">
-                  <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
-                    </div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 leading-none mt-0.5">{c.industry}</div>
-                  </div>
+                <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
+                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
                 </Link>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {activeEvents.length > 0 && (
-                    <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800">
-                      {activeEvents.length} active
-                    </span>
-                  )}
-                  {activeEvents.length > 0 && (
-                    <button
-                      onClick={() => setShowComments(!showComments)}
-                      className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
-                        showComments
-                          ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
-                          : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
-                      }`}
-                    >
-                      <span>{showComments ? 'Hide' : 'Show'}</span>
-                    </button>
-                  )}
-                </div>
+                {hasFavorites && (
+                  <button
+                    onClick={() => setShowComments(!showComments)}
+                    className={`flex items-center gap-2.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                      showComments
+                        ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
+                        : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <span>Show Comments</span>
+                    <div className={`w-5 h-3 rounded-full transition-colors relative flex items-center ${
+                      showComments
+                        ? 'bg-violet-600 dark:bg-violet-400'
+                        : 'bg-gray-400 dark:bg-slate-600'
+                    }`}>
+                      <div className={`w-2.5 h-2.5 rounded-full bg-white transition-transform ${
+                        showComments ? 'translate-x-2.5' : 'translate-x-0.5'
+                      }`} />
+                    </div>
+                  </button>
+                )}
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
@@ -367,7 +385,7 @@ export const Home = () => {
                           </div>
                         </SwipeCard>
                         {showComments && (
-                        <div className="mt-1.5 ml-2 space-y-1.5" onClick={ev => ev.stopPropagation()}>
+                        <div className="mt-1.5 ml-2 space-y-1.5 comments-enter" onClick={ev => ev.stopPropagation()}>
                           {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
                             const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                             return (
@@ -501,6 +519,7 @@ export const Home = () => {
         </div>
       )}
     </Layout>
+    </>
   )
 }
 
