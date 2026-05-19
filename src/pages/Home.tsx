@@ -179,25 +179,31 @@ export const Home = () => {
 
   useEffect(() => {
     const COIN_INTERVAL = 10000
+    let coinAddedThisInterval = false
 
     const updateProgress = () => {
       const now = Date.now()
       const elapsed = now - lastCoinTimeRef.current
-      const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
+      const progress = elapsed / COIN_INTERVAL
 
-      setCoinProgress(progress)
+      if (progress >= 1) {
+        if (!coinAddedThisInterval) {
+          coinAddedThisInterval = true
+          lastCoinTimeRef.current = now
 
-      if (elapsed >= COIN_INTERVAL) {
-        lastCoinTimeRef.current = now
+          if (currentUser) {
+            updateCoins(1)
+          } else {
+            setAnonCoins((prev: number) => prev + 1)
+          }
 
-        if (currentUser) {
-          updateCoins(1)
-        } else {
-          setAnonCoins((prev: number) => prev + 1)
+          setCoinPuff(true)
+          setTimeout(() => setCoinPuff(false), 600)
         }
-
-        setCoinPuff(true)
-        setTimeout(() => setCoinPuff(false), 600)
+        setCoinProgress((elapsed % COIN_INTERVAL) / COIN_INTERVAL)
+      } else {
+        coinAddedThisInterval = false
+        setCoinProgress(progress)
       }
     }
 
