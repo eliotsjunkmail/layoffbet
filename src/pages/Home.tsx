@@ -58,6 +58,7 @@ export const Home = () => {
     return stored ? JSON.parse(stored) : true
   })
   const [coinPuff, setCoinPuff] = useState(false)
+  const [coinProgress, setCoinProgress] = useState(0)
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
@@ -167,10 +168,30 @@ export const Home = () => {
 
   useEffect(() => {
     if (!currentUser) return
-    const interval = setInterval(() => {
-      updateCoins(1)
-    }, 15000)
-    return () => clearInterval(interval)
+    if (currentUser.isAdmin) {
+      updateCoins(-currentUser.coins)
+    }
+  }, [currentUser?.id])
+
+  useEffect(() => {
+    if (!currentUser) return
+    const COIN_INTERVAL = 6000
+    let startTime = Date.now()
+
+    const updateProgress = () => {
+      const elapsed = Date.now() - startTime
+      const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
+      setCoinProgress(progress)
+
+      if (elapsed % COIN_INTERVAL < 100) {
+        updateCoins(1)
+        setCoinPuff(true)
+        setTimeout(() => setCoinPuff(false), 600)
+      }
+    }
+
+    const animationFrame = setInterval(updateProgress, 50)
+    return () => clearInterval(animationFrame)
   }, [currentUser, updateCoins])
 
   const handleStar = (e: React.MouseEvent, companyId: string) => {
@@ -216,6 +237,20 @@ export const Home = () => {
             filter: blur(8px);
           }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        .comments-enter {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .comments-exit {
+          animation: fadeOut 0.3s ease-in;
+        }
       `}</style>
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
@@ -238,7 +273,13 @@ export const Home = () => {
                     />
                   )}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-2 sm:mt-1">remaining</div>
+                <div className="w-full h-1 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
+                  <div
+                    className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all"
+                    style={{ width: `${coinProgress * 100}%` }}
+                  />
+                </div>
               </button>
               <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
@@ -406,7 +447,7 @@ export const Home = () => {
                           </div>
                         </SwipeCard>
                         {showComments && (
-                        <div className="mt-1.5 ml-2 space-y-1.5" onClick={ev => ev.stopPropagation()}>
+                        <div className="mt-1.5 ml-2 space-y-1.5 comments-enter" onClick={ev => ev.stopPropagation()}>
                           {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
                             const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                             return (
