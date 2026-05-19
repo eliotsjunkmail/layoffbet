@@ -53,8 +53,15 @@ export const Home = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
-  const [showComments, setShowComments] = useState(true)
+  const [showComments, setShowComments] = useState(() => {
+    const stored = localStorage.getItem('showComments')
+    return stored ? JSON.parse(stored) : true
+  })
   const updateCoins = useStore(s => s.updateCoins)
+
+  useEffect(() => {
+    localStorage.setItem('showComments', JSON.stringify(showComments))
+  }, [showComments])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -292,25 +299,23 @@ export const Home = () => {
                     <div className="text-xs text-gray-400 dark:text-slate-500 leading-none mt-0.5">{c.industry}</div>
                   </div>
                 </Link>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {activeEvents.length > 0 && (
-                    <span className="text-xs font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full border border-violet-200 dark:border-violet-800">
-                      {activeEvents.length} active
-                    </span>
-                  )}
-                  {activeEvents.length > 0 && (
-                    <button
-                      onClick={() => setShowComments(!showComments)}
-                      className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
-                        showComments
-                          ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
-                          : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
-                      }`}
-                    >
-                      <span>{showComments ? 'Hide' : 'Show'}</span>
-                    </button>
-                  )}
-                </div>
+                {hasFavorites && (
+                  <button
+                    onClick={() => setShowComments(!showComments)}
+                    className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                      showComments
+                        ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
+                        : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <span>Comments</span>
+                    <div className={`w-4 h-2.5 rounded-full transition-colors ${
+                      showComments
+                        ? 'bg-violet-600 dark:bg-violet-400'
+                        : 'bg-gray-400 dark:bg-slate-600'
+                    }`} />
+                  </button>
+                )}
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
