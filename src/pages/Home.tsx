@@ -53,6 +53,7 @@ export const Home = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
+  const updateCoins = useStore(s => s.updateCoins)
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -68,24 +69,18 @@ export const Home = () => {
     if (!currentUser) return null
     const userBets = bets.filter(b => b.userId === currentUser.id)
     const userEvents = userBets.map(b => events.find(e => e.id === b.eventId)).filter(Boolean) as typeof events
-    const resolvedEvents = userEvents.filter(e => getEffectiveStatus(e) === 'resolved')
-    const winningBets = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && event.outcome === b.side
-    })
-    const winRate = resolvedEvents.length > 0 ? Math.round((winningBets.length / resolvedEvents.length) * 100) : 0
     const activeBetCount = userBets.filter(b => {
       const event = events.find(e => e.id === b.eventId)
       return event && getEffectiveStatus(event) === 'active'
     }).length
     const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+    const totalShares = userEvents.reduce((sum, e) => sum + (e.shareCount ?? 0), 0)
     return {
       coins: currentUser.coins,
       totalBets: userBets.length,
       activeBets: activeBetCount,
       totalBetAmount,
-      winRate,
-      resolvedBets: resolvedEvents.length,
+      totalShares,
     }
   }, [currentUser, bets, events, getEffectiveStatus])
 
@@ -156,6 +151,14 @@ export const Home = () => {
     setShowDropdown(false)
   }, [location.key])
 
+  useEffect(() => {
+    if (!currentUser) return
+    const interval = setInterval(() => {
+      updateCoins(1)
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [currentUser, updateCoins])
+
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
@@ -187,31 +190,32 @@ export const Home = () => {
   return (
     <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
-        {/* User Stats Banner (logged in) */}
+        {/* User Stats (logged in) */}
         {currentUser && userStats && (
-          <div className="mb-6 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/30 dark:to-indigo-900/30 border border-violet-200 dark:border-violet-800 rounded-2xl p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="text-center">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Coins</div>
-                <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">{userStats.coins}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Bets</div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{userStats.totalBets}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{userStats.activeBets} active</div>
-              </div>
-              {userStats.resolvedBets > 0 && (
-                <div className="text-center">
-                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Win Rate</div>
-                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.winRate}%</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{userStats.resolvedBets} resolved</div>
-                </div>
+          <div className="pt-3 pb-3 -mx-4 px-4 mb-8">
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.coins}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
+              </button>
+              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Bets</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBets}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+              </button>
+              <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalBetAmount}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+              </button>
+              {userStats.totalShares > 0 && (
+                <button onClick={() => navigate('/search')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Shares</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{userStats.totalShares}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">shared</div>
+                </button>
               )}
-              <div className="text-center">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Wagered</div>
-                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{userStats.totalBetAmount}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">coins</div>
-              </div>
             </div>
           </div>
         )}
