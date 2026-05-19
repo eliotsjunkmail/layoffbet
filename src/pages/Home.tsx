@@ -63,7 +63,7 @@ export const Home = () => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? JSON.parse(stored) : 0
   })
-  const lastCoinTimeRef = useRef<number>(Date.now())
+  const lastCoinTimeRef = useRef<number | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
@@ -180,6 +180,10 @@ export const Home = () => {
   useEffect(() => {
     const COIN_INTERVAL = 10000
 
+    if (lastCoinTimeRef.current === null) {
+      lastCoinTimeRef.current = Date.now()
+    }
+
     const coinInterval = setInterval(() => {
       lastCoinTimeRef.current = Date.now()
 
@@ -199,10 +203,12 @@ export const Home = () => {
   useEffect(() => {
     const COIN_INTERVAL = 10000
     const progressInterval = setInterval(() => {
-      const now = Date.now()
-      const elapsed = now - lastCoinTimeRef.current
-      const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
-      setCoinProgress(progress)
+      if (lastCoinTimeRef.current !== null) {
+        const now = Date.now()
+        const elapsed = now - lastCoinTimeRef.current
+        const progress = (elapsed % COIN_INTERVAL) / COIN_INTERVAL
+        setCoinProgress(progress)
+      }
     }, 50)
 
     return () => clearInterval(progressInterval)
