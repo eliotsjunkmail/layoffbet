@@ -67,7 +67,7 @@ export const Home = () => {
   useEffect(() => {
     if (currentUser?.coins) {
       setAnimatingCoins(true)
-      const timer = setTimeout(() => setAnimatingCoins(false), 600)
+      const timer = setTimeout(() => setAnimatingCoins(false), 15000)
       return () => clearTimeout(timer)
     }
   }, [currentUser?.coins])
@@ -206,8 +206,10 @@ export const Home = () => {
       <style>{`
         @keyframes spin-flip {
           0% { transform: rotateY(0deg) scale(1); }
-          50% { transform: rotateY(90deg) scale(1.1); }
-          100% { transform: rotateY(0deg) scale(1); }
+          25% { transform: rotateY(90deg) scale(1.05); }
+          50% { transform: rotateY(180deg) scale(1); }
+          75% { transform: rotateY(270deg) scale(1.05); }
+          100% { transform: rotateY(360deg) scale(1); }
         }
       `}</style>
       <Layout fullWidth>
@@ -220,7 +222,7 @@ export const Home = () => {
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
                   {userStats.coins >= 10 ? String(userStats.coins).slice(0, -1) : ''}
-                  <span className={`inline-block transition-transform ${animatingCoins ? 'animate-pulse' : ''}`} style={animatingCoins ? { animation: 'spin-flip 0.6s ease-out' } : {}}>
+                  <span className="inline-block" style={animatingCoins ? { animation: 'spin-flip 15s linear infinite' } : {}}>
                     {String(userStats.coins).slice(-1)}
                   </span>
                 </div>
