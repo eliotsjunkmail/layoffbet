@@ -52,6 +52,7 @@ export const Home = () => {
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
+  const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -62,6 +63,31 @@ export const Home = () => {
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
+
+  const userStats = useMemo(() => {
+    if (!currentUser) return null
+    const userBets = bets.filter(b => b.userId === currentUser.id)
+    const userEvents = userBets.map(b => events.find(e => e.id === b.eventId)).filter(Boolean) as typeof events
+    const resolvedEvents = userEvents.filter(e => getEffectiveStatus(e) === 'resolved')
+    const winningBets = userBets.filter(b => {
+      const event = events.find(e => e.id === b.eventId)
+      return event && event.outcome === b.side
+    })
+    const winRate = resolvedEvents.length > 0 ? Math.round((winningBets.length / resolvedEvents.length) * 100) : 0
+    const activeBetCount = userBets.filter(b => {
+      const event = events.find(e => e.id === b.eventId)
+      return event && getEffectiveStatus(event) === 'active'
+    }).length
+    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+    return {
+      coins: currentUser.coins,
+      totalBets: userBets.length,
+      activeBets: activeBetCount,
+      totalBetAmount,
+      winRate,
+      resolvedBets: resolvedEvents.length,
+    }
+  }, [currentUser, bets, events, getEffectiveStatus])
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0
@@ -161,6 +187,35 @@ export const Home = () => {
   return (
     <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
+        {/* User Stats Banner (logged in) */}
+        {currentUser && userStats && (
+          <div className="mb-6 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/30 dark:to-indigo-900/30 border border-violet-200 dark:border-violet-800 rounded-2xl p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="text-center">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Coins</div>
+                <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">{userStats.coins}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Bets</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{userStats.totalBets}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{userStats.activeBets} active</div>
+              </div>
+              {userStats.resolvedBets > 0 && (
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Win Rate</div>
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{userStats.winRate}%</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{userStats.resolvedBets} resolved</div>
+                </div>
+              )}
+              <div className="text-center">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1">Wagered</div>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{userStats.totalBetAmount}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">coins</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero */}
         <div className={`${(currentUser || hasFavorites) ? 'pt-4 pb-4' : 'pt-10 pb-8'} text-center`}>
           {/* Title + subtitle: always on desktop, hidden on mobile once logged in or has favorites */}
@@ -390,8 +445,31 @@ export const Home = () => {
           </>
         )}
 
-        {/* CTA for guests */}
-        {!currentUser && (
+        {/* Login Banner for guests */}
+        {!currentUser && !dismissedLoginBanner && (
+          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-8 flex items-start justify-between gap-4">
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-3 sm:mb-0">
+                Create a free anonymous account to remember your bets and earn <strong className="text-violet-600 dark:text-violet-400">100 Coins daily</strong>.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link to="/login" className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+                Sign In <ArrowRight className="w-4 h-4" />
+              </Link>
+              <button
+                onClick={() => setDismissedLoginBanner(true)}
+                className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* CTA for guests (hidden when banner shown) */}
+        {!currentUser && dismissedLoginBanner && (
           <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-8 text-center">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
             <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
