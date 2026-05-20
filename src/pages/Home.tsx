@@ -256,11 +256,31 @@ export const Home = () => {
           0% { transform: translate(0, 0) scale(1); opacity: 1; }
           100% { transform: translate(0, -40px) scale(1.5); opacity: 0; }
         }
+        @keyframes slideDown {
+          from {
+            transform: translateY(-10px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes slideUp {
+          from {
+            transform: translateY(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateY(-10px);
+            opacity: 0;
+          }
+        }
         .comments-enter {
-          animation: fadeIn 0.3s ease-out;
+          animation: slideDown 0.3s ease-out;
         }
         .comments-exit {
-          animation: fadeOut 0.3s ease-in;
+          animation: slideUp 0.3s ease-in;
         }
         .coin-puff {
           animation: puff 0.6s ease-out forwards;
@@ -499,6 +519,31 @@ export const Home = () => {
           )
         })()}
 
+        {/* Global Show Comments toggle - only shown when user has favorites */}
+        {hasFavorites && (
+          <div className="flex justify-center mb-4 pt-2">
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className={`flex items-center gap-2.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                showComments
+                  ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
+                  : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
+              }`}
+            >
+              <span>Show Comments</span>
+              <div className={`w-5 h-3 rounded-full transition-colors relative flex items-center ${
+                showComments
+                  ? 'bg-violet-600 dark:bg-violet-400'
+                  : 'bg-gray-400 dark:bg-slate-600'
+              }`}>
+                <div className={`w-2.5 h-2.5 rounded-full bg-white transition-transform ${
+                  showComments ? 'translate-x-2.5' : 'translate-x-0.5'
+                }`} />
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
           const betOrder = (eventId: string) => {
@@ -521,35 +566,12 @@ export const Home = () => {
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
                 </Link>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={e => handleStar(e, c.id)}
-                    className="p-1.5 rounded-lg transition-colors flex-shrink-0"
-                  >
-                    <Star className={`w-5 h-5 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`} />
-                  </button>
-                  {hasFavorites && (
-                    <button
-                      onClick={() => setShowComments(!showComments)}
-                      className={`flex items-center gap-2.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                        showComments
-                          ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
-                          : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
-                      }`}
-                  >
-                    <span>Show Comments</span>
-                    <div className={`w-5 h-3 rounded-full transition-colors relative flex items-center ${
-                      showComments
-                        ? 'bg-violet-600 dark:bg-violet-400'
-                        : 'bg-gray-400 dark:bg-slate-600'
-                    }`}>
-                      <div className={`w-2.5 h-2.5 rounded-full bg-white transition-transform ${
-                        showComments ? 'translate-x-2.5' : 'translate-x-0.5'
-                      }`} />
-                    </div>
-                  </button>
-                  )}
-                </div>
+                <button
+                  onClick={e => handleStar(e, c.id)}
+                  className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                >
+                  <Star className={`w-6 h-6 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
+                </button>
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
