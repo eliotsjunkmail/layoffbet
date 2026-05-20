@@ -211,10 +211,11 @@ export const CompanyPage = () => {
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={handleShare}
-                  className="p-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-xs font-medium"
                   title="Share this company"
                 >
                   {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+                  <span>Share</span>
                 </button>
                 <button
                   onClick={() => toggleFavoriteCompany(company.id)}

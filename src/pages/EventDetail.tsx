@@ -141,9 +141,10 @@ export const EventDetail = () => {
             <button
               onClick={handleShare}
               title="Share this prediction"
-              className="p-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-xs font-medium"
             >
               {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+              <span>Share</span>
             </button>
             <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColors[status]}`}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
