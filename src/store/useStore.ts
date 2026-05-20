@@ -342,7 +342,6 @@ interface StoreState {
   logout: () => void
   register: (username: string, password: string) => { ok: boolean; error?: string }
   checkDailyCoins: () => void
-  updateCoins: (amount: number) => void
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
@@ -479,16 +478,6 @@ export const useStore = create<StoreState>()(
         const t = today()
         if (currentUser.lastCoinsDate === t) return
         const updated = { ...currentUser, coins: currentUser.coins + DAILY_COINS, lastCoinsDate: t }
-        set(s => ({
-          currentUser: updated,
-          users: s.users.map(u => u.id === updated.id ? updated : u),
-        }))
-      },
-
-      updateCoins: (amount) => {
-        const { currentUser } = get()
-        if (!currentUser) return
-        const updated = { ...currentUser, coins: currentUser.coins + amount }
         set(s => ({
           currentUser: updated,
           users: s.users.map(u => u.id === updated.id ? updated : u),
@@ -711,13 +700,8 @@ export const useStore = create<StoreState>()(
       },
 
       recordShare: (eventId) => {
-        const { currentUser } = get()
         set(s => ({
           events: s.events.map(e => e.id === eventId ? { ...e, shareCount: (e.shareCount ?? 0) + 1 } : e),
-          ...(currentUser && {
-            currentUser: { ...currentUser, coins: currentUser.coins + 100 },
-            users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: u.coins + 100 } : u),
-          }),
         }))
       },
 

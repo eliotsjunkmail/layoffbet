@@ -57,7 +57,6 @@ export const Home = () => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
-  const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
