@@ -139,6 +139,12 @@ export const Header = () => {
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />
                 </Link>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="p-2 rounded-lg transition-colors text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
+                >
+                  <PlusCircle className="w-5 h-5" />
+                </button>
                 <Link
                   to="/login"
                   className="ml-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors"
