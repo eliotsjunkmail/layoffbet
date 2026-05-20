@@ -4,10 +4,10 @@ import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { AuthModal } from '../components/AuthModal'
-import { getProbability, formatDate, timeUntil, betMovementStr } from '../utils/odds'
+import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug } from '../utils/odds'
 
 export const EventDetail = () => {
-  const { id } = useParams<{ id: string }>()
+  const { id, slug } = useParams<{ id?: string; slug?: string }>()
   const navigate = useNavigate()
   const events = useStore(s => s.events)
   const companies = useStore(s => s.companies)
@@ -96,7 +96,11 @@ export const EventDetail = () => {
   }
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/event/${id}`
+    const company = companies.find(c => c.slug === slug || c.id === slug)
+    const eventSlug = makeSlug(event.title)
+    const url = company
+      ? `${window.location.origin}/${company.slug}/bet/${id}/${eventSlug}`
+      : `${window.location.origin}/event/${id}`
     const shareText = `"${event.title}" — ${prob.yes}% likely on Layoff Bet`
     const shareData = {
       title: event.companyName,

@@ -244,6 +244,7 @@ export const App = () => (
       <Route path="/privacy" element={<PrivacyPolicy />} />
 
       <Route path="/:slug" element={<CompanyPage />} />
+      <Route path="/:slug/bet/:id/*" element={<EventDetail />} />
       <Route path="/event/:id" element={<EventDetail />} />
       <Route path="/search" element={<Search />} />
 
