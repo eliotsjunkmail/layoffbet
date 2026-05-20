@@ -58,11 +58,19 @@ export const Home = () => {
     return stored ? JSON.parse(stored) : true
   })
   const [coinsAddedThisSession, setCoinsAddedThisSession] = useState(0)
+  const [anonCoins, setAnonCoins] = useState(() => {
+    const stored = localStorage.getItem('anonCoins')
+    return stored ? parseInt(stored) : 0
+  })
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
   }, [showComments])
+
+  useEffect(() => {
+    localStorage.setItem('anonCoins', anonCoins.toString())
+  }, [anonCoins])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -159,18 +167,22 @@ export const Home = () => {
 
   // Add coins every 10 seconds (max 100 coins per session)
   useEffect(() => {
-    if (!currentUser || coinsAddedThisSession >= 100) return
+    if (coinsAddedThisSession >= 100) return
 
     const interval = setInterval(() => {
       setCoinsAddedThisSession(prev => {
         if (prev >= 100) return prev
-        updateCoins(1)
+        if (currentUser) {
+          updateCoins(1)
+        } else {
+          setAnonCoins(prev => prev + 1)
+        }
         return prev + 1
       })
     }, 10000)
 
     return () => clearInterval(interval)
-  }, [currentUser, coinsAddedThisSession, updateCoins])
+  }, [coinsAddedThisSession, currentUser, updateCoins])
 
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
@@ -221,13 +233,13 @@ export const Home = () => {
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
-        {currentUser && userStats && (
+        {(currentUser && userStats) || !currentUser ? (
           <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
+              <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
-                  {userStats.coins}
+                  {currentUser ? userStats!.coins : anonCoins}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
@@ -245,9 +257,23 @@ export const Home = () => {
                   </button>
                 </>
               )}
+              {!currentUser && (
+                <>
+                  <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col opacity-60">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-400 dark:text-slate-500 flex-1 flex items-center justify-center">—</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">sign in</div>
+                  </button>
+                  <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col opacity-60">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-400 dark:text-slate-500 flex-1 flex items-center justify-center">—</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">sign in</div>
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Hero */}
         <div className={`${(currentUser || hasFavorites) ? 'pt-2 pb-2' : 'pt-6 pb-4'} text-center`}>
