@@ -392,7 +392,7 @@ export const Home = () => {
           )}
 
           {!currentUser && (hasFavorites || lastVisitedCompany) && (
-            <p className="text-xs text-gray-400 dark:text-slate-500">
+            <p className="text-xs text-gray-400 dark:text-slate-500 -mt-2">
               Swipe left or right to bet — no sign-in needed.
             </p>
           )}
