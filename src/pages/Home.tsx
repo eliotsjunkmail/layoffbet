@@ -25,7 +25,6 @@ const barProps = (yesPool: number, noPool: number) => {
 }
 
 export const Home = () => {
-  console.log('HOME PAGE LOADED - COINS DISABLED (deployed: 2026-05-20)')
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
