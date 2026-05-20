@@ -325,12 +325,10 @@ export const Home = () => {
           {/* Title + subtitle: always on desktop, hidden on mobile once logged in or has favorites */}
           <div className={`${(currentUser || hasFavorites) ? 'hidden sm:block' : 'block'} mb-3`}>
             <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
-              <span className="sm:hidden">What's really happening at work</span>
-              <span className="hidden sm:block">Find out what's really<br />happening at your company</span>
+              What's really happening at work
             </h1>
-            <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base max-w-sm mx-auto whitespace-nowrap overflow-hidden text-ellipsis sm:whitespace-normal sm:overflow-visible">
-              Anonymous prediction markets for the workplace
-              <span className="hidden sm:inline"> — track signals, bet on outcomes</span>
+            <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base max-w-sm mx-auto">
+              Anonymous prediction markets for work
             </p>
           </div>
 
