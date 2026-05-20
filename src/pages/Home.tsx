@@ -178,13 +178,13 @@ export const Home = () => {
     setShowDropdown(false)
   }, [location.key])
 
-  // Add coins every 10 seconds (max 100 coins per session)
+  // Add coins every 3 seconds (max 50 coins per session)
   useEffect(() => {
-    if (coinsAddedThisSession >= 100) return
+    if (coinsAddedThisSession >= 50) return
 
     const interval = setInterval(() => {
       setCoinsAddedThisSession(prev => {
-        if (prev >= 100) return prev
+        if (prev >= 50) return prev
         if (currentUser) {
           updateCoins(1)
         } else {
@@ -196,7 +196,7 @@ export const Home = () => {
         setTimeout(() => setCoinPuff(null), 600)
         return prev + 1
       })
-    }, 10000)
+    }, 3000)
 
     return () => clearInterval(interval)
   }, [coinsAddedThisSession, currentUser, updateCoins])
