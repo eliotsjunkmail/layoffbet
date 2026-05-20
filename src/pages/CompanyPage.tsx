@@ -218,7 +218,7 @@ export const CompanyPage = () => {
                 </button>
                 <button
                   onClick={() => toggleFavoriteCompany(company.id)}
-                  className={`p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+                  className={`p-2 rounded-xl transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
                   title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
                   <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />

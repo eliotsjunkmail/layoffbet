@@ -403,9 +403,9 @@ export const Home = () => {
                 </Link>
                 <button
                   onClick={e => handleStar(e, c.id)}
-                  className="p-1.5 rounded-lg transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                 >
-                  <Star className={`w-5 h-5 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`} />
+                  <Star className={`w-5 h-5 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400'}`} />
                 </button>
               </div>
               {activeEvents.length > 0 ? (
