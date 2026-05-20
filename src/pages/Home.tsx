@@ -226,7 +226,7 @@ export const Home = () => {
           setTimeout(() => setSwipeFlash(null), 600)
           showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
         } else {
-          showToast('10 bets reached — sign in to keep going')
+          showToast('Prediction is no longer active')
         }
       } else {
         showToast('Not enough coins')
@@ -304,10 +304,10 @@ export const Home = () => {
               )}
               {!currentUser && (
                 <>
-                  <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
                     <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.values(anonVotedEvents).filter(v => v.count < 10).length} active</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
                   </button>
                   <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
@@ -422,9 +422,6 @@ export const Home = () => {
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const flash = swipeFlash?.id === e.id
-                    const anonVote = anonVotedEvents[e.id]
-                    const anonCount = anonVote?.count ?? 0
-                    const exhausted = !currentUser && anonCount >= 10
                     const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)
                     return (
@@ -432,7 +429,7 @@ export const Home = () => {
                         <SwipeCard
                           onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
                           onSwipeNo={() => handleSwipeBet(e.id, 'no')}
-                          disabled={exhausted}
+                          disabled={false}
                           onClick={() => navigate(`/event/${e.id}`)}
                           demoActive={cIdx === 0 && eIdx === 0}
                           cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow

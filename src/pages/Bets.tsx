@@ -51,11 +51,12 @@ export const Bets = () => {
   const myBets = currentUser ? bets.filter(b => b.userId === currentUser.id) : []
 
   // For pre-login users, convert anonVotedEvents to bet-like objects
+  // Amount is calculated as count * 10 (since each vote is 10 coins)
   const anonBets = currentUser ? [] : Object.entries(anonVotedEvents).map(([eventId, data]) => ({
     id: eventId,
     eventId,
     userId: '',
-    amount: 10,
+    amount: data.count * 10,
     side: data.side as 'yes' | 'no',
     createdAt: new Date().toISOString()
   }))

@@ -415,7 +415,6 @@ export const useStore = create<StoreState>()(
       placeAnonymousVote: (eventId, side, amount = 10) => {
         const { events, anonVotedEvents, getEffectiveStatus } = get()
         const existing = anonVotedEvents[eventId]
-        if (existing && existing.count >= 10) return false
         const event = events.find(e => e.id === eventId)
         if (!event || getEffectiveStatus(event) !== 'active') return false
         set(s => ({
