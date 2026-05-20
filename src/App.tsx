@@ -113,18 +113,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
-        {/* Countdown banner */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 mb-4 text-center">
-          <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Stealth beta · Launching late 2026</p>
-          <div className="flex flex-col items-center">
-            <span className="text-5xl font-black text-white tabular-nums leading-none">{pad(days)}</span>
-            <span className="text-xs text-slate-600 uppercase tracking-wider mt-1.5">Days to launch</span>
-          </div>
-        </div>
-
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-          <p className="text-base font-semibold text-white mb-1 text-center">Where do you work?</p>
           <p className="text-xs text-slate-500 text-center mb-5">Early access is invite-only</p>
 
           <form onSubmit={submit} className="space-y-3">
