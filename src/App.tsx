@@ -258,7 +258,7 @@ export const App = () => (
       <Route path="/search" element={<Search />} />
 
       <Route path="/feed" element={<Protected><Feed /></Protected>} />
-      <Route path="/bets" element={<Protected><Bets /></Protected>} />
+      <Route path="/bets" element={<Bets />} />
       <Route path="/create" element={<Protected><CreateEvent /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />

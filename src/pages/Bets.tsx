@@ -18,6 +18,7 @@ const barProps = (yesPool: number, noPool: number) => {
 export const Bets = () => {
   const currentUser = useStore(s => s.currentUser)
   const bets = useStore(s => s.bets)
+  const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const events = useStore(s => s.events)
   const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
@@ -34,18 +35,33 @@ export const Bets = () => {
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
-    if (placeBet(eventId, side, 10)) {
-      setSwipeFlash({ id: eventId, side })
-      setTimeout(() => setSwipeFlash(null), 600)
-      showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+    if (currentUser) {
+      if (placeBet(eventId, side, 10)) {
+        setSwipeFlash({ id: eventId, side })
+        setTimeout(() => setSwipeFlash(null), 600)
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+      } else {
+        showToast('Not enough coins or 100-coin limit reached')
+      }
     } else {
-      showToast('Not enough coins or 100-coin limit reached')
+      showToast('Sign in to place more bets')
     }
   }
 
-  const myBets = bets.filter(b => b.userId === currentUser?.id)
+  const myBets = currentUser ? bets.filter(b => b.userId === currentUser.id) : []
 
-  const allItems = myBets
+  // For pre-login users, convert anonVotedEvents to bet-like objects
+  const anonBets = currentUser ? [] : Object.entries(anonVotedEvents).map(([eventId, data]) => ({
+    id: eventId,
+    eventId,
+    userId: '',
+    amount: 10,
+    side: data.side as 'yes' | 'no',
+    createdAt: new Date().toISOString()
+  }))
+
+  const combinedBets = currentUser ? myBets : anonBets
+  const allItems = combinedBets
     .map(bet => {
       const event = events.find(e => e.id === bet.eventId)
       if (!event) return null
@@ -87,7 +103,7 @@ export const Bets = () => {
   const totalShown = tab === 'active' ? activeItems.length : completedItems.length
 
   // Get suggested bets from same companies, favorites, or viewed companies
-  const userBetCompanyIds = new Set(myBets.map(b => events.find(e => e.id === b.eventId)?.companyId).filter(Boolean))
+  const userBetCompanyIds = new Set(combinedBets.map(b => events.find(e => e.id === b.eventId)?.companyId).filter(Boolean))
   const suggestedCompanyIds = new Set([
     ...userBetCompanyIds,
     ...favoriteCompanyIds,
@@ -97,7 +113,7 @@ export const Bets = () => {
   const suggestedEvents = events
     .filter(e => {
       const status = getEffectiveStatus(e)
-      const hasUserBet = myBets.some(b => b.eventId === e.id)
+      const hasUserBet = combinedBets.some(b => b.eventId === e.id)
       const inSuggestedCompany = suggestedCompanyIds.has(e.companyId)
       return status === 'active' && !hasUserBet && inSuggestedCompany
     })
