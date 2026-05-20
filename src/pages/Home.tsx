@@ -514,10 +514,36 @@ export const Home = () => {
                     )
                   })}
                 </div>
+              ) : null}
+              {/* Add prediction button */}
+              {currentUser ? (
+                <button
+                  onClick={() => navigate('/create', { state: { companyId: c.id } })}
+                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                >
+                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                    What else is happening at {c.name}?
+                  </span>
+                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
+                    + Add a prediction
+                  </span>
+                </button>
               ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                >
+                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                    What else is happening at {c.name}?
+                  </span>
+                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
+                    + Add a prediction
+                  </span>
+                </button>
+              )}
+              {activeEvents.length === 0 && (
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-center shadow-sm">
                   <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
-                  <Link to="/create" className="text-xs text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">Create one →</Link>
                 </div>
               )}
               {cIdx === 0 && <AdBanner />}
