@@ -8,8 +8,6 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
 import { getProbability, betMovementStr } from '../utils/odds'
 
-const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
-
 const fmtViews = (n: number) => {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
   if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`
@@ -44,7 +42,6 @@ export const Home = () => {
   const location = useLocation()
 
   const [query, setQuery] = useState('')
-  const [industry, setIndustry] = useState('All')
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -158,9 +155,12 @@ export const Home = () => {
 
   const filtered = useMemo(() => {
     return companies
-      .filter(c => industry === 'All' || c.industry === industry)
-      .sort((a, b) => b.viewCount - a.viewCount)
-  }, [companies, industry])
+      .sort((a, b) => {
+        if (a.name === 'BNY Mellon') return -1
+        if (b.name === 'BNY Mellon') return 1
+        return a.name.localeCompare(b.name)
+      })
+  }, [companies])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -548,40 +548,22 @@ export const Home = () => {
 
         {hasFavorites && <div className="mb-2" />}
 
-        {/* Industry filter + Browse — hidden once user has favorites */}
+        {/* Browse companies — hidden once user has favorites */}
         {!hasFavorites && (
-          <>
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-              {INDUSTRIES.map(ind => (
-                <button
-                  key={ind}
-                  onClick={() => setIndustry(ind)}
-                  className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
-                    industry === ind
-                      ? 'bg-violet-600 border-violet-600 text-white'
-                      : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-violet-300 dark:hover:border-violet-700'
-                  }`}
-                >
-                  {ind}
-                </button>
+          <section className="mb-4">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
+              <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                {filtered.length}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {filtered.map(c => (
+                <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
               ))}
             </div>
-
-            <section className="mb-4">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
-                <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                  {filtered.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {filtered.map(c => (
-                  <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
-                ))}
-              </div>
-            </section>
-          </>
+          </section>
         )}
 
         {/* Login Banner for guests */}
