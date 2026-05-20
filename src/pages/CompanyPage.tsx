@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
 import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -41,6 +41,8 @@ export const CompanyPage = () => {
   const addComment = useStore(s => s.addComment)
   const upvoteComment = useStore(s => s.upvoteComment)
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
+  const anonCoins = useStore(s => s.anonCoins ?? 0)
+  const anonCoinsSpent = useStore(s => s.anonCoinsSpent ?? 0)
   const [shareCopied, setShareCopied] = useState(false)
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
@@ -56,6 +58,26 @@ export const CompanyPage = () => {
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
+
+  const userStats = useMemo(() => {
+    if (!currentUser) return null
+    const userBets = bets.filter(b => b.userId === currentUser.id)
+    const activeBetCount = userBets.filter(b => {
+      const event = events.find(e => e.id === b.eventId)
+      return event && getEffectiveStatus(event) === 'active'
+    }).length
+    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+    const activeBetAmount = userBets.filter(b => {
+      const event = events.find(e => e.id === b.eventId)
+      return event && getEffectiveStatus(event) === 'active'
+    }).reduce((sum, b) => sum + b.amount, 0)
+    return {
+      coins: currentUser.coins - activeBetAmount,
+      totalBets: userBets.length,
+      activeBets: activeBetCount,
+      totalBetAmount,
+    }
+  }, [currentUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
@@ -129,9 +151,50 @@ export const CompanyPage = () => {
 
   return (
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-5 text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>
+
+      {/* User Metrics */}
+      {(currentUser && userStats) || !currentUser ? (
+        <div className="mb-5 -mx-4 px-4 pb-4">
+          <div className="grid grid-cols-3 gap-3">
+            <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
+              <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</div>
+              <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
+            </button>
+            {currentUser && userStats && (
+              <>
+                <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+                </button>
+                <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                </button>
+              </>
+            )}
+            {!currentUser && (
+              <>
+                <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
+                </button>
+                <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{anonCoinsSpent}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-5 shadow-sm dark:shadow-none">
         <div className="flex items-start gap-4">
