@@ -519,31 +519,6 @@ export const Home = () => {
           )
         })()}
 
-        {/* Global Show Comments toggle - only shown when user has favorites */}
-        {hasFavorites && (
-          <div className="flex justify-center mb-4 pt-2">
-            <button
-              onClick={() => setShowComments(!showComments)}
-              className={`flex items-center gap-2.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                showComments
-                  ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
-                  : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
-              }`}
-            >
-              <span>Show Comments</span>
-              <div className={`w-5 h-3 rounded-full transition-colors relative flex items-center ${
-                showComments
-                  ? 'bg-violet-600 dark:bg-violet-400'
-                  : 'bg-gray-400 dark:bg-slate-600'
-              }`}>
-                <div className={`w-2.5 h-2.5 rounded-full bg-white transition-transform ${
-                  showComments ? 'translate-x-2.5' : 'translate-x-0.5'
-                }`} />
-              </div>
-            </button>
-          </div>
-        )}
-
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
           const betOrder = (eventId: string) => {
