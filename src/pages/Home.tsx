@@ -62,6 +62,7 @@ export const Home = () => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 0
   })
+  const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
 
   useEffect(() => {
@@ -177,6 +178,10 @@ export const Home = () => {
         } else {
           setAnonCoins(prev => prev + 1)
         }
+        // Trigger puff animation
+        const puffId = Math.random().toString(36).substring(7)
+        setCoinPuff({ id: puffId, x: 50, y: 50 })
+        setTimeout(() => setCoinPuff(null), 600)
         return prev + 1
       })
     }, 10000)
@@ -223,11 +228,19 @@ export const Home = () => {
           from { opacity: 1; }
           to { opacity: 0; }
         }
+        @keyframes puff {
+          0% { transform: translate(0, 0) scale(1); opacity: 1; }
+          100% { transform: translate(0, -40px) scale(1.5); opacity: 0; }
+        }
         .comments-enter {
           animation: fadeIn 0.3s ease-out;
         }
         .comments-exit {
           animation: fadeOut 0.3s ease-in;
+        }
+        .coin-puff {
+          animation: puff 0.6s ease-out forwards;
+          pointer-events: none;
         }
       `}</style>
       <Layout fullWidth>
@@ -240,6 +253,11 @@ export const Home = () => {
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
                   {currentUser && userStats ? userStats.coins : anonCoins}
+                  {coinPuff && (
+                    <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
+                      ✨
+                    </div>
+                  )}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
               </button>
