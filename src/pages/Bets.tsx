@@ -57,7 +57,7 @@ export const Bets = () => {
     eventId,
     userId: '',
     amount: data.count * 10,
-    side: data.side as 'yes' | 'no',
+    side: data.lastSide as 'yes' | 'no',
     createdAt: new Date().toISOString()
   }))
 
