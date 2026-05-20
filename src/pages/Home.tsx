@@ -62,6 +62,10 @@ export const Home = () => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 0
   })
+  const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
+    const stored = localStorage.getItem('anonCoinsSpent')
+    return stored ? parseInt(stored) : 0
+  })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
 
@@ -72,6 +76,10 @@ export const Home = () => {
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
   }, [anonCoins])
+
+  useEffect(() => {
+    localStorage.setItem('anonCoinsSpent', anonCoinsSpent.toString())
+  }, [anonCoinsSpent])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -211,12 +219,17 @@ export const Home = () => {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
-      if (placeAnonymousVote(eventId, side)) {
-        setSwipeFlash({ id: eventId, side })
-        setTimeout(() => setSwipeFlash(null), 600)
-        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${movement}`)
+      if (Math.max(0, anonCoins - anonCoinsSpent) >= 10) {
+        if (placeAnonymousVote(eventId, side)) {
+          setAnonCoinsSpent(prev => prev + 10)
+          setSwipeFlash({ id: eventId, side })
+          setTimeout(() => setSwipeFlash(null), 600)
+          showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+        } else {
+          showToast('10 bets reached — sign in to keep going')
+        }
       } else {
-        showToast('10 bets reached — sign in to keep going')
+        showToast('Not enough coins')
       }
     }
   }
@@ -256,7 +269,7 @@ export const Home = () => {
               <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
-                  {currentUser && userStats ? userStats.coins : anonCoins}
+                  {currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}
                   {coinPuff && (
                     <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
                       ✨
