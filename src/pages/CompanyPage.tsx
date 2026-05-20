@@ -41,9 +41,15 @@ export const CompanyPage = () => {
   const addComment = useStore(s => s.addComment)
   const upvoteComment = useStore(s => s.upvoteComment)
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
-  const anonCoins = useStore(s => s.anonCoins ?? 0)
-  const anonCoinsSpent = useStore(s => s.anonCoinsSpent ?? 0)
   const [shareCopied, setShareCopied] = useState(false)
+  const [anonCoins, setAnonCoins] = useState(() => {
+    const stored = localStorage.getItem('anonCoins')
+    return stored ? parseInt(stored) : 0
+  })
+  const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
+    const stored = localStorage.getItem('anonCoinsSpent')
+    return stored ? parseInt(stored) : 0
+  })
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
