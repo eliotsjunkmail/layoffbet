@@ -477,7 +477,7 @@ export const useStore = create<StoreState>()(
         if (!currentUser) return
         const t = today()
         if (currentUser.lastCoinsDate === t) return
-        const updated = { ...currentUser, coins: currentUser.coins + DAILY_COINS, lastCoinsDate: t }
+        const updated = { ...currentUser, coins: Math.min(currentUser.coins + DAILY_COINS, 999), lastCoinsDate: t }
         set(s => ({
           currentUser: updated,
           users: s.users.map(u => u.id === updated.id ? updated : u),
@@ -487,7 +487,7 @@ export const useStore = create<StoreState>()(
       updateCoins: (amount) => {
         const { currentUser } = get()
         if (!currentUser) return
-        const updated = { ...currentUser, coins: currentUser.coins + amount }
+        const updated = { ...currentUser, coins: Math.min(currentUser.coins + amount, 999) }
         set(s => ({
           currentUser: updated,
           users: s.users.map(u => u.id === updated.id ? updated : u),
@@ -507,7 +507,7 @@ export const useStore = create<StoreState>()(
         if (!existing) {
           if (amount > 100 || currentUser.coins < amount) return false
           const bet: Bet = { id: `bet-${uid()}`, eventId, userId: currentUser.id, side, amount, createdAt: new Date().toISOString() }
-          const newCoins = currentUser.coins - amount
+          const newCoins = Math.min(currentUser.coins - amount, 999)
           set(s => ({
             bets: [...s.bets, bet],
             events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
@@ -521,7 +521,7 @@ export const useStore = create<StoreState>()(
         if (existing.side === side) {
           const newAmount = existing.amount + amount
           if (newAmount > 100 || currentUser.coins < amount) return false
-          const newCoins = currentUser.coins - amount
+          const newCoins = Math.min(currentUser.coins - amount, 999)
           set(s => ({
             bets: s.bets.map(b => b.id === existing.id ? { ...b, amount: newAmount } : b),
             events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
@@ -538,7 +538,7 @@ export const useStore = create<StoreState>()(
         const netCost = remainder              // refund cancelled coins, spend remainder
         if (currentUser.coins < netCost) return false
 
-        const newCoins = currentUser.coins - netCost
+        const newCoins = Math.min(currentUser.coins - netCost, 999)
 
         // Rebuild bets array
         const withoutExisting = bets.filter(b => b.id !== existing.id)
@@ -574,7 +574,7 @@ export const useStore = create<StoreState>()(
         if (!bet) return
         const event = events.find(e => e.id === eventId)
         if (!event || getEffectiveStatus(event) !== 'active') return
-        const updatedUser = { ...currentUser, coins: currentUser.coins + bet.amount }
+        const updatedUser = { ...currentUser, coins: Math.min(currentUser.coins + bet.amount, 999) }
         set(s => ({
           bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === currentUser.id)),
           events: s.events.map(e => e.id === eventId ? {
@@ -632,7 +632,7 @@ export const useStore = create<StoreState>()(
           const share = winnerPool > 0 ? (bet.amount / winnerPool) * totalPool : 0
           const payout = Math.floor(share)
           const idx = updatedUsers.findIndex(u => u.id === bet.userId)
-          if (idx !== -1) updatedUsers[idx] = { ...updatedUsers[idx], coins: updatedUsers[idx].coins + payout }
+          if (idx !== -1) updatedUsers[idx] = { ...updatedUsers[idx], coins: Math.min(updatedUsers[idx].coins + payout, 999) }
         })
 
         const { currentUser } = get()
