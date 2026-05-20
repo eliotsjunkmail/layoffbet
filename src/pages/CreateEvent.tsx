@@ -12,6 +12,7 @@ export const CreateEvent = () => {
   const { state } = useLocation() as { state: { companyId?: string } | null }
   const sorted = [...companies].sort((a, b) => a.name.localeCompare(b.name))
   const minDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+  const maxDate = new Date(Date.now() + 730 * 86400000).toISOString().split('T')[0]
   const [companyId, setCompanyId] = useState(state?.companyId ?? sorted[0]?.id ?? '')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -63,7 +64,8 @@ export const CreateEvent = () => {
 
         <div>
           <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Expiration Date</label>
-          <input type="date" value={expiresAt} min={minDate} onChange={e => setExpiresAt(e.target.value)} className={inputCls} />
+          <input type="date" value={expiresAt} min={minDate} max={maxDate} onChange={e => setExpiresAt(e.target.value)} className={inputCls} />
+          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 2 years from today</div>
         </div>
 
         {error && (
