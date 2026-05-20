@@ -111,6 +111,13 @@ export const Home = () => {
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0
 
+  const lastVisitedCompany = useMemo(() => {
+    if (hasFavorites) return null
+    const entries = Object.entries(companyLastVisit).sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+    if (entries.length === 0) return null
+    return companies.find(c => c.id === entries[0][0])
+  }, [hasFavorites, companyLastVisit, companies])
+
   const activeEventsByCompany = useMemo(() => {
     const map: Record<string, number> = {}
     events.forEach(e => {
@@ -370,6 +377,121 @@ export const Home = () => {
             </p>
           )}
         </div>
+
+        {/* Last visited company (when no favorites) */}
+        {!hasFavorites && lastVisitedCompany && (() => {
+          const c = lastVisitedCompany
+          const betOrder = (eventId: string) => {
+            if (!currentUser) return 2
+            const b = bets.find(bet => bet.eventId === eventId && bet.userId === currentUser.id)
+            if (!b) return 2
+            return b.side === 'yes' ? 0 : 1
+          }
+          const activeEvents = events
+            .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
+            .sort((a, b) => {
+              const diff = betOrder(a.id) - betOrder(b.id)
+              if (diff !== 0) return diff
+              return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
+            })
+          return (
+            <section key={c.id} className="mb-2 pt-1">
+              <div className="flex items-center justify-between mb-3">
+                <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
+                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+                </Link>
+              </div>
+              {activeEvents.length > 0 ? (
+                <div className="space-y-2.5">
+                  {activeEvents.map((e, eIdx) => {
+                    const { dominant, pct } = barProps(e.yesPool, e.noPool)
+                    const flash = swipeFlash?.id === e.id
+                    const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
+                    const eventComments = comments.filter(c => c.eventId === e.id)
+                    return (
+                      <div key={e.id}>
+                        <SwipeCard
+                          onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
+                          onSwipeNo={() => handleSwipeBet(e.id, 'no')}
+                          disabled={false}
+                          onClick={() => navigate(`/event/${e.id}`)}
+                          demoActive={eIdx === 0}
+                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
+                            ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                              flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                              'border-violet-200 dark:border-violet-800'}`}
+                        >
+                          {userBet && (
+                            <div className="mb-2">
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
+                            {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
+                              <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                            )}
+                          </div>
+                          <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
+                            <div
+                              className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            {dominant === 'yes'
+                              ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                              : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
+                            }
+                            <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins</span>
+                            {dominant === 'no'
+                              ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                              : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
+                            }
+                          </div>
+                        </SwipeCard>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : null}
+              {/* Add prediction button */}
+              {currentUser ? (
+                <button
+                  onClick={() => navigate('/create', { state: { companyId: c.id } })}
+                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                >
+                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                    What else is happening at {c.name}?
+                  </span>
+                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
+                    + Add a prediction
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                >
+                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                    What else is happening at {c.name}?
+                  </span>
+                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
+                    + Add a prediction
+                  </span>
+                </button>
+              )}
+              {activeEvents.length === 0 && (
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-center shadow-sm">
+                  <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
+                </div>
+              )}
+            </section>
+          )
+        })()}
 
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
