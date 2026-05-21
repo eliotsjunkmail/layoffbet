@@ -133,10 +133,12 @@ export const Bets = () => {
 
   return (
     <Layout>
-      <button onClick={() => navigate('/')} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
-        <ChevronLeft className="w-4 h-4" /> Back
-      </button>
-      <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-4">My Bets</h1>
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => navigate('/')} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors text-sm flex-shrink-0">
+          <ChevronLeft className="w-4 h-4" /> Back
+        </button>
+        <h1 className="text-lg font-bold text-gray-900 dark:text-white">My Bets</h1>
+      </div>
 
       <div className="flex bg-gray-100 dark:bg-slate-800/60 rounded-xl p-1 mb-5 gap-1">
         {([
