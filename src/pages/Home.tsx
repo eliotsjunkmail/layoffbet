@@ -432,6 +432,13 @@ export const Home = () => {
                               </span>
                             </div>
                           )}
+                          {!userBet && anonVotedEvents[e.id] && (
+                            <div className="mb-2">
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                You bet {anonVotedEvents[e.id].count * 10} coins {anonVotedEvents[e.id].lastSide === 'yes' ? 'YES' : 'NO'}
+                              </span>
+                            </div>
+                          )}
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
                             {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
