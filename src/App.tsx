@@ -41,6 +41,16 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
   const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
 
   useEffect(() => {
+    if (!scrollRef.current) return
+    const el = scrollRef.current
+    if (scrollDirection === 'right') {
+      el.scrollLeft = el.scrollWidth - el.clientWidth
+    } else {
+      el.scrollLeft = 0
+    }
+  }, [scrollDirection])
+
+  useEffect(() => {
     if (!scrollRef.current || isDragging) return
     const scroll = () => {
       if (!scrollRef.current) return
@@ -202,7 +212,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             {['A', 'B', 'C', 'D'].map((letter, idx) => (
               <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
             ))}
-            <div className="text-center pt-2">
+            <div className="text-center">
               <div className="text-xs text-slate-500">and more…</div>
             </div>
           </div>
