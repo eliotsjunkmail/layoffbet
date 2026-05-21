@@ -32,7 +32,7 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDirection: 'left' | 'right' }) => {
+const CompanyScroller = ({ letter, scrollDirection, speed }: { letter: string; scrollDirection: 'left' | 'right'; speed: number }) => {
   const companies = useStore(s => s.companies)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -45,8 +45,8 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
-      const speed = scrollDirection === 'left' ? 0.5 : -0.5
-      el.scrollLeft += speed
+      const scrollSpeed = scrollDirection === 'left' ? speed : -speed
+      el.scrollLeft += scrollSpeed
       if (scrollDirection === 'left' && el.scrollLeft >= el.scrollWidth - el.clientWidth) {
         el.scrollLeft = 0
       } else if (scrollDirection === 'right' && el.scrollLeft <= 0) {
@@ -55,7 +55,7 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [scrollDirection, isDragging])
+  }, [scrollDirection, speed, isDragging])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -172,9 +172,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
-          {['B'].map((letter, idx) => (
-            <CompanyScroller key={`${letter}-${idx}`} letter={letter} scrollDirection="right" />
-          ))}
+          <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
+          <CompanyScroller letter="B" scrollDirection="right" speed={0.5} />
           <div className="text-center">
             <div className="text-xs text-slate-500">and more…</div>
           </div>
