@@ -47,7 +47,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
   })()
 
   useEffect(() => {
-    if (!scrollRef.current || isDragging) return
+    if (!scrollRef.current || isDragging || selectedCompanyId) return
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
@@ -61,7 +61,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [scrollDirection, speed, isDragging])
+  }, [scrollDirection, speed, isDragging, selectedCompanyId])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-company-pill]')) return
