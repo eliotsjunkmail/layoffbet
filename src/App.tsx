@@ -45,7 +45,7 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
-      const speed = scrollDirection === 'left' ? 2 : -2
+      const speed = scrollDirection === 'left' ? 0.5 : -0.5
       el.scrollLeft += speed
       if (scrollDirection === 'left' && el.scrollLeft >= el.scrollWidth - el.clientWidth) {
         el.scrollLeft = 0
@@ -53,7 +53,7 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
         el.scrollLeft = el.scrollWidth - el.clientWidth
       }
     }
-    const interval = setInterval(scroll, 50)
+    const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
   }, [scrollDirection, isDragging])
 
@@ -198,12 +198,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
 
           {/* Company scrollers */}
-          <div className="mt-8 space-y-3">
+          <div className="mt-8 space-y-2">
             {['A', 'B', 'C', 'D'].map((letter, idx) => (
-              <div key={letter}>
-                <div className="text-xs text-slate-600 mb-2">{letter}</div>
-                <CompanyScroller letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
-              </div>
+              <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
             ))}
             <div className="text-center pt-2">
               <div className="text-xs text-slate-500">and more…</div>
