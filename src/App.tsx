@@ -49,12 +49,11 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
 
   useEffect(() => {
     if (!scrollRef.current || isDragging || selectedCompanyId) return
-    const el = scrollRef.current
-    if (el.scrollWidth <= el.clientWidth) return
 
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
+      if (el.scrollWidth <= el.clientWidth) return
       el.scrollLeft += speed
       if (el.scrollLeft >= el.scrollWidth - el.clientWidth) {
         el.scrollLeft = 0
