@@ -99,7 +99,7 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
         <button
           key={c.id}
           onClick={(e) => handlePillClick(e, c.id)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border ${
+          className={`appearance-none flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border cursor-pointer ${
             selectedCompanyId === c.id
               ? 'bg-violet-600 border-violet-600 text-white'
               : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
