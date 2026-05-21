@@ -32,7 +32,7 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDirection: 'left' | 'right' }) => {
+const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) => {
   const companies = useStore(s => s.companies)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -44,29 +44,22 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
   useEffect(() => {
     if (!scrollRef.current) return
     const el = scrollRef.current
-    if (scrollDirection === 'right') {
-      el.scrollLeft = el.scrollWidth - el.clientWidth
-    } else {
-      el.scrollLeft = 0
-    }
-  }, [scrollDirection])
+    el.scrollLeft = 0
+  }, [])
 
   useEffect(() => {
     if (!scrollRef.current || isDragging || selectedCompanyId) return
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
-      const speed = scrollDirection === 'left' ? 0.5 : -0.5
       el.scrollLeft += speed
-      if (scrollDirection === 'left' && el.scrollLeft >= el.scrollWidth - el.clientWidth) {
+      if (el.scrollLeft >= el.scrollWidth - el.clientWidth) {
         el.scrollLeft = 0
-      } else if (scrollDirection === 'right' && el.scrollLeft <= 0) {
-        el.scrollLeft = el.scrollWidth - el.clientWidth
       }
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [scrollDirection, isDragging, selectedCompanyId])
+  }, [speed, isDragging, selectedCompanyId])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -197,7 +190,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
           {['A', 'B', 'C', 'D'].map((letter, idx) => (
-            <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
+            <CompanyScroller key={letter} letter={letter} speed={0.3 + idx * 0.1} />
           ))}
         </div>
 
