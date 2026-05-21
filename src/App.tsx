@@ -202,7 +202,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             {['A', 'B', 'C', 'D'].map((letter, idx) => (
               <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
             ))}
-            <div className="text-center pt-2">
+            <div className="text-center">
               <div className="text-xs text-slate-500">and more…</div>
             </div>
           </div>
