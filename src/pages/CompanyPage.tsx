@@ -63,7 +63,7 @@ export const CompanyPage = () => {
     setFocusedInput(null)
   }
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
 
   const userStats = useMemo(() => {
     if (!currentUser) return null
