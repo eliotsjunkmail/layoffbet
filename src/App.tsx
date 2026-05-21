@@ -60,7 +60,7 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [isDragging, selectedCompanyId])
+  }, [isDragging, selectedCompanyId, filtered])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
