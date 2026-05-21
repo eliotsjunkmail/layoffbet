@@ -45,10 +45,13 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
     if (!scrollRef.current) return
     const el = scrollRef.current
     el.scrollLeft = 0
-  }, [])
+  }, [filtered])
 
   useEffect(() => {
     if (!scrollRef.current || isDragging || selectedCompanyId) return
+    const el = scrollRef.current
+    if (el.scrollWidth <= el.clientWidth) return
+
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
@@ -59,7 +62,7 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [speed, isDragging, selectedCompanyId])
+  }, [speed, isDragging, selectedCompanyId, filtered])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
