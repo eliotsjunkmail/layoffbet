@@ -122,7 +122,7 @@ export const Header = () => {
                   onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
                   className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${isActive('/create')}`}
                 >
-                  Bet
+                  + Bet
                 </button>
                 <button
                   onClick={() => setShowProfile(true)}
@@ -141,7 +141,7 @@ export const Header = () => {
                   onClick={() => navigate('/login')}
                   className="px-3 py-1.5 rounded-lg font-medium text-sm transition-colors text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
                 >
-                  Bet
+                  + Bet
                 </button>
                 <Link
                   to="/login"
