@@ -170,6 +170,16 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
+        {/* Company scrollers */}
+        <div className="mb-6 space-y-2">
+          {['B', 'B', 'B', 'D'].map((letter, idx) => (
+            <CompanyScroller key={`${letter}-${idx}`} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
+          ))}
+          <div className="text-center">
+            <div className="text-xs text-slate-500">and more…</div>
+          </div>
+        </div>
+
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
           <p className="text-xs text-slate-500 text-center mb-5">Early access is invite-only</p>
@@ -196,16 +206,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               Continue →
             </button>
           </form>
-
-          {/* Company scrollers */}
-          <div className="mt-8 space-y-2">
-            {['B', 'B', 'B', 'D'].map((letter, idx) => (
-              <CompanyScroller key={`${letter}-${idx}`} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
-            ))}
-            <div className="text-center">
-              <div className="text-xs text-slate-500">and more…</div>
-            </div>
-          </div>
         </div>
 
         <div className="text-center mt-6">
