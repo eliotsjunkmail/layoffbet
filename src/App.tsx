@@ -165,7 +165,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6">
           <div className="flex flex-col items-center gap-3">
             <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-xl shadow-violet-900/50">
               <DiceIcon />
@@ -180,17 +180,25 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
+        {/* Company scrollers */}
+        <div className="mb-6 space-y-2">
+          {['A', 'B', 'C', 'D'].map((letter, idx) => (
+            <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
+          ))}
+          <div className="text-center">
+            <div className="text-xs text-slate-500">and more…</div>
+          </div>
+        </div>
+
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-          <p className="text-xs text-slate-500 text-center mb-5">Early access is invite-only</p>
-
           <form onSubmit={submit} className="space-y-3">
             <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
               <input
                 type="text"
                 value={input}
                 onChange={e => { setInput(e.target.value); setError(false) }}
-                placeholder="Enter code"
+                placeholder="Early access is invite-only"
                 autoFocus
                 autoComplete="off"
                 className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
@@ -206,16 +214,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               Continue →
             </button>
           </form>
-
-          {/* Company scrollers */}
-          <div className="mt-8 space-y-2">
-            {['A', 'B', 'C', 'D'].map((letter, idx) => (
-              <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
-            ))}
-            <div className="text-center">
-              <div className="text-xs text-slate-500">and more…</div>
-            </div>
-          </div>
         </div>
 
         <div className="text-center mt-6">
