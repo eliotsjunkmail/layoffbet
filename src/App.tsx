@@ -32,13 +32,19 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, onSelectCompany }: { letter: string; scrollDirection: 'left' | 'right'; speed: number; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
+const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, onSelectCompany, prioritizeCompany }: { letter: string; scrollDirection: 'left' | 'right'; speed: number; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void; prioritizeCompany?: string }) => {
   const companies = useStore(s => s.companies)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(0)
 
-  const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
+  const filtered = (() => {
+    const all = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
+    if (!prioritizeCompany) return all
+    const priority = all.find(c => c.name.toUpperCase().includes(prioritizeCompany.toUpperCase()))
+    if (!priority) return all
+    return [all[0], priority, ...all.slice(1).filter(c => c.id !== priority.id)]
+  })()
 
   useEffect(() => {
     if (!scrollRef.current || isDragging) return
@@ -188,7 +194,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
           <CompanyScroller letter="A" scrollDirection="right" speed={0.2} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
-          <CompanyScroller letter="B" scrollDirection="left" speed={0.5} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <CompanyScroller letter="B" scrollDirection="left" speed={0.5} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} prioritizeCompany="BNY" />
           <CompanyScroller letter="C" scrollDirection="right" speed={0.1} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
           <div className="text-center">
             <div className="text-xs text-slate-500">and more…</div>
