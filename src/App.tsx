@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import type { ReactNode } from 'react'
@@ -30,6 +30,63 @@ const useCountdown = (targetDate: string) => {
     return () => clearInterval(id)
   }, [targetDate])
   return tick
+}
+
+const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDirection: 'left' | 'right' }) => {
+  const companies = useStore(s => s.companies)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState(0)
+
+  const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
+
+  useEffect(() => {
+    if (!scrollRef.current || isDragging) return
+    const scroll = () => {
+      if (!scrollRef.current) return
+      const el = scrollRef.current
+      const speed = scrollDirection === 'left' ? 2 : -2
+      el.scrollLeft += speed
+      if (scrollDirection === 'left' && el.scrollLeft >= el.scrollWidth - el.clientWidth) {
+        el.scrollLeft = 0
+      } else if (scrollDirection === 'right' && el.scrollLeft <= 0) {
+        el.scrollLeft = el.scrollWidth - el.clientWidth
+      }
+    }
+    const interval = setInterval(scroll, 50)
+    return () => clearInterval(interval)
+  }, [scrollDirection, isDragging])
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    setDragStart(e.clientX - (scrollRef.current?.scrollLeft || 0))
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return
+    scrollRef.current.scrollLeft = e.clientX - dragStart
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  return (
+    <div
+      ref={scrollRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
+    >
+      {filtered.map(c => (
+        <div key={c.id} className="flex-shrink-0 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-full text-sm text-slate-300 whitespace-nowrap">
+          {c.name}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
@@ -139,6 +196,19 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               Continue →
             </button>
           </form>
+
+          {/* Company scrollers */}
+          <div className="mt-8 space-y-3">
+            {['A', 'B', 'C', 'D'].map((letter, idx) => (
+              <div key={letter}>
+                <div className="text-xs text-slate-600 mb-2">{letter}</div>
+                <CompanyScroller letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
+              </div>
+            ))}
+            <div className="text-center pt-2">
+              <div className="text-xs text-slate-500">and more…</div>
+            </div>
+          </div>
         </div>
 
         <div className="text-center mt-6">
@@ -183,6 +253,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           40% { transform: translateX(6px); }
           60% { transform: translateX(-4px); }
           80% { transform: translateX(4px); }
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>
