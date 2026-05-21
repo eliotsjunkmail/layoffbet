@@ -37,7 +37,6 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(0)
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
 
   const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -48,7 +47,7 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
   }, [filtered])
 
   useEffect(() => {
-    if (!scrollRef.current || isDragging || selectedCompanyId) return
+    if (!scrollRef.current || isDragging) return
 
     const scroll = () => {
       if (!scrollRef.current) return
@@ -60,7 +59,7 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [isDragging, selectedCompanyId, filtered])
+  }, [isDragging, filtered])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -76,11 +75,6 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
     setIsDragging(false)
   }
 
-  const handlePillClick = (e: React.MouseEvent, companyId: string) => {
-    e.stopPropagation()
-    setSelectedCompanyId(selectedCompanyId === companyId ? null : companyId)
-  }
-
   return (
     <div
       ref={scrollRef}
@@ -91,17 +85,12 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
       className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
     >
       {[...filtered, ...filtered].map((c, idx) => (
-        <button
+        <div
           key={`${c.id}-${idx}`}
-          onClick={(e) => handlePillClick(e, c.id)}
-          className={`appearance-none flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border cursor-pointer ${
-            selectedCompanyId === c.id
-              ? 'bg-violet-600 border-violet-600 text-white'
-              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
-          }`}
+          className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border bg-slate-800 border-slate-700 text-slate-300"
         >
           {c.name}
-        </button>
+        </div>
       ))}
     </div>
   )
