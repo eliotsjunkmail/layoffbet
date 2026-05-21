@@ -418,8 +418,11 @@ export const Home = () => {
                     const flash = swipeFlash?.id === e.id
                     const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)
+                    const midpoint = Math.floor(activeEvents.length / 2)
                     return (
-                      <div key={e.id}>
+                      <>
+                        {eIdx === midpoint && cIdx === 0 && <AdBanner />}
+                        <div key={e.id}>
                         <SwipeCard
                           onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
                           onSwipeNo={() => handleSwipeBet(e.id, 'no')}
@@ -501,7 +504,8 @@ export const Home = () => {
                           </div>
                         </div>
                         )}
-                      </div>
+                        </div>
+                      </>
                     )
                   })}
                 </div>
@@ -530,7 +534,6 @@ export const Home = () => {
                   <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
                 </div>
               )}
-              {cIdx === 0 && <AdBanner />}
             </section>
           )
         })}
