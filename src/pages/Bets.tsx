@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { CheckCircle, Clock, ChevronRight } from 'lucide-react'
+import { CheckCircle, Clock, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
@@ -133,6 +133,9 @@ export const Bets = () => {
 
   return (
     <Layout>
+      <button onClick={() => navigate('/')} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
+        <ChevronLeft className="w-4 h-4" /> Back
+      </button>
       <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-4">My Bets</h1>
 
       <div className="flex bg-gray-100 dark:bg-slate-800/60 rounded-xl p-1 mb-5 gap-1">
