@@ -8,6 +8,8 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
 import { getProbability, betMovementStr } from '../utils/odds'
 
+const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
+
 const fmtViews = (n: number) => {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
   if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`
@@ -42,6 +44,7 @@ export const Home = () => {
   const location = useLocation()
 
   const [query, setQuery] = useState('')
+  const [industry, setIndustry] = useState('All')
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -54,6 +57,7 @@ export const Home = () => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
+  const [hidingComments, setHidingComments] = useState(false)
   const [coinsAddedThisSession, setCoinsAddedThisSession] = useState(0)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -111,13 +115,6 @@ export const Home = () => {
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0
 
-  const lastVisitedCompany = useMemo(() => {
-    if (hasFavorites) return null
-    const entries = Object.entries(companyLastVisit).sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
-    if (entries.length === 0) return null
-    return companies.find(c => c.id === entries[0][0])
-  }, [hasFavorites, companyLastVisit, companies])
-
   const activeEventsByCompany = useMemo(() => {
     const map: Record<string, number> = {}
     events.forEach(e => {
@@ -162,12 +159,9 @@ export const Home = () => {
 
   const filtered = useMemo(() => {
     return companies
-      .sort((a, b) => {
-        if (a.name === 'BNY Mellon') return -1
-        if (b.name === 'BNY Mellon') return 1
-        return a.name.localeCompare(b.name)
-      })
-  }, [companies])
+      .filter(c => industry === 'All' || c.industry === industry)
+      .sort((a, b) => b.viewCount - a.viewCount)
+  }, [companies, industry])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -252,35 +246,23 @@ export const Home = () => {
           from { opacity: 1; }
           to { opacity: 0; }
         }
+        @keyframes slideInRight {
+          from { transform: translateX(-100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutLeft {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(-100%); opacity: 0; }
+        }
         @keyframes puff {
           0% { transform: translate(0, 0) scale(1); opacity: 1; }
           100% { transform: translate(0, -40px) scale(1.5); opacity: 0; }
         }
-        @keyframes slideDown {
-          from {
-            transform: translateY(-10px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        @keyframes slideUp {
-          from {
-            transform: translateY(0);
-            opacity: 1;
-          }
-          to {
-            transform: translateY(-10px);
-            opacity: 0;
-          }
-        }
         .comments-enter {
-          animation: slideDown 0.3s ease-out;
+          animation: slideInRight 0.3s ease-out;
         }
         .comments-exit {
-          animation: slideUp 0.3s ease-in;
+          animation: slideOutLeft 0.3s ease-in;
         }
         .coin-puff {
           animation: puff 0.6s ease-out forwards;
@@ -352,15 +334,15 @@ export const Home = () => {
           {/* Title + subtitle: always on desktop, hidden on mobile once logged in or has favorites */}
           <div className={`${(currentUser || hasFavorites) ? 'hidden sm:block' : 'block'} mb-3`}>
             <h1 className="text-xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight mb-3">
-              What's happening at work
+              What's really happening at work
             </h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base max-w-sm mx-auto">
               Anonymous prediction markets for work
             </p>
           </div>
 
-          {/* Search with typeahead - only show if no favorites and no last visited company */}
-          {!hasFavorites && !lastVisitedCompany && (
+          {/* Search with typeahead - only show if no favorites */}
+          {!hasFavorites && (
           <div ref={searchRef} className="relative max-w-md mx-auto mb-2">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500 pointer-events-none" />
             <input
@@ -391,133 +373,12 @@ export const Home = () => {
           </div>
           )}
 
-          {!currentUser && (hasFavorites || lastVisitedCompany) && (
-            <p className="text-xs text-gray-400 dark:text-slate-500 -mt-2">
+          {!currentUser && (
+            <p className="text-xs text-gray-400 dark:text-slate-500">
               Swipe left or right to bet — no sign-in needed.
             </p>
           )}
         </div>
-
-        {/* Last visited company (when no favorites) */}
-        {!hasFavorites && lastVisitedCompany && (() => {
-          const c = lastVisitedCompany
-          const betOrder = (eventId: string) => {
-            if (!currentUser) return 2
-            const b = bets.find(bet => bet.eventId === eventId && bet.userId === currentUser.id)
-            if (!b) return 2
-            return b.side === 'yes' ? 0 : 1
-          }
-          const activeEvents = events
-            .filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
-            .sort((a, b) => {
-              const diff = betOrder(a.id) - betOrder(b.id)
-              if (diff !== 0) return diff
-              return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
-            })
-          return (
-            <section key={c.id} className="mb-2 pt-1">
-              <div className="flex items-center justify-between mb-3">
-                <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
-                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
-                </Link>
-                <button
-                  onClick={e => handleStar(e, c.id)}
-                  className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                >
-                  <Star className={`w-5 h-5 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400'}`} />
-                </button>
-              </div>
-              {activeEvents.length > 0 ? (
-                <div className="space-y-2.5">
-                  {activeEvents.map((e, eIdx) => {
-                    const { dominant, pct } = barProps(e.yesPool, e.noPool)
-                    const flash = swipeFlash?.id === e.id
-                    const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
-                    const eventComments = comments.filter(c => c.eventId === e.id)
-                    return (
-                      <div key={e.id}>
-                        <SwipeCard
-                          onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
-                          onSwipeNo={() => handleSwipeBet(e.id, 'no')}
-                          disabled={false}
-                          onClick={() => navigate(`/event/${e.id}`)}
-                          demoActive={eIdx === 0}
-                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
-                            ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                              flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                              'border-violet-200 dark:border-violet-800'}`}
-                        >
-                          {userBet && (
-                            <div className="mb-2">
-                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                                You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
-                            {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                              <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
-                            )}
-                          </div>
-                          <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                            <div
-                              className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            {dominant === 'yes'
-                              ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                              : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
-                            }
-                            <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins</span>
-                            {dominant === 'no'
-                              ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                              : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
-                            }
-                          </div>
-                        </SwipeCard>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : null}
-              {/* Add prediction button */}
-              {currentUser ? (
-                <button
-                  onClick={() => navigate('/create', { state: { companyId: c.id } })}
-                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
-                >
-                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                    What else is happening at {c.name}?
-                  </span>
-                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
-                    + Add a prediction
-                  </span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate('/login')}
-                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
-                >
-                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                    What else is happening at {c.name}?
-                  </span>
-                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
-                    + Add a prediction
-                  </span>
-                </button>
-              )}
-              {activeEvents.length === 0 && (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-center shadow-sm">
-                  <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
-                </div>
-              )}
-            </section>
-          )
-        })()}
 
         {/* Favorite company sections */}
         {hasFavorites && favorites.map((c, cIdx) => {
@@ -541,12 +402,45 @@ export const Home = () => {
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
                 </Link>
-                <button
-                  onClick={e => handleStar(e, c.id)}
-                  className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                >
-                  <Star className={`w-6 h-6 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={e => handleStar(e, c.id)}
+                    className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                  >
+                    <Star className={`w-6 h-6 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
+                  </button>
+                  {hasFavorites && (
+                    <button
+                      onClick={() => {
+                        if (showComments) {
+                          setHidingComments(true)
+                          setTimeout(() => {
+                            setShowComments(false)
+                            setHidingComments(false)
+                          }, 300)
+                        } else {
+                          setShowComments(true)
+                        }
+                      }}
+                      className={`flex items-center gap-2.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                        showComments
+                          ? 'bg-violet-50 dark:bg-violet-900/30 border-violet-200 dark:border-violet-800 text-violet-600 dark:text-violet-400'
+                          : 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
+                      }`}
+                    >
+                      <span>Show Comments</span>
+                      <div className={`w-5 h-3 rounded-full transition-colors relative flex items-center ${
+                        showComments
+                          ? 'bg-violet-600 dark:bg-violet-400'
+                          : 'bg-gray-400 dark:bg-slate-600'
+                      }`}>
+                        <div className={`w-2.5 h-2.5 rounded-full bg-white transition-transform ${
+                          showComments ? 'translate-x-2.5' : 'translate-x-0.5'
+                        }`} />
+                      </div>
+                    </button>
+                  )}
+                </div>
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
@@ -599,8 +493,8 @@ export const Home = () => {
                             }
                           </div>
                         </SwipeCard>
-                        {showComments && (
-                        <div className="mt-1.5 ml-2 space-y-1.5 comments-enter" onClick={ev => ev.stopPropagation()}>
+                        {(showComments || hidingComments) && (
+                        <div className={`mt-1.5 ml-2 space-y-1.5 ${hidingComments ? 'comments-exit' : 'comments-enter'}`} onClick={ev => ev.stopPropagation()}>
                           {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
                             const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                             return (
@@ -681,22 +575,40 @@ export const Home = () => {
 
         {hasFavorites && <div className="mb-2" />}
 
-        {/* Browse companies — hidden once user has favorites */}
+        {/* Industry filter + Browse — hidden once user has favorites */}
         {!hasFavorites && (
-          <section className="mb-4">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
-              <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                {filtered.length}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {filtered.map(c => (
-                <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
+          <>
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+              {INDUSTRIES.map(ind => (
+                <button
+                  key={ind}
+                  onClick={() => setIndustry(ind)}
+                  className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
+                    industry === ind
+                      ? 'bg-violet-600 border-violet-600 text-white'
+                      : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-violet-300 dark:hover:border-violet-700'
+                  }`}
+                >
+                  {ind}
+                </button>
               ))}
             </div>
-          </section>
+
+            <section className="mb-4">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
+                <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                  {filtered.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {filtered.map(c => (
+                  <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
+                ))}
+              </div>
+            </section>
+          </>
         )}
 
         {/* Login Banner for guests */}
