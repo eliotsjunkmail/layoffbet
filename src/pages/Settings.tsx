@@ -74,19 +74,19 @@ export const Settings = () => {
         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
-              <MessageSquare className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+              <MessageSquare className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-shrink-0" />
               <div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white">Show Comments</div>
-                <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  Display comments on predictions
-                </div>
+                <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Display comments on predictions</div>
               </div>
             </div>
             <button
               onClick={() => setShowComments(!showComments)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${showComments ? 'bg-violet-600' : 'bg-gray-300 dark:bg-slate-600'}`}
+              className={`relative w-14 h-7 rounded-full transition-colors ${showComments ? 'bg-violet-600' : 'bg-gray-200 dark:bg-slate-600'}`}
             >
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${showComments ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center text-xs font-bold ${showComments ? 'translate-x-8 text-violet-600' : 'translate-x-1 text-gray-400'}`}>
+                {showComments ? '✓' : '✕'}
+              </span>
             </button>
           </div>
         </div>
