@@ -120,9 +120,9 @@ export const Header = () => {
                 </Link>
                 <button
                   onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
-                  className={`p-2 rounded-lg transition-colors ${isActive('/create')}`}
+                  className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-colors ${isActive('/create')}`}
                 >
-                  <PlusCircle className="w-5 h-5" />
+                  Bet
                 </button>
                 <button
                   onClick={() => setShowProfile(true)}
@@ -139,9 +139,9 @@ export const Header = () => {
                 </Link>
                 <button
                   onClick={() => navigate('/login')}
-                  className="p-2 rounded-lg transition-colors text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
+                  className="px-3 py-1.5 rounded-lg font-medium text-sm transition-colors text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
                 >
-                  <PlusCircle className="w-5 h-5" />
+                  Bet
                 </button>
                 <Link
                   to="/login"
