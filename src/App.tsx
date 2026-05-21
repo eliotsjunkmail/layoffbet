@@ -32,7 +32,7 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection, speed }: { letter: string; scrollDirection: 'left' | 'right'; speed: number }) => {
+const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, onSelectCompany }: { letter: string; scrollDirection: 'left' | 'right'; speed: number; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
   const companies = useStore(s => s.companies)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -58,6 +58,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed }: { letter: string; s
   }, [scrollDirection, speed, isDragging])
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-company-pill]')) return
     setIsDragging(true)
     setDragStart(e.clientX - (scrollRef.current?.scrollLeft || 0))
   }
@@ -71,6 +72,10 @@ const CompanyScroller = ({ letter, scrollDirection, speed }: { letter: string; s
     setIsDragging(false)
   }
 
+  const handlePillClick = (companyId: string) => {
+    onSelectCompany?.(companyId)
+  }
+
   return (
     <div
       ref={scrollRef}
@@ -81,9 +86,18 @@ const CompanyScroller = ({ letter, scrollDirection, speed }: { letter: string; s
       className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
     >
       {filtered.map(c => (
-        <div key={c.id} className="flex-shrink-0 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-full text-sm text-slate-300 whitespace-nowrap">
+        <button
+          key={c.id}
+          data-company-pill
+          onClick={() => handlePillClick(c.id)}
+          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+            selectedCompanyId === c.id
+              ? 'bg-violet-600 border-violet-500 text-white'
+              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
+          }`}
+        >
           {c.name}
-        </div>
+        </button>
       ))}
     </div>
   )
@@ -95,6 +109,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -172,9 +187,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
-          <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
-          <CompanyScroller letter="B" scrollDirection="left" speed={0.5} />
-          <CompanyScroller letter="C" scrollDirection="right" speed={0.1} />
+          <CompanyScroller letter="A" scrollDirection="right" speed={0.2} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <CompanyScroller letter="B" scrollDirection="left" speed={0.5} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <CompanyScroller letter="C" scrollDirection="right" speed={0.1} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
           <div className="text-center">
             <div className="text-xs text-slate-500">and more…</div>
           </div>
