@@ -337,21 +337,24 @@ export const CompanyPage = () => {
             <AdBanner />
 
             {/* Add prediction CTA */}
-            {currentUser ? (
-              <button
-                onClick={() => navigate('/create', { state: { companyId: company.id } })}
-                className="px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors mt-6"
-              >
-                + New bet
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors mt-6"
-              >
-                Sign in to bet
-              </button>
-            )}
+            <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center gap-3 mt-6">
+              <span className="text-sm text-gray-600 dark:text-slate-400">Know something about {company.name}?</span>
+              {currentUser ? (
+                <button
+                  onClick={() => navigate('/create', { state: { companyId: company.id } })}
+                  className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
+                >
+                  + New bet
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
+                >
+                  Sign in to bet
+                </button>
+              )}
+            </div>
           </div>
         </section>
       )}
