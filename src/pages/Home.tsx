@@ -510,7 +510,7 @@ export const Home = () => {
               {currentUser ? (
                 <button
                   onClick={() => navigate('/create', { state: { companyId: c.id } })}
-                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group mt-6"
                 >
                   <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                     What else is happening at {c.name}?
@@ -522,7 +522,7 @@ export const Home = () => {
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group mt-6"
                 >
                   <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
                     What else is happening at {c.name}?
