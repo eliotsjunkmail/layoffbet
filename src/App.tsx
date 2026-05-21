@@ -90,9 +90,9 @@ const CompanyScroller = ({ letter, speed }: { letter: string; speed: number }) =
       onMouseLeave={handleMouseUp}
       className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
     >
-      {filtered.map(c => (
+      {[...filtered, ...filtered].map((c, idx) => (
         <button
-          key={c.id}
+          key={`${c.id}-${idx}`}
           onClick={(e) => handlePillClick(e, c.id)}
           className={`appearance-none flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border cursor-pointer ${
             selectedCompanyId === c.id
