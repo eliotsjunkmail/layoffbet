@@ -32,13 +32,39 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection, speed }: { letter: string; scrollDirection: 'left' | 'right'; speed: number }) => {
+const CompanyScroller = ({ letter, scrollDirection, speed, startCompany }: { letter: string; scrollDirection: 'left' | 'right'; speed: number; startCompany?: string }) => {
   const companies = useStore(s => s.companies)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(0)
 
   const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
+
+  useEffect(() => {
+    if (!scrollRef.current) return
+    const el = scrollRef.current
+    if (!startCompany) return
+
+    const timeout = setTimeout(() => {
+      const pills = el.querySelectorAll('div > div')
+      let targetIndex = -1
+      pills.forEach((pill, idx) => {
+        if (pill.textContent?.toUpperCase().includes(startCompany.toUpperCase())) {
+          targetIndex = idx
+        }
+      })
+
+      if (targetIndex >= 0) {
+        const targetPill = pills[targetIndex] as HTMLElement
+        const containerWidth = el.clientWidth
+        const pillLeft = targetPill.offsetLeft
+        const pillWidth = targetPill.offsetWidth
+        el.scrollLeft = Math.max(0, pillLeft - (containerWidth - pillWidth) / 2)
+      }
+    }, 50)
+
+    return () => clearTimeout(timeout)
+  }, [startCompany])
 
   useEffect(() => {
     if (!scrollRef.current || isDragging) return
@@ -173,7 +199,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
           <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
-          <CompanyScroller letter="B" scrollDirection="left" speed={0.5} />
+          <CompanyScroller letter="B" scrollDirection="left" speed={0.5} startCompany="BNY" />
           <CompanyScroller letter="C" scrollDirection="right" speed={0.1} />
           <div className="text-center">
             <div className="text-xs text-slate-500">and more…</div>
