@@ -273,7 +273,7 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
         {(currentUser && userStats) || !currentUser ? (
-          <div className="pt-3 pb-3 -mx-4 px-4 mb-0">
+          <div className="pt-3 pb-0 -mx-4 px-4 mb-0">
             <div className="grid grid-cols-3 gap-3">
               <button onClick={() => {
                 if (currentUser && userStats) {
