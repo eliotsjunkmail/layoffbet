@@ -130,7 +130,7 @@ export const Header = () => {
                 </button>
                 <button
                   onClick={() => setShowProfile(true)}
-                  className="flex items-center gap-1 ml-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full px-2.5 py-1.5 transition-colors"
+                  className="flex items-center gap-1 ml-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full px-3 py-1.5 transition-colors"
                 >
                   <User className="w-4 h-4 text-gray-700 dark:text-slate-200" />
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" />

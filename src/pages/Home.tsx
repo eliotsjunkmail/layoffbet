@@ -90,7 +90,7 @@ export const Home = () => {
     setFocusedInput(null)
   }
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
 
   const userStats = useMemo(() => {
     if (!currentUser) return null
@@ -396,7 +396,7 @@ export const Home = () => {
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
-            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-2 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
+            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-6'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
@@ -510,26 +510,16 @@ export const Home = () => {
               {currentUser ? (
                 <button
                   onClick={() => navigate('/create', { state: { companyId: c.id } })}
-                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                  className="px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors mt-6"
                 >
-                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                    What else is happening at {c.name}?
-                  </span>
-                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
-                    + Add a prediction
-                  </span>
+                  + New bet
                 </button>
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-violet-400 dark:hover:border-violet-600 rounded-xl p-4 flex flex-col items-center gap-1.5 transition-colors group"
+                  className="px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors mt-6"
                 >
-                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                    What else is happening at {c.name}?
-                  </span>
-                  <span className="text-xs text-violet-500 dark:text-violet-400 font-medium group-hover:underline">
-                    + Add a prediction
-                  </span>
+                  + New bet
                 </button>
               )}
               {activeEvents.length === 0 && (

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Calendar } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 
@@ -18,6 +18,7 @@ export const CreateEvent = () => {
   const [description, setDescription] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [error, setError] = useState('')
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,7 +65,15 @@ export const CreateEvent = () => {
 
         <div>
           <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Expiration Date</label>
-          <input type="date" value={expiresAt} min={minDate} max={maxDate} onChange={e => setExpiresAt(e.target.value)} className={inputCls} />
+          <div className="relative">
+            <input type="date" ref={dateInputRef} value={expiresAt} min={minDate} max={maxDate} onChange={e => setExpiresAt(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            <div className={`${inputCls} flex items-center justify-between`}>
+              <span className={`${expiresAt ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-600'} pointer-events-none`}>
+                {expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select a date'}
+              </span>
+              <Calendar className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-shrink-0 pointer-events-none" />
+            </div>
+          </div>
           <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 2 years from today</div>
         </div>
 
