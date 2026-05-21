@@ -256,8 +256,11 @@ export const CompanyPage = () => {
               const anonCount = anonVote?.count ?? 0
               const exhausted = !currentUser && anonCount >= 10
               const eventComments = comments.filter(c => c.eventId === event.id)
+              const midpoint = Math.floor(active.length / 2)
               return (
-                <div key={event.id}>
+                <>
+                  {idx === midpoint && <AdBanner />}
+                  <div key={event.id}>
                   <SwipeCard
                     onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                     onSwipeNo={() => handleSwipeBet(event.id, 'no')}
@@ -331,10 +334,10 @@ export const CompanyPage = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                  </div>
+                </>
               )
             })}
-            <AdBanner />
 
             {/* Add prediction CTA */}
             <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center gap-3 mt-6">
