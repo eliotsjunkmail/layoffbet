@@ -134,7 +134,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim().toLowerCase() === GATE_ANS) {
+    if (selectedCompanyId || input.trim().toLowerCase() === GATE_ANS) {
       localStorage.setItem(GATE_KEY, '1')
       setUnlocked(true)
     } else {
@@ -211,7 +211,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 type="text"
                 value={input}
                 onChange={e => { setInput(e.target.value); setError(false) }}
-                placeholder="Enter code"
+                placeholder={selectedCompanyId ? 'Or enter code' : 'Enter code or select company'}
                 autoComplete="off"
                 className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
               />
