@@ -66,12 +66,12 @@ export const CreateEvent = () => {
         <div>
           <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Expiration Date</label>
           <div className="relative">
-            <input type="date" ref={dateInputRef} value={expiresAt} min={minDate} max={maxDate} onChange={e => setExpiresAt(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
-            <div className={`${inputCls} flex items-center justify-between pointer-events-none`}>
-              <span className={expiresAt ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-600'}>
+            <input type="date" ref={dateInputRef} value={expiresAt} min={minDate} max={maxDate} onChange={e => setExpiresAt(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            <div className={`${inputCls} flex items-center justify-between`}>
+              <span className={`${expiresAt ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-600'} pointer-events-none`}>
                 {expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select a date'}
               </span>
-              <Calendar className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+              <Calendar className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-shrink-0 pointer-events-none" />
             </div>
           </div>
           <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 2 years from today</div>
