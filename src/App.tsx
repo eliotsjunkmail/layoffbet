@@ -134,7 +134,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedCompanyId || input.trim().toLowerCase() === GATE_ANS) {
+    if (input.trim().toLowerCase() === GATE_ANS) {
       localStorage.setItem(GATE_KEY, '1')
       setUnlocked(true)
     } else {
