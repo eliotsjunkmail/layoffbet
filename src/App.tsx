@@ -37,6 +37,7 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(0)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
 
   const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -51,7 +52,7 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
   }, [scrollDirection])
 
   useEffect(() => {
-    if (!scrollRef.current || isDragging) return
+    if (!scrollRef.current || isDragging || selectedCompanyId) return
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
@@ -65,7 +66,7 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [scrollDirection, isDragging])
+  }, [scrollDirection, isDragging, selectedCompanyId])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -81,6 +82,11 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     setIsDragging(false)
   }
 
+  const handlePillClick = (e: React.MouseEvent, companyId: string) => {
+    e.stopPropagation()
+    setSelectedCompanyId(selectedCompanyId === companyId ? null : companyId)
+  }
+
   return (
     <div
       ref={scrollRef}
@@ -91,9 +97,17 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
       className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
     >
       {filtered.map(c => (
-        <div key={c.id} className="flex-shrink-0 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-full text-sm text-slate-300 whitespace-nowrap">
+        <button
+          key={c.id}
+          onClick={(e) => handlePillClick(e, c.id)}
+          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border ${
+            selectedCompanyId === c.id
+              ? 'bg-violet-600 border-violet-600 text-white'
+              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
+          }`}
+        >
           {c.name}
-        </div>
+        </button>
       ))}
     </div>
   )
@@ -185,9 +199,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           {['A', 'B', 'C', 'D'].map((letter, idx) => (
             <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
           ))}
-          <div className="text-center">
-            <div className="text-xs text-slate-500">and more…</div>
-          </div>
         </div>
 
         {/* Challenge card */}
