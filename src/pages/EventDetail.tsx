@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
 import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2, Check } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { AuthModal } from '../components/AuthModal'
@@ -17,6 +18,7 @@ export const EventDetail = () => {
   const placeBet = useStore(s => s.placeBet)
   const removeBet = useStore(s => s.removeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
+  const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const addComment = useStore(s => s.addComment)
   const deleteComment = useStore(s => s.deleteComment)
@@ -29,7 +31,23 @@ export const EventDetail = () => {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
+  const [anonCoins, setAnonCoins] = useState(() => {
+    const stored = localStorage.getItem('anonCoins')
+    return stored ? parseInt(stored) : 50
+  })
+  const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
+    const stored = localStorage.getItem('anonCoinsSpent')
+    return stored ? parseInt(stored) : 0
+  })
   const recordShare = useStore(s => s.recordShare)
+
+  useEffect(() => {
+    localStorage.setItem('anonCoins', anonCoins.toString())
+  }, [anonCoins])
+
+  useEffect(() => {
+    localStorage.setItem('anonCoinsSpent', anonCoinsSpent.toString())
+  }, [anonCoinsSpent])
 
   const event = events.find(e => e.id === id)
 
@@ -51,25 +69,29 @@ export const EventDetail = () => {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
 
   const anonVote = anonVotedEvents[id!]
-  const anonExhausted = !currentUser && (anonVote?.count ?? 0) >= 10
-  const requiresLogin = !currentUser && (betAmount === 25 || betAmount === 50)
+  const remainingGuestCoins = Math.max(0, anonCoins - anonCoinsSpent)
+  const canPlaceGuestBet = !currentUser && remainingGuestCoins >= betAmount
 
   const handleBet = (side: 'yes' | 'no') => {
     const movement = betMovementStr(event.yesPool, event.noPool, side, betAmount)
-    if (!currentUser && (betAmount === 25 || betAmount === 50)) {
-      setPendingBet(side)
-      setShowAuthModal(true)
-      return
-    }
+    const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
+
     if (!currentUser) {
+      if (!canPlaceGuestBet) {
+        showToast('Not enough coins')
+        return
+      }
       if (placeAnonymousVote(id!, side, betAmount)) {
+        setAnonCoinsSpent(prev => prev + betAmount)
+        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
         showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
       } else {
-        showToast('10 bets reached — sign in to keep going')
+        showToast('Prediction is no longer active')
       }
       return
     }
     if (placeBet(id!, side, betAmount)) {
+      confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
       showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
     } else {
       showToast('Not enough Coins or already bet.')
@@ -205,53 +227,43 @@ export const EventDetail = () => {
             <>
               <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">Place your bet</div>
               <div className="flex gap-2 mb-3">
-                {[5, 10, 25, 50].map(amt => {
-                  const guestOnly = !currentUser && (amt === 25 || amt === 50)
-                  return (
-                    <button
-                      key={amt}
-                      onClick={() => setBetAmount(amt)}
-                      className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all relative ${betAmount === amt ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
-                    >
-                      {amt}
-                      {guestOnly && <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full" title="Requires sign-in" />}
-                    </button>
-                  )
-                })}
+                {[5, 10, 25, 50].map(amt => (
+                  <button
+                    key={amt}
+                    onClick={() => setBetAmount(amt)}
+                    disabled={!currentUser && amt > remainingGuestCoins}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${betAmount === amt ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'} disabled:opacity-40 disabled:cursor-not-allowed`}
+                  >
+                    {amt}
+                  </button>
+                ))}
               </div>
 
-              {requiresLogin ? (
-                <div className="rounded-2xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 px-4 py-5 text-center">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Sign in to bet {betAmount} coins</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Free accounts get <span className="font-medium text-violet-600 dark:text-violet-400">100 coins daily</span> to wager on predictions</p>
-                  <button
-                    onClick={() => setShowAuthModal(true)}
-                    className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                  >
-                    Sign in — It's Free
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleBet('no')}
-                    disabled={anonExhausted}
-                    className="flex-1 py-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ✕ NO
-                  </button>
-                  <button
-                    onClick={() => handleBet('yes')}
-                    disabled={anonExhausted}
-                    className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ✓ YES
-                  </button>
+              {!currentUser && (
+                <div className="text-xs text-gray-500 dark:text-slate-400 mb-3 text-center">
+                  {remainingGuestCoins} coins remaining
                 </div>
               )}
-              {anonExhausted && (
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleBet('no')}
+                  disabled={!canPlaceGuestBet && !currentUser}
+                  className="flex-1 py-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ✕ NO
+                </button>
+                <button
+                  onClick={() => handleBet('yes')}
+                  disabled={!canPlaceGuestBet && !currentUser}
+                  className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ✓ YES
+                </button>
+              </div>
+              {currentUser === null && remainingGuestCoins < betAmount && (
                 <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-2">
-                  10 bets reached — <button onClick={() => setShowAuthModal(true)} className="text-violet-600 dark:text-violet-400 hover:underline">sign in</button> to keep going
+                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-violet-600 dark:text-violet-400 hover:underline">Sign in</button> for 100 daily coins.
                 </p>
               )}
             </>
