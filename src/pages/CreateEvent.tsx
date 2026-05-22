@@ -17,6 +17,7 @@ export const CreateEvent = () => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
+  const [side, setSide] = useState<'yes' | 'no' | null>(null)
   const [error, setError] = useState('')
   const dateInputRef = useRef<HTMLInputElement>(null)
 
@@ -26,9 +27,11 @@ export const CreateEvent = () => {
     if (!companyId) return setError('Select a company.')
     if (!title.trim() || title.trim().length < 10) return setError('Title must be at least 10 characters.')
     if (!expiresAt) return setError('Set an expiration date.')
+    if (!side) return setError('Choose YES or NO for your prediction.')
     const company = companies.find(c => c.id === companyId)
     if (!company) return
-    createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString() })
+    const success = createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
+    if (!success) return setError('Not enough coins to create prediction. (Costs 50 coins)')
     navigate('/')
   }
 
@@ -75,6 +78,35 @@ export const CreateEvent = () => {
             </div>
           </div>
           <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 2 years from today</div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Your Prediction <span className="text-rose-500">*</span></label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setSide('yes')}
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
+                side === 'yes'
+                  ? 'bg-green-500 text-white border-green-600'
+                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-green-500 dark:hover:border-green-500'
+              }`}
+            >
+              YES - 50 coins
+            </button>
+            <button
+              type="button"
+              onClick={() => setSide('no')}
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
+                side === 'no'
+                  ? 'bg-red-500 text-white border-red-600'
+                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500'
+              }`}
+            >
+              NO - 50 coins
+            </button>
+          </div>
+          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Creating a prediction costs 50 coins and places that bet</div>
         </div>
 
         {error && (
