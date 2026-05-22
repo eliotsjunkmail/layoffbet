@@ -426,7 +426,7 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       currentUser: null,
-      guestCoins: 100,
+      guestCoins: 50,
       users: SEED_USERS,
       companies: SEED_COMPANIES,
       events: SEED_EVENTS,
@@ -500,7 +500,7 @@ export const useStore = create<StoreState>()(
         return true
       },
 
-      logout: () => set({ currentUser: null, guestCoins: 100 }),
+      logout: () => set({ currentUser: null, guestCoins: 50 }),
 
       register: (username, password) => {
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
