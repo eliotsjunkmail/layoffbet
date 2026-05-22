@@ -112,7 +112,11 @@ export const Home = () => {
     }
   }, [currentUser, bets, events, getEffectiveStatus])
 
-  const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
+  const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id)).sort((a, b) => {
+    const aIdx = favoriteCompanyIds.indexOf(a.id)
+    const bIdx = favoriteCompanyIds.indexOf(b.id)
+    return bIdx - aIdx
+  })
   const hasFavorites = favorites.length > 0
   const defaultCompany = companies.find(c => c.slug === 'meta')
 
@@ -357,7 +361,7 @@ export const Home = () => {
             {/* Dropdown */}
             {showDropdown && typeaheadResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
-                <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { setShowDropdown(false); setQuery(''); navigate(`/${c.slug}`) }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
+                <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id); setShowDropdown(false); setQuery('') }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
               </div>
             )}
             {showDropdown && query && typeaheadResults.length === 0 && (
