@@ -61,6 +61,7 @@ const SEED_COMPANIES: Company[] = [
   { id: 'comp-50', name: "Crown Castle Int'l",          slug: 'crown-castle',       description: 'Real estate investment trust providing wireless tower infrastructure and fiber solutions across the United States',  industry: 'Telecom Infrastructure', viewCount: 21445,  createdAt: pastDate(1) },
   { id: 'comp-51', name: 'Cummins',                     slug: 'cummins',            description: 'American corporation that designs, manufactures, and distributes engines, filtration, and power generation products',industry: 'Manufacturing',         viewCount: 24890,  createdAt: pastDate(1) },
   { id: 'comp-52', name: 'CVS',                         slug: 'cvs',                description: 'American retail pharmacy and health care company operating thousands of retail locations and a pharmacy benefits manager',industry: 'Healthcare Retail',  viewCount: 134445, createdAt: pastDate(60) },
+  { id: 'comp-53', name: 'Meta',                        slug: 'meta',               description: 'Facebook parent company providing social media, virtual reality, and advertising technology platforms worldwide',       industry: 'Technology',             viewCount: 201234, createdAt: pastDate(60) },
 ]
 
 const ADMIN_USER: User = {
@@ -287,6 +288,43 @@ const SEED_EVENTS: Event[] = [
     expiresAt: futureDate(75), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
     yesPool: 500, noPool: 200, outcome: null, createdAt: pastDate(1), viewCount: 6102, shareCount: 0,
   },
+
+  // Meta predictions
+  {
+    id: 'evt-m1', companyId: 'comp-53', companyName: 'Meta',
+    title: 'Meta will complete its 10% workforce reduction (8,000 jobs) by end of Q2 2026',
+    description: 'Meta CEO Mark Zuckerberg announced a 10% reduction in workforce starting May 2026. With around 80,000 employees, this affects approximately 8,000 workers. The company is shifting 7,000 into AI roles while eliminating management layers. Timeline suggests completion by end of Q2.',
+    expiresAt: futureDate(45), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 680, noPool: 220, outcome: null, createdAt: pastDate(3), viewCount: 9823, shareCount: 0,
+  },
+  {
+    id: 'evt-m2', companyId: 'comp-53', companyName: 'Meta',
+    title: 'Meta will announce additional workforce reductions in H2 2026 beyond the initial 10%',
+    description: 'Zuckerberg declined to rule out further reductions in the second half of 2026. With AI infrastructure spending ballooning to $125-145 billion annually and compensation cuts already implemented, more layoffs appear likely as the company prioritizes AI over traditional roles.',
+    expiresAt: futureDate(180), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 520, noPool: 380, outcome: null, createdAt: pastDate(2), viewCount: 7654, shareCount: 0,
+  },
+  {
+    id: 'evt-m3', companyId: 'comp-53', companyName: 'Meta',
+    title: 'Meta will cut compensation further in 2027 beyond 2026 reductions',
+    description: 'Meta has already trimmed annual raises by 5% in February 2026 and 10% the year prior. Median total compensation dropped from $417,400 in 2024 to $388,200 in 2025. With massive AI infrastructure costs, another compensation cut appears likely in 2027.',
+    expiresAt: futureDate(240), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 450, noPool: 270, outcome: null, createdAt: pastDate(2), viewCount: 5432, shareCount: 0,
+  },
+  {
+    id: 'evt-m4', companyId: 'comp-53', companyName: 'Meta',
+    title: 'Meta will shift more than 7,000 employees to AI roles without backfill',
+    description: 'Meta is transferring approximately 7,000 employees into new AI initiatives to address critical skill gaps in AI infrastructure. The question is whether these teams will be fully backfilled from engineering or if other departments will be hollowed out.',
+    expiresAt: futureDate(120), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 590, noPool: 310, outcome: null, createdAt: pastDate(1), viewCount: 6789, shareCount: 0,
+  },
+  {
+    id: 'evt-m5', companyId: 'comp-53', companyName: 'Meta',
+    title: 'Meta senior staff departures will accelerate as middle management layers are cut',
+    description: 'Meta is actively flattening organizational structures and eliminating management layers. Historical pattern shows executive departures accelerate during major restructuring as senior leaders lose direct reports and influence. Some may opt for severance rather than relocate or restructure their teams.',
+    expiresAt: futureDate(90), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 420, noPool: 280, outcome: null, createdAt: pastDate(1), viewCount: 5123, shareCount: 0,
+  },
 ]
 
 const SEED_COMMENTS: Comment[] = [
@@ -320,6 +358,13 @@ const SEED_COMMENTS: Comment[] = [
   { id: 'cmt-a8', eventId: 'evt-a5', content: 'My manager actually said "train them with enthusiasm." I could not make this up', createdAt: pastDate(3) },
   { id: 'cmt-a9', eventId: 'evt-a9', content: 'Was in the Maitland group. Got the call on a Tuesday at 10am. Badge stopped working by noon', createdAt: pastDate(20) },
   { id: 'cmt-a10', eventId: 'evt-a10', content: 'The "alignment initiative" email is HR code for figure out if you\'re going to make the drive or take the package', createdAt: pastDate(1) },
+  // Meta comments
+  { id: 'cmt-m1', eventId: 'evt-m1', content: '$125-145 billion on AI infrastructure is insane. Something has to give. The layoffs are just the start.', createdAt: pastDate(4) },
+  { id: 'cmt-m2', eventId: 'evt-m1', content: 'Zuck framed this as "AI Year" but really it\'s cost-cutting disguised as strategy. The math doesn\'t work any other way.', createdAt: pastDate(3) },
+  { id: 'cmt-m3', eventId: 'evt-m2', content: 'He literally said he won\'t rule out MORE cuts in H2. That\'s code for "yes we\'re doing this again, I just don\'t want the headlines now"', createdAt: pastDate(2) },
+  { id: 'cmt-m4', eventId: 'evt-m3', content: 'Comp cuts in 2024, more cuts in 2025, more cuts coming in 2026, and they\'re talking 2027? This is death by a thousand cuts.', createdAt: pastDate(2) },
+  { id: 'cmt-m5', eventId: 'evt-m4', content: 'Shifting 7000 people to AI while cutting staff elsewhere. That team is going to be stressed to the max. Burnout incoming.', createdAt: pastDate(1) },
+  { id: 'cmt-m6', eventId: 'evt-m5', content: 'When they flatten orgs this aggressively, senior folks always bail. Why stick around if your org chart just got nuked?', createdAt: pastDate(1) },
 ]
 
 interface StoreState {
