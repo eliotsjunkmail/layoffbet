@@ -52,6 +52,19 @@ export const Bets = () => {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
 
+  const handleCancelBet = (eventId: string, isGuest: boolean) => {
+    if (isGuest) {
+      const vote = anonVotedEvents[eventId]
+      if (vote) {
+        const amount = vote.count * 10
+        setAnonCoinsSpent(prev => Math.max(0, prev - amount))
+        removeAnonymousVote(eventId)
+      }
+    } else {
+      removeBet(eventId)
+    }
+  }
+
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
@@ -229,7 +242,7 @@ export const Bets = () => {
                   const isActive = status === 'active'
                   const BetTag = isActive ? (
                     <button
-                      onClick={(ev) => { ev.stopPropagation(); removeBet(event.id) }}
+                      onClick={(ev) => { ev.stopPropagation(); handleCancelBet(event.id, !currentUser) }}
                       className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${bet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                     >
                       {bet.side === 'yes' ? 'YES' : 'NO'} - {bet.amount} coins
