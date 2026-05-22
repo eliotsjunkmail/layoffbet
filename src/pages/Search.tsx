@@ -66,7 +66,7 @@ export const Search = () => {
             const companyEvents = events.filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             return (
               <Link key={c.id} to={`/${c.slug}`} className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
-                <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
+                <CompanyLogo name={c.name} id={c.id} industry={c.industry} color={c.color} sentiment={sentimentByCompany[c.id]} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
                   <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mt-0.5">

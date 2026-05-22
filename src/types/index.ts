@@ -16,6 +16,7 @@ export interface Company {
   industry: string
   viewCount: number
   createdAt: string
+  color?: string
 }
 
 export type EventStatus = 'active' | 'expired' | 'resolved' | 'archived'

@@ -645,7 +645,7 @@ const SearchResultsList = ({
           className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer border-b border-gray-100 dark:border-slate-800 last:border-0 transition-colors"
           onClick={() => onSelect(c)}
         >
-          <CompanyLogo name={c.name} id={c.id} industry={c.industry} sentiment={sentimentByCompany[c.id]} size="sm" />
+          <CompanyLogo name={c.name} id={c.id} industry={c.industry} color={c.color} sentiment={sentimentByCompany[c.id]} size="sm" />
           <div className="flex-1 min-w-0 text-left">
             <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</div>
             <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
@@ -688,7 +688,7 @@ const CompanyRow = ({
       to={`/${company.slug}`}
       className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
     >
-      <CompanyLogo name={company.name} id={company.id} industry={company.industry} sentiment={sentiment} size="md" />
+      <CompanyLogo name={company.name} id={company.id} industry={company.industry} color={company.color} sentiment={sentiment} size="md" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{company.name}</span>

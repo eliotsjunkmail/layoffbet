@@ -9,6 +9,7 @@ interface CompanyLogoProps {
   name: string
   id: string
   industry?: string
+  color?: string
   /** Average YES% across active predictions (0–100). Drives icon color. */
   sentiment?: number
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -74,14 +75,17 @@ const SIZES = {
   xl: { box: 'w-16 h-16 rounded-2xl', icon: 'w-8 h-8' },
 }
 
-export const CompanyLogo = ({ industry, sentiment, size = 'md' }: CompanyLogoProps) => {
+export const CompanyLogo = ({ industry, color, sentiment, size = 'md' }: CompanyLogoProps) => {
   const Icon: LucideIcon = (industry ? INDUSTRY_ICONS[industry] : undefined) ?? INDUSTRY_ICONS['Default']
   const [bg, iconColor] = sentimentClasses(sentiment)
   const { box, icon } = SIZES[size]
 
+  const bgClass = color ? `bg-[${color}]` : bg
+  const iconColorClass = color ? 'text-white' : iconColor
+
   return (
-    <div className={`${box} ${bg} flex items-center justify-center flex-shrink-0`}>
-      <Icon className={`${icon} ${iconColor}`} />
+    <div className={`${box} ${bgClass} flex items-center justify-center flex-shrink-0`} style={color ? { backgroundColor: color } : undefined}>
+      <Icon className={`${icon} ${iconColorClass}`} />
     </div>
   )
 }
