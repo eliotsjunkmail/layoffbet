@@ -215,17 +215,18 @@ export const Home = () => {
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
+    const betAmount = 10
     if (currentUser) {
-      if (placeBet(eventId, side, 10)) {
-        confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 }, shapes: ['square'], scalar: 2, colors: ['#ec4899'], ticks: 200 })
+      if (placeBet(eventId, side, betAmount)) {
+        confetti({ particleCount: betAmount, spread: 45, origin: { y: 0.5 }, shapes: ['square'], scalar: 2, colors: ['#fbcfe8'], gravity: 1, ticks: 300 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
-      if (Math.max(0, anonCoins - anonCoinsSpent) >= 10) {
+      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
-          setAnonCoinsSpent(prev => prev + 10)
-          confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 }, shapes: ['square'], scalar: 2, colors: ['#ec4899'], ticks: 200 })
+          setAnonCoinsSpent(prev => prev + betAmount)
+          confetti({ particleCount: betAmount, spread: 45, origin: { y: 0.5 }, shapes: ['square'], scalar: 2, colors: ['#fbcfe8'], gravity: 1, ticks: 300 })
         } else {
           showToast('Prediction is no longer active')
         }
