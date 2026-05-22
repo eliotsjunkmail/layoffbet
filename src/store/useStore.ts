@@ -386,6 +386,7 @@ interface StoreState {
 
   login: (username: string, password: string) => boolean
   logout: () => void
+  migrateGuestBets: () => void
   register: (username: string, password: string) => { ok: boolean; error?: string }
   checkDailyCoins: () => void
   updateCoins: (amount: number) => void
@@ -518,10 +519,48 @@ export const useStore = create<StoreState>()(
         if (!user) return false
         set({ currentUser: user })
         get().checkDailyCoins()
+        get().migrateGuestBets()
         return true
       },
 
-      logout: () => set({ currentUser: null, guestCoins: 50 }),
+      logout: () => {
+        localStorage.removeItem('anonCoins')
+        localStorage.removeItem('anonCoinsSpent')
+        set({ currentUser: null, guestCoins: 50, anonCoinsSpent: 0 })
+      },
+
+      migrateGuestBets: () => {
+        const { currentUser, anonVotedEvents, anonCoinsSpent, anonCoins, bets, events } = get()
+        if (!currentUser) return
+
+        const remainingCoins = Math.max(0, anonCoins - anonCoinsSpent)
+        const newBets: Bet[] = []
+
+        Object.entries(anonVotedEvents).forEach(([eventId, vote]) => {
+          const event = events.find(e => e.id === eventId)
+          if (event) {
+            const amount = vote.count * 10
+            const bet: Bet = {
+              id: `bet-${uid()}`,
+              eventId,
+              userId: currentUser.id,
+              side: vote.lastSide,
+              amount,
+            }
+            newBets.push(bet)
+          }
+        })
+
+        set(s => ({
+          currentUser: {
+            ...currentUser,
+            coins: Math.min(currentUser.coins + remainingCoins, 999),
+          },
+          bets: [...bets, ...newBets],
+          anonVotedEvents: {},
+          anonCoinsSpent: 0,
+        }))
+      },
 
       register: (username, password) => {
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
@@ -537,6 +576,7 @@ export const useStore = create<StoreState>()(
           lastCoinsDate: today(),
         }
         set(s => ({ users: [...s.users, user], currentUser: user }))
+        get().migrateGuestBets()
         return { ok: true }
       },
 
