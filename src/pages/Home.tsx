@@ -114,6 +114,7 @@ export const Home = () => {
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id))
   const hasFavorites = favorites.length > 0
+  const defaultCompany = companies.find(c => c.slug === 'meta')
 
   const activeEventsByCompany = useMemo(() => {
     const map: Record<string, number> = {}
@@ -341,8 +342,7 @@ export const Home = () => {
             </p>
           </div>
 
-          {/* Search with typeahead - only show if no favorites */}
-          {!hasFavorites && (
+          {/* Search with typeahead */}
           <div ref={searchRef} className="relative max-w-md mx-auto mb-2">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500 pointer-events-none" />
             <input
@@ -371,7 +371,6 @@ export const Home = () => {
               </div>
             )}
           </div>
-          )}
 
           {!currentUser && (
             <p className="text-xs text-gray-400 dark:text-slate-500">
@@ -380,8 +379,8 @@ export const Home = () => {
           )}
         </div>
 
-        {/* Favorite company sections */}
-        {hasFavorites && favorites.map((c, cIdx) => {
+        {/* Company sections (favorites or default Meta for new users) */}
+        {(hasFavorites ? favorites : (defaultCompany ? [defaultCompany] : [])).map((c, cIdx) => {
           const betOrder = (eventId: string) => {
             if (!currentUser) return 2
             const b = bets.find(bet => bet.eventId === eventId && bet.userId === currentUser.id)
