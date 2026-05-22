@@ -67,7 +67,7 @@ const ADMIN_USER: User = {
   id: 'user-admin',
   username: 'admin',
   password: 'admin',
-  coins: 50,
+  coins: 100,
   isAdmin: true,
   createdAt: pastDate(60),
   lastCoinsDate: today(),
@@ -79,7 +79,7 @@ const SEED_USERS: User[] = [
     id: 'user-eliot',
     username: 'eliotsjunkmail@gmail.com',
     password: 'eliot123',
-    coins: 50,
+    coins: 100,
     isAdmin: true,
     createdAt: pastDate(60),
     lastCoinsDate: today(),
@@ -381,7 +381,7 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       currentUser: null,
-      guestCoins: 50,
+      guestCoins: 100,
       users: SEED_USERS,
       companies: SEED_COMPANIES,
       events: SEED_EVENTS,
@@ -455,7 +455,7 @@ export const useStore = create<StoreState>()(
         return true
       },
 
-      logout: () => set({ currentUser: null, guestCoins: 50 }),
+      logout: () => set({ currentUser: null, guestCoins: 100 }),
 
       register: (username, password) => {
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
@@ -465,7 +465,7 @@ export const useStore = create<StoreState>()(
           id: `user-${uid()}`,
           username: username.trim(),
           password,
-          coins: 50,
+          coins: 100,
           isAdmin: false,
           createdAt: new Date().toISOString(),
           lastCoinsDate: today(),
