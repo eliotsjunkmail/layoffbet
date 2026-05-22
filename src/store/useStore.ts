@@ -641,12 +641,13 @@ export const useStore = create<StoreState>()(
 
       createEvent: (data) => {
         const { currentUser } = get()
-        if (!currentUser) return
+        const creatorId = currentUser?.id || 'anon'
+        const creatorName = currentUser?.username || 'Guest'
         const event: Event = {
           ...data,
           id: `evt-${uid()}`,
-          creatorId: currentUser.id,
-          creatorName: currentUser.username,
+          creatorId,
+          creatorName,
           yesPool: 50,
           noPool: 50,
           outcome: null,

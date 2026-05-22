@@ -142,8 +142,12 @@ export const Header = () => {
                   <Search className="w-5 h-5" />
                 </Link>
                 <button
-                  onClick={() => navigate('/login')}
-                  className="px-3 py-1.5 rounded-full font-medium text-sm border-2 border-gray-300 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
+                  onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
+                  className={`px-3 py-1.5 rounded-full font-medium text-sm border-2 transition-colors ${
+                    isActive('/create').includes('violet')
+                      ? 'border-violet-600 dark:border-violet-400 text-violet-600 dark:text-violet-400'
+                      : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500'
+                  }`}
                 >
                   + Bet
                 </button>
