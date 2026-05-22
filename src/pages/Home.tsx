@@ -227,23 +227,9 @@ export const Home = () => {
       confettiOrigin = { x, y: Math.max(y, 0.05) }
     }
 
-    // Create confetti by drawing stick figures on canvas
-    const stickPersonConfetti = () => {
-      confetti({
-        particleCount: betAmount,
-        spread: 45,
-        origin: confettiOrigin,
-        gravity: 0.5,
-        ticks: 600,
-        shapes: ['circle'],
-        colors: ['#d4a574'],
-        scalar: 1.2,
-      })
-    }
-
     if (currentUser) {
       if (placeBet(eventId, side, betAmount)) {
-        stickPersonConfetti()
+        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 0.5, ticks: 600 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
@@ -251,7 +237,7 @@ export const Home = () => {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
           setAnonCoinsSpent(prev => prev + betAmount)
-          stickPersonConfetti()
+          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 0.5, ticks: 600 })
         } else {
           showToast('Prediction is no longer active')
         }
