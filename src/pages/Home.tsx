@@ -250,6 +250,19 @@ export const Home = () => {
     }
   }
 
+  const handleCancelBet = (eventId: string, isGuest: boolean) => {
+    if (isGuest) {
+      const vote = anonVotedEvents[eventId]
+      if (vote) {
+        const amount = vote.count * 10
+        setAnonCoinsSpent(prev => Math.max(0, prev - amount))
+        removeAnonymousVote(eventId)
+      }
+    } else {
+      removeBet(eventId)
+    }
+  }
+
   return (
     <>
       <style>{`
@@ -446,7 +459,7 @@ export const Home = () => {
                           {userBet && (
                             <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
                               <button
-                                onClick={(ev) => { ev.stopPropagation(); removeBet(e.id) }}
+                                onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, false) }}
                                 className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                               >
                                 {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
@@ -457,7 +470,7 @@ export const Home = () => {
                           {!userBet && anonVotedEvents[e.id] && (
                             <div className={`mb-2 ${anonVotedEvents[e.id].lastSide === 'no' ? 'flex justify-end' : ''}`}>
                               <button
-                                onClick={(ev) => { ev.stopPropagation(); removeAnonymousVote(e.id) }}
+                                onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, true) }}
                                 className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full transition-opacity hover:opacity-75 ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                               >
                                 {anonVotedEvents[e.id].lastSide === 'yes' ? 'YES' : 'NO'} - {anonVotedEvents[e.id].count * 10} coins

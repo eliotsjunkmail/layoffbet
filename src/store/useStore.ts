@@ -480,7 +480,7 @@ export const useStore = create<StoreState>()(
       },
 
       removeAnonymousVote: (eventId) => {
-        const { anonVotedEvents, events, getEffectiveStatus } = get()
+        const { anonVotedEvents, events, guestCoins, getEffectiveStatus } = get()
         const vote = anonVotedEvents[eventId]
         if (!vote) return
         const event = events.find(e => e.id === eventId)
@@ -489,6 +489,7 @@ export const useStore = create<StoreState>()(
         const newVotes = { ...anonVotedEvents }
         delete newVotes[eventId]
         set(s => ({
+          guestCoins: guestCoins + amount,
           anonVotedEvents: newVotes,
           events: s.events.map(e => e.id === eventId ? {
             ...e,
