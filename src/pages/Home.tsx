@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -48,7 +49,6 @@ export const Home = () => {
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
-  const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
@@ -211,12 +211,9 @@ export const Home = () => {
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
-    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
     if (currentUser) {
       if (placeBet(eventId, side, 10)) {
-        setSwipeFlash({ id: eventId, side })
-        setTimeout(() => setSwipeFlash(null), 600)
-        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
@@ -224,9 +221,7 @@ export const Home = () => {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= 10) {
         if (placeAnonymousVote(eventId, side)) {
           setAnonCoinsSpent(prev => prev + 10)
-          setSwipeFlash({ id: eventId, side })
-          setTimeout(() => setSwipeFlash(null), 600)
-          showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })
         } else {
           showToast('Prediction is no longer active')
         }
@@ -373,8 +368,8 @@ export const Home = () => {
           </div>
 
           {!currentUser && (
-            <p className="text-xs text-gray-400 dark:text-slate-500">
-              Swipe left or right to bet — no sign-in needed.
+            <p className="text-xs text-gray-400 dark:text-slate-500 mb-0">
+              Swipe left or right to bet — no sign-in needed
             </p>
           )}
         </div>
@@ -414,7 +409,6 @@ export const Home = () => {
                 <div className="space-y-2.5">
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
-                    const flash = swipeFlash?.id === e.id
                     const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)
                     const midpoint = Math.floor(activeEvents.length / 2)
@@ -428,15 +422,19 @@ export const Home = () => {
                           disabled={false}
                           onClick={() => navigate(`/event/${e.id}`)}
                           demoActive={cIdx === 0 && eIdx === 0}
-                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
-                            ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                              flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                              'border-violet-200 dark:border-violet-800'}`}
+                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-violet-200 dark:border-violet-800`}
                         >
                           {userBet && (
                             <div className="mb-2">
                               <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
                                 You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
+                              </span>
+                            </div>
+                          )}
+                          {!userBet && anonVotedEvents[e.id] && (
+                            <div className="mb-2">
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                You bet {anonVotedEvents[e.id].count * 10} coins {anonVotedEvents[e.id].lastSide === 'yes' ? 'YES' : 'NO'}
                               </span>
                             </div>
                           )}

@@ -32,13 +32,19 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDirection: 'left' | 'right' }) => {
+const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, onSelectCompany, prioritizeCompany }: { letter: string; scrollDirection: 'left' | 'right'; speed: number; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void; prioritizeCompany?: string }) => {
   const companies = useStore(s => s.companies)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(0)
 
-  const filtered = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
+  const filtered = (() => {
+    const all = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
+    if (!prioritizeCompany) return all
+    const priority = all.find(c => c.name.toUpperCase().includes(prioritizeCompany.toUpperCase()))
+    if (!priority) return all
+    return [all[0], priority, ...all.slice(1).filter(c => c.id !== priority.id)]
+  })()
 
   useEffect(() => {
     if (!scrollRef.current) return
@@ -51,12 +57,12 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
   }, [scrollDirection])
 
   useEffect(() => {
-    if (!scrollRef.current || isDragging) return
+    if (!scrollRef.current || isDragging || selectedCompanyId) return
     const scroll = () => {
       if (!scrollRef.current) return
       const el = scrollRef.current
-      const speed = scrollDirection === 'left' ? 0.5 : -0.5
-      el.scrollLeft += speed
+      const scrollSpeed = scrollDirection === 'left' ? speed : -speed
+      el.scrollLeft += scrollSpeed
       if (scrollDirection === 'left' && el.scrollLeft >= el.scrollWidth - el.clientWidth) {
         el.scrollLeft = 0
       } else if (scrollDirection === 'right' && el.scrollLeft <= 0) {
@@ -65,9 +71,10 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     }
     const interval = setInterval(scroll, 30)
     return () => clearInterval(interval)
-  }, [scrollDirection, isDragging])
+  }, [scrollDirection, speed, isDragging, selectedCompanyId])
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-company-pill]')) return
     setIsDragging(true)
     setDragStart(e.clientX - (scrollRef.current?.scrollLeft || 0))
   }
@@ -81,6 +88,10 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
     setIsDragging(false)
   }
 
+  const handlePillClick = (companyId: string) => {
+    onSelectCompany?.(companyId)
+  }
+
   return (
     <div
       ref={scrollRef}
@@ -91,20 +102,31 @@ const CompanyScroller = ({ letter, scrollDirection }: { letter: string; scrollDi
       className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
     >
       {filtered.map(c => (
-        <div key={c.id} className="flex-shrink-0 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-full text-sm text-slate-300 whitespace-nowrap">
+        <button
+          key={c.id}
+          data-company-pill
+          onClick={() => handlePillClick(c.id)}
+          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+            selectedCompanyId === c.id
+              ? 'bg-violet-600 border-violet-500 text-white'
+              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
+          }`}
+        >
           {c.name}
-        </div>
+        </button>
       ))}
     </div>
   )
 }
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
+  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -124,6 +146,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
+      if (selectedCompanyId) {
+        toggleFavoriteCompany(selectedCompanyId)
+      }
       localStorage.setItem(GATE_KEY, '1')
       setUnlocked(true)
     } else {
@@ -182,9 +207,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
-          {['A', 'B', 'C', 'D'].map((letter, idx) => (
-            <CompanyScroller key={letter} letter={letter} scrollDirection={idx % 2 === 0 ? 'left' : 'right'} />
-          ))}
+          <CompanyScroller letter="A" scrollDirection="right" speed={0.2} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} prioritizeCompany="BNY" />
+          <CompanyScroller letter="C" scrollDirection="right" speed={0.1} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
           <div className="text-center">
             <div className="text-xs text-slate-500">and more…</div>
           </div>
@@ -198,8 +223,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 type="text"
                 value={input}
                 onChange={e => { setInput(e.target.value); setError(false) }}
-                placeholder="Early access is invite-only"
-                autoFocus
+                placeholder={selectedCompanyId ? 'Or enter code' : 'Enter code or select company'}
                 autoComplete="off"
                 className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
               />
