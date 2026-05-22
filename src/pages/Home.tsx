@@ -216,6 +216,7 @@ export const Home = () => {
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
     const betAmount = 10
+    const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
     // Get the card element and calculate confetti origin
     const cardEl = document.querySelector(`[data-event-id="${eventId}"]`)
@@ -229,7 +230,7 @@ export const Home = () => {
 
     if (currentUser) {
       if (placeBet(eventId, side, betAmount)) {
-        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 0.5, ticks: 600 })
+        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 600 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
@@ -237,7 +238,7 @@ export const Home = () => {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
           setAnonCoinsSpent(prev => prev + betAmount)
-          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 0.5, ticks: 600 })
+          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 600 })
         } else {
           showToast('Prediction is no longer active')
         }
