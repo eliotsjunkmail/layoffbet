@@ -69,6 +69,8 @@ export const Home = () => {
   })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
+  const removeBet = useStore(s => s.removeBet)
+  const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
@@ -442,17 +444,25 @@ export const Home = () => {
                           cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-violet-200 dark:border-violet-800`}
                         >
                           {userBet && (
-                            <div className="mb-2">
-                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                                You bet {userBet.amount} coins {userBet.side === 'yes' ? 'YES' : 'NO'}
-                              </span>
+                            <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
+                              <button
+                                onClick={(ev) => { ev.stopPropagation(); removeBet(e.id) }}
+                                className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                              >
+                                {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
+                                <X className="w-3 h-3" />
+                              </button>
                             </div>
                           )}
                           {!userBet && anonVotedEvents[e.id] && (
-                            <div className="mb-2">
-                              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                                You bet {anonVotedEvents[e.id].count * 10} coins {anonVotedEvents[e.id].lastSide === 'yes' ? 'YES' : 'NO'}
-                              </span>
+                            <div className={`mb-2 ${anonVotedEvents[e.id].lastSide === 'no' ? 'flex justify-end' : ''}`}>
+                              <button
+                                onClick={(ev) => { ev.stopPropagation(); removeAnonymousVote(e.id) }}
+                                className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full transition-opacity hover:opacity-75 ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                              >
+                                {anonVotedEvents[e.id].lastSide === 'yes' ? 'YES' : 'NO'} - {anonVotedEvents[e.id].count * 10} coins
+                                <X className="w-3 h-3" />
+                              </button>
                             </div>
                           )}
                           <div className="flex items-start justify-between gap-2 mb-2">
