@@ -68,6 +68,7 @@ export const Home = () => {
     return stored ? parseInt(stored) : 0
   })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
+  const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
   const updateCoins = useStore(s => s.updateCoins)
   const removeBet = useStore(s => s.removeBet)
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
@@ -232,6 +233,7 @@ export const Home = () => {
 
     if (currentUser) {
       if (placeBet(eventId, side, betAmount)) {
+        setHasPlacedFirstBet(true)
         confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 600 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
@@ -239,6 +241,7 @@ export const Home = () => {
     } else {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
+          setHasPlacedFirstBet(true)
           setAnonCoinsSpent(prev => prev + betAmount)
           confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 600 })
         } else {
@@ -453,7 +456,7 @@ export const Home = () => {
                           onSwipeNo={() => handleSwipeBet(e.id, 'no')}
                           disabled={false}
                           onClick={() => navigate(`/event/${e.id}`)}
-                          demoActive={cIdx === 0 && eIdx === 0}
+                          demoActive={!hasPlacedFirstBet && cIdx === 0 && eIdx === 0}
                           cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-violet-200 dark:border-violet-800`}
                         >
                           {userBet && (
