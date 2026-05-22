@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { CheckCircle, Clock, ChevronRight, ChevronLeft, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -64,6 +64,25 @@ export const Bets = () => {
       removeBet(eventId)
     }
   }
+
+  const userStats = useMemo(() => {
+    if (!currentUser) return null
+    const userBets = bets.filter(b => b.userId === currentUser.id)
+    const activeBetCount = userBets.filter(b => {
+      const event = events.find(e => e.id === b.eventId)
+      return event && getEffectiveStatus(event) === 'active'
+    }).length
+    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+    return {
+      coins: currentUser.coins - userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).reduce((sum, b) => sum + b.amount, 0),
+      totalBets: userBets.length,
+      activeBets: activeBetCount,
+      totalBetAmount,
+    }
+  }, [currentUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
@@ -188,6 +207,47 @@ export const Bets = () => {
         </button>
         <h1 className="text-lg font-bold text-gray-900 dark:text-white">My Bets</h1>
       </div>
+
+      {/* User Metrics */}
+      {(currentUser && userStats) || !currentUser ? (
+        <div className="mb-5 -mx-4 px-4 pb-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+              <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</div>
+              <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
+            </div>
+            {currentUser && userStats && (
+              <>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                </div>
+              </>
+            )}
+            {!currentUser && (
+              <>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{anonCoinsSpent}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <div className="flex bg-gray-100 dark:bg-slate-800/60 rounded-xl p-1 mb-5 gap-1">
         {([
