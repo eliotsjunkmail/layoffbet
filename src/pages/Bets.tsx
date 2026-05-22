@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { CheckCircle, Clock, ChevronRight, ChevronLeft, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -6,6 +6,7 @@ import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
+import confetti from 'canvas-confetti'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -23,29 +24,63 @@ export const Bets = () => {
   const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const placeBet = useStore(s => s.placeBet)
+  const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
   const removeBet = useStore(s => s.removeBet)
+  const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
+  const [anonCoins, setAnonCoins] = useState(() => {
+    const stored = localStorage.getItem('anonCoins')
+    return stored ? parseInt(stored) : 50
+  })
+  const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
+    const stored = localStorage.getItem('anonCoinsSpent')
+    return stored ? parseInt(stored) : 0
+  })
   const navigate = useNavigate()
+
+  useEffect(() => {
+    localStorage.setItem('anonCoins', anonCoins.toString())
+  }, [anonCoins])
+
+  useEffect(() => {
+    localStorage.setItem('anonCoinsSpent', anonCoinsSpent.toString())
+  }, [anonCoinsSpent])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
+    const betAmount = 10
+    const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
+
     if (currentUser) {
-      if (placeBet(eventId, side, 10)) {
+      if (placeBet(eventId, side, betAmount)) {
         setSwipeFlash({ id: eventId, side })
         setTimeout(() => setSwipeFlash(null), 600)
-        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
-      showToast('Sign in to place more bets')
+      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
+        if (placeAnonymousVote(eventId, side)) {
+          setAnonCoinsSpent(prev => prev + betAmount)
+          setSwipeFlash({ id: eventId, side })
+          setTimeout(() => setSwipeFlash(null), 600)
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+          showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
+        } else {
+          showToast('Prediction is no longer active')
+        }
+      } else {
+        showToast('Not enough coins')
+      }
     }
   }
 
@@ -214,7 +249,9 @@ export const Bets = () => {
                           className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
                         >
                           <div className="flex items-center justify-between mb-2">
-                            {BetTag}
+                            <div className={bet.side === 'no' ? 'flex justify-end flex-1' : ''}>
+                              {BetTag}
+                            </div>
                             <span className="text-xs font-medium">
                               {won && <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Won</span>}
                               {lost && <span className="text-rose-500 dark:text-rose-400">Lost</span>}
@@ -255,7 +292,7 @@ export const Bets = () => {
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
                             'border-violet-200 dark:border-violet-800'}`}
                       >
-                        <div className="mb-2">
+                        <div className={`mb-2 ${bet.side === 'no' ? 'flex justify-end' : ''}`}>
                           {BetTag}
                         </div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>

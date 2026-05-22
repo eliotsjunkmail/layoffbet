@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
 import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -46,7 +47,7 @@ export const CompanyPage = () => {
   const [shareCopied, setShareCopied] = useState(false)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
-    return stored ? parseInt(stored) : 0
+    return stored ? parseInt(stored) : 50
   })
   const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
     const stored = localStorage.getItem('anonCoinsSpent')
@@ -56,6 +57,14 @@ export const CompanyPage = () => {
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
+
+  useEffect(() => {
+    localStorage.setItem('anonCoins', anonCoins.toString())
+  }, [anonCoins])
+
+  useEffect(() => {
+    localStorage.setItem('anonCoinsSpent', anonCoinsSpent.toString())
+  }, [anonCoinsSpent])
 
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
@@ -90,21 +99,31 @@ export const CompanyPage = () => {
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
+    const betAmount = 10
+    const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
+
     if (currentUser) {
-      if (placeBet(eventId, side, 10)) {
+      if (placeBet(eventId, side, betAmount)) {
         setSwipeFlash({ id: eventId, side })
         setTimeout(() => setSwipeFlash(null), 600)
-        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · 10 coins · ${movement}`)
+        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
-      if (placeAnonymousVote(eventId, side)) {
-        setSwipeFlash({ id: eventId, side })
-        setTimeout(() => setSwipeFlash(null), 600)
-        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${movement}`)
+      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
+        if (placeAnonymousVote(eventId, side)) {
+          setAnonCoinsSpent(prev => prev + betAmount)
+          setSwipeFlash({ id: eventId, side })
+          setTimeout(() => setSwipeFlash(null), 600)
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+          showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
+        } else {
+          showToast('Prediction is no longer active')
+        }
       } else {
-        showToast('10 bets reached — sign in to keep going')
+        showToast('Not enough coins')
       }
     }
   }
