@@ -463,10 +463,10 @@ export const Home = () => {
                             <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
                               <button
                                 onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, false) }}
-                                className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                                className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                               >
                                 {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
-                                <X className="w-3 h-3" />
+                                <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}
@@ -474,10 +474,10 @@ export const Home = () => {
                             <div className={`mb-2 ${anonVotedEvents[e.id].lastSide === 'no' ? 'flex justify-end' : ''}`}>
                               <button
                                 onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, true) }}
-                                className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full transition-opacity hover:opacity-75 ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                                className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${anonVotedEvents[e.id].lastSide === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                               >
                                 {anonVotedEvents[e.id].lastSide === 'yes' ? 'YES' : 'NO'} - {anonVotedEvents[e.id].count * 10} coins
-                                <X className="w-3 h-3" />
+                                <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}
