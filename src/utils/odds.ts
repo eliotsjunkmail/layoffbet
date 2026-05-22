@@ -25,10 +25,12 @@ export const timeUntil = (iso: string): string => {
   if (diff <= 0) return 'Expired'
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-  if (days > 0) return `${days}d ${hours}h left`
-  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  if (hours > 0) return `${hours}h ${mins}m left`
-  return `${mins}m left`
+  if (days > 0) {
+    const dayText = days === 1 ? 'day' : 'days'
+    return `${days} ${dayText} left`
+  }
+  const hourText = hours === 1 ? 'hour' : 'hours'
+  return `${hours} ${hourText} left`
 }
 
 export const uid = (): string =>
