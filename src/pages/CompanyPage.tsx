@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -42,6 +42,8 @@ export const CompanyPage = () => {
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const comments = useStore(s => s.comments)
   const addComment = useStore(s => s.addComment)
+  const editComment = useStore(s => s.editComment)
+  const deleteComment = useStore(s => s.deleteComment)
   const upvoteComment = useStore(s => s.upvoteComment)
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const [shareCopied, setShareCopied] = useState(false)
@@ -57,6 +59,8 @@ export const CompanyPage = () => {
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [commentErrors, setCommentErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -67,11 +71,41 @@ export const CompanyPage = () => {
   }, [anonCoinsSpent])
 
   const handleAddComment = (eventId: string) => {
+    if (!currentUser) return
     const text = commentInputs[eventId]?.trim()
     if (!text) return
-    addComment(eventId, text)
+
+    if (editingCommentId) {
+      const result = editComment(editingCommentId, text)
+      if (result.ok) {
+        setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
+        setEditingCommentId(null)
+        setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
+      } else {
+        setCommentErrors(prev => ({ ...prev, [eventId]: result.error || 'Error' }))
+      }
+    } else {
+      const result = addComment(eventId, text)
+      if (result.ok) {
+        setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
+        setFocusedInput(null)
+        setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
+      } else {
+        setCommentErrors(prev => ({ ...prev, [eventId]: result.error || 'Error' }))
+      }
+    }
+  }
+
+  const handleEditComment = (comment: typeof comments[0], eventId: string) => {
+    setEditingCommentId(comment.id)
+    setCommentInputs(prev => ({ ...prev, [eventId]: comment.content }))
+    setFocusedInput(eventId)
+  }
+
+  const handleCancelEdit = (eventId: string) => {
+    setEditingCommentId(null)
     setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
-    setFocusedInput(null)
+    setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
@@ -356,19 +390,44 @@ export const CompanyPage = () => {
                   <div className="mt-1.5 ml-2 space-y-1.5">
                     {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
                       const hasUpvoted = upvotedCommentIds.includes(cmt.id)
+                      const canEdit = currentUser && (cmt.userId === currentUser.id || currentUser.isAdmin)
                       return (
-                        <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2 flex items-start gap-2">
-                          <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed flex-1">{cmt.content}</p>
-                          <button
-                            onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                            className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-violet-600 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-500'}`}
-                          >
-                            <ThumbsUp className="w-3 h-3" />
-                            {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
-                          </button>
+                        <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2 flex items-start gap-2 group">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed break-words">{cmt.content}</p>
+                            {cmt.editedAt && <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">(edited)</p>}
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
+                              className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-violet-600 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-500'}`}
+                            >
+                              <ThumbsUp className="w-3 h-3" />
+                              {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
+                            </button>
+                            {canEdit && (
+                              <>
+                                <button
+                                  onClick={ev => { ev.stopPropagation(); handleEditComment(cmt, event.id) }}
+                                  className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-violet-500 transition-all"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={ev => { ev.stopPropagation(); deleteComment(cmt.id) }}
+                                  className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-all"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
                       )
                     })}
+                    {commentErrors[event.id] && (
+                      <p className="text-[10px] text-rose-500">{commentErrors[event.id]}</p>
+                    )}
                     <div className="flex gap-1.5 pt-0.5">
                       <input
                         value={commentInputs[event.id] ?? ''}
@@ -377,17 +436,30 @@ export const CompanyPage = () => {
                         onFocus={() => setFocusedInput(event.id)}
                         onBlur={() => setTimeout(() => setFocusedInput(f => f === event.id ? null : f), 150)}
                         onClick={ev => ev.stopPropagation()}
-                        placeholder="Add a comment..."
+                        placeholder={editingCommentId ? "Edit comment..." : "Add a comment..."}
+                        maxLength={500}
                         className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500"
                       />
                       {focusedInput === event.id && (
-                        <button
-                          onMouseDown={ev => ev.preventDefault()}
-                          onClick={ev => { ev.stopPropagation(); handleAddComment(event.id) }}
-                          className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                        </button>
+                        <>
+                          <button
+                            onMouseDown={ev => ev.preventDefault()}
+                            onClick={ev => { ev.stopPropagation(); handleAddComment(event.id) }}
+                            className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
+                            title={editingCommentId ? "Update" : "Comment"}
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                          {editingCommentId && (
+                            <button
+                              onMouseDown={ev => ev.preventDefault()}
+                              onClick={ev => { ev.stopPropagation(); handleCancelEdit(event.id) }}
+                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500 text-gray-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-medium"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
