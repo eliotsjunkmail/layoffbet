@@ -328,43 +328,43 @@ const SEED_EVENTS: Event[] = [
 ]
 
 const SEED_COMMENTS: Comment[] = [
-  { id: 'cmt-1', eventId: 'evt-1', content: 'I work there — the vibes are awful. Managers stopped approving expenses and travel two months ago', createdAt: pastDate(3) },
-  { id: 'cmt-2', eventId: 'evt-1', content: 'They laid off my whole team last cycle and called it a "reorg." Same playbook incoming', createdAt: pastDate(2) },
-  { id: 'cmt-3', eventId: 'evt-1', content: 'Cord-cutting is not slowing down. The math doesn\'t work without headcount cuts', createdAt: pastDate(0) },
-  { id: 'cmt-4', eventId: 'evt-2', content: 'AT&T has been doing rolling layoffs for 5 years. There\'s no floor', createdAt: pastDate(2) },
-  { id: 'cmt-5', eventId: 'evt-2', content: 'They offshored my department last year. What\'s left to cut?', createdAt: pastDate(1) },
-  { id: 'cmt-6', eventId: 'evt-4', content: 'Splunk had a totally different culture. The integration is going to be brutal', createdAt: pastDate(1) },
-  { id: 'cmt-7', eventId: 'evt-5', content: 'The CVS near me already closed. This is already happening', createdAt: pastDate(4) },
-  { id: 'cmt-8', eventId: 'evt-5', content: 'Walgreens is doing the same thing. Standalone pharmacy is dying', createdAt: pastDate(2) },
+  { id: 'cmt-1', eventId: 'evt-1', userId: 'sys-user', content: 'I work there — the vibes are awful. Managers stopped approving expenses and travel two months ago', createdAt: pastDate(3) },
+  { id: 'cmt-2', eventId: 'evt-1', userId: 'sys-user', content: 'They laid off my whole team last cycle and called it a "reorg." Same playbook incoming', createdAt: pastDate(2) },
+  { id: 'cmt-3', eventId: 'evt-1', userId: 'sys-user', content: 'Cord-cutting is not slowing down. The math doesn\'t work without headcount cuts', createdAt: pastDate(0) },
+  { id: 'cmt-4', eventId: 'evt-2', userId: 'sys-user', content: 'AT&T has been doing rolling layoffs for 5 years. There\'s no floor', createdAt: pastDate(2) },
+  { id: 'cmt-5', eventId: 'evt-2', userId: 'sys-user', content: 'They offshored my department last year. What\'s left to cut?', createdAt: pastDate(1) },
+  { id: 'cmt-6', eventId: 'evt-4', userId: 'sys-user', content: 'Splunk had a totally different culture. The integration is going to be brutal', createdAt: pastDate(1) },
+  { id: 'cmt-7', eventId: 'evt-5', userId: 'sys-user', content: 'The CVS near me already closed. This is already happening', createdAt: pastDate(4) },
+  { id: 'cmt-8', eventId: 'evt-5', userId: 'sys-user', content: 'Walgreens is doing the same thing. Standalone pharmacy is dying', createdAt: pastDate(2) },
   // BNY comments
-  { id: 'cmt-b1', eventId: 'evt-b1', content: 'They\'ve been quietly walking people out for months. This is just going to be the formal announcement', createdAt: pastDate(6) },
-  { id: 'cmt-b2', eventId: 'evt-b1', content: 'Robin Vince said "workforce evolution" on the last earnings call like 4 times. Read the room', createdAt: pastDate(5) },
-  { id: 'cmt-b3', eventId: 'evt-b1', content: 'My manager told us AI tools will handle 40% of our current workload by end of year. Do the math', createdAt: pastDate(3) },
-  { id: 'cmt-b4', eventId: 'evt-b2', content: 'Pershing is a mess. Lost two major RIA clients this quarter and nobody wants to talk about it internally', createdAt: pastDate(4) },
-  { id: 'cmt-b5', eventId: 'evt-b2', content: 'They restructured my team twice in 18 months. Each time fewer seats when the music stopped', createdAt: pastDate(2) },
-  { id: 'cmt-b6', eventId: 'evt-b3', content: 'I\'ve been training my replacement in Pune for 3 months. Not subtle', createdAt: pastDate(5) },
-  { id: 'cmt-b7', eventId: 'evt-b3', content: 'Every single new tech req I\'ve seen opened in the last 6 months is India-based. Zero exceptions', createdAt: pastDate(3) },
-  { id: 'cmt-b8', eventId: 'evt-b4', content: 'All the contractors in my group got 30-day notices last month. FTEs, you\'re next', createdAt: pastDate(2) },
-  { id: 'cmt-b9', eventId: 'evt-b8', content: 'This happens every year. Bonuses hit in Feb, layoffs announced in March. Clockwork', createdAt: pastDate(1) },
-  { id: 'cmt-b10', eventId: 'evt-b9', content: 'I was part of this. No warning, no severance negotiation. Just a Teams call and a badge deactivation', createdAt: pastDate(10) },
+  { id: 'cmt-b1', eventId: 'evt-b1', userId: 'sys-user', content: 'They\'ve been quietly walking people out for months. This is just going to be the formal announcement', createdAt: pastDate(6) },
+  { id: 'cmt-b2', eventId: 'evt-b1', userId: 'sys-user', content: 'Robin Vince said "workforce evolution" on the last earnings call like 4 times. Read the room', createdAt: pastDate(5) },
+  { id: 'cmt-b3', eventId: 'evt-b1', userId: 'sys-user', content: 'My manager told us AI tools will handle 40% of our current workload by end of year. Do the math', createdAt: pastDate(3) },
+  { id: 'cmt-b4', eventId: 'evt-b2', userId: 'sys-user', content: 'Pershing is a mess. Lost two major RIA clients this quarter and nobody wants to talk about it internally', createdAt: pastDate(4) },
+  { id: 'cmt-b5', eventId: 'evt-b2', userId: 'sys-user', content: 'They restructured my team twice in 18 months. Each time fewer seats when the music stopped', createdAt: pastDate(2) },
+  { id: 'cmt-b6', eventId: 'evt-b3', userId: 'sys-user', content: 'I\'ve been training my replacement in Pune for 3 months. Not subtle', createdAt: pastDate(5) },
+  { id: 'cmt-b7', eventId: 'evt-b3', userId: 'sys-user', content: 'Every single new tech req I\'ve seen opened in the last 6 months is India-based. Zero exceptions', createdAt: pastDate(3) },
+  { id: 'cmt-b8', eventId: 'evt-b4', userId: 'sys-user', content: 'All the contractors in my group got 30-day notices last month. FTEs, you\'re next', createdAt: pastDate(2) },
+  { id: 'cmt-b9', eventId: 'evt-b8', userId: 'sys-user', content: 'This happens every year. Bonuses hit in Feb, layoffs announced in March. Clockwork', createdAt: pastDate(1) },
+  { id: 'cmt-b10', eventId: 'evt-b9', userId: 'sys-user', content: 'I was part of this. No warning, no severance negotiation. Just a Teams call and a badge deactivation', createdAt: pastDate(10) },
   // ADP comments
-  { id: 'cmt-a1', eventId: 'evt-a1', content: 'June layoffs at ADP are as predictable as tax season. Set your calendar', createdAt: pastDate(7) },
-  { id: 'cmt-a2', eventId: 'evt-a1', content: 'Been here 11 years. It\'s June every single time. The only variable is which floor gets cleared', createdAt: pastDate(5) },
-  { id: 'cmt-a3', eventId: 'evt-a1', content: 'Leadership briefed on scope already. Wider than last year. Whole business units being eliminated not just individuals', createdAt: pastDate(3) },
-  { id: 'cmt-a4', eventId: 'evt-a2', content: 'My building had 400 people two years ago. We\'re down to maybe 60. The lights are literally off on two floors', createdAt: pastDate(6) },
-  { id: 'cmt-a5', eventId: 'evt-a3', content: 'They told us to report to Norfolk or resign. Nobody wanted to relocate so most of us just waited for the package', createdAt: pastDate(4) },
-  { id: 'cmt-a6', eventId: 'evt-a3', content: 'Homeshored since 2019. Got the "alignment" email last month. We all know what that means', createdAt: pastDate(2) },
-  { id: 'cmt-a7', eventId: 'evt-a5', content: 'I spent 3 months documenting everything for my offshore replacement. They called it "knowledge transfer."', createdAt: pastDate(5) },
-  { id: 'cmt-a8', eventId: 'evt-a5', content: 'My manager actually said "train them with enthusiasm." I could not make this up', createdAt: pastDate(3) },
-  { id: 'cmt-a9', eventId: 'evt-a9', content: 'Was in the Maitland group. Got the call on a Tuesday at 10am. Badge stopped working by noon', createdAt: pastDate(20) },
-  { id: 'cmt-a10', eventId: 'evt-a10', content: 'The "alignment initiative" email is HR code for figure out if you\'re going to make the drive or take the package', createdAt: pastDate(1) },
+  { id: 'cmt-a1', eventId: 'evt-a1', userId: 'sys-user', content: 'June layoffs at ADP are as predictable as tax season. Set your calendar', createdAt: pastDate(7) },
+  { id: 'cmt-a2', eventId: 'evt-a1', userId: 'sys-user', content: 'Been here 11 years. It\'s June every single time. The only variable is which floor gets cleared', createdAt: pastDate(5) },
+  { id: 'cmt-a3', eventId: 'evt-a1', userId: 'sys-user', content: 'Leadership briefed on scope already. Wider than last year. Whole business units being eliminated not just individuals', createdAt: pastDate(3) },
+  { id: 'cmt-a4', eventId: 'evt-a2', userId: 'sys-user', content: 'My building had 400 people two years ago. We\'re down to maybe 60. The lights are literally off on two floors', createdAt: pastDate(6) },
+  { id: 'cmt-a5', eventId: 'evt-a3', userId: 'sys-user', content: 'They told us to report to Norfolk or resign. Nobody wanted to relocate so most of us just waited for the package', createdAt: pastDate(4) },
+  { id: 'cmt-a6', eventId: 'evt-a3', userId: 'sys-user', content: 'Homeshored since 2019. Got the "alignment" email last month. We all know what that means', createdAt: pastDate(2) },
+  { id: 'cmt-a7', eventId: 'evt-a5', userId: 'sys-user', content: 'I spent 3 months documenting everything for my offshore replacement. They called it "knowledge transfer."', createdAt: pastDate(5) },
+  { id: 'cmt-a8', eventId: 'evt-a5', userId: 'sys-user', content: 'My manager actually said "train them with enthusiasm." I could not make this up', createdAt: pastDate(3) },
+  { id: 'cmt-a9', eventId: 'evt-a9', userId: 'sys-user', content: 'Was in the Maitland group. Got the call on a Tuesday at 10am. Badge stopped working by noon', createdAt: pastDate(20) },
+  { id: 'cmt-a10', eventId: 'evt-a10', userId: 'sys-user', content: 'The "alignment initiative" email is HR code for figure out if you\'re going to make the drive or take the package', createdAt: pastDate(1) },
   // Meta comments
-  { id: 'cmt-m1', eventId: 'evt-m1', content: '$125-145 billion on AI infrastructure is insane. Something has to give. The layoffs are just the start.', createdAt: pastDate(4) },
-  { id: 'cmt-m2', eventId: 'evt-m1', content: 'Zuck framed this as "AI Year" but really it\'s cost-cutting disguised as strategy. The math doesn\'t work any other way.', createdAt: pastDate(3) },
-  { id: 'cmt-m3', eventId: 'evt-m2', content: 'He literally said he won\'t rule out MORE cuts in H2. That\'s code for "yes we\'re doing this again, I just don\'t want the headlines now"', createdAt: pastDate(2) },
-  { id: 'cmt-m4', eventId: 'evt-m3', content: 'Comp cuts in 2024, more cuts in 2025, more cuts coming in 2026, and they\'re talking 2027? This is death by a thousand cuts.', createdAt: pastDate(2) },
-  { id: 'cmt-m5', eventId: 'evt-m4', content: 'Shifting 7000 people to AI while cutting staff elsewhere. That team is going to be stressed to the max. Burnout incoming.', createdAt: pastDate(1) },
-  { id: 'cmt-m6', eventId: 'evt-m5', content: 'When they flatten orgs this aggressively, senior folks always bail. Why stick around if your org chart just got nuked?', createdAt: pastDate(1) },
+  { id: 'cmt-m1', eventId: 'evt-m1', userId: 'sys-user', content: '$125-145 billion on AI infrastructure is insane. Something has to give. The layoffs are just the start.', createdAt: pastDate(4) },
+  { id: 'cmt-m2', eventId: 'evt-m1', userId: 'sys-user', content: 'Zuck framed this as "AI Year" but really it\'s cost-cutting disguised as strategy. The math doesn\'t work any other way.', createdAt: pastDate(3) },
+  { id: 'cmt-m3', eventId: 'evt-m2', userId: 'sys-user', content: 'He literally said he won\'t rule out MORE cuts in H2. That\'s code for "yes we\'re doing this again, I just don\'t want the headlines now"', createdAt: pastDate(2) },
+  { id: 'cmt-m4', eventId: 'evt-m3', userId: 'sys-user', content: 'Comp cuts in 2024, more cuts in 2025, more cuts coming in 2026, and they\'re talking 2027? This is death by a thousand cuts.', createdAt: pastDate(2) },
+  { id: 'cmt-m5', eventId: 'evt-m4', userId: 'sys-user', content: 'Shifting 7000 people to AI while cutting staff elsewhere. That team is going to be stressed to the max. Burnout incoming.', createdAt: pastDate(1) },
+  { id: 'cmt-m6', eventId: 'evt-m5', userId: 'sys-user', content: 'When they flatten orgs this aggressively, senior folks always bail. Why stick around if your org chart just got nuked?', createdAt: pastDate(1) },
 ]
 
 interface StoreState {
@@ -527,13 +527,15 @@ export const useStore = create<StoreState>()(
       logout: () => {
         localStorage.removeItem('anonCoins')
         localStorage.removeItem('anonCoinsSpent')
-        set({ currentUser: null, guestCoins: 50, anonCoinsSpent: 0 })
+        set({ currentUser: null, guestCoins: 50 })
       },
 
       migrateGuestBets: () => {
-        const { currentUser, anonVotedEvents, anonCoinsSpent, anonCoins, bets, events } = get()
+        const { currentUser, anonVotedEvents, bets, events } = get()
         if (!currentUser) return
 
+        const anonCoins = parseInt(localStorage.getItem('anonCoins') || '50')
+        const anonCoinsSpent = parseInt(localStorage.getItem('anonCoinsSpent') || '0')
         const remainingCoins = Math.max(0, anonCoins - anonCoinsSpent)
         const newBets: Bet[] = []
 
@@ -547,6 +549,7 @@ export const useStore = create<StoreState>()(
               userId: currentUser.id,
               side: vote.lastSide,
               amount,
+              createdAt: new Date().toISOString(),
             }
             newBets.push(bet)
           }
@@ -559,8 +562,9 @@ export const useStore = create<StoreState>()(
           },
           bets: [...bets, ...newBets],
           anonVotedEvents: {},
-          anonCoinsSpent: 0,
         }))
+        localStorage.removeItem('anonCoinsSpent')
+        localStorage.removeItem('anonCoins')
       },
 
       register: (username, password) => {
