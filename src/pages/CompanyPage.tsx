@@ -271,8 +271,8 @@ export const CompanyPage = () => {
 
       {/* Copied toast */}
       {shareCopied && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 dark:bg-slate-700 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in">
-          <Check className="w-3.5 h-3.5 text-emerald-400" /> Link copied to clipboard
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in">
+          <Check className="w-3.5 h-3.5 text-emerald-500" /> Link copied to clipboard
         </div>
       )}
 
@@ -459,7 +459,7 @@ export const CompanyPage = () => {
       )}
 
       {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
         </div>
       )}
