@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -36,6 +36,8 @@ export const CompanyPage = () => {
   const markCompanyVisited = useStore(s => s.markCompanyVisited)
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
+  const removeBet = useStore(s => s.removeBet)
+  const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const comments = useStore(s => s.comments)
   const addComment = useStore(s => s.addComment)
@@ -257,6 +259,7 @@ export const CompanyPage = () => {
               const exhausted = !currentUser && anonCount >= 10
               const eventComments = comments.filter(c => c.eventId === event.id)
               const midpoint = Math.floor(active.length / 2)
+              const userBet = currentUser ? bets.find(b => b.eventId === event.id && b.userId === currentUser.id) : null
               return (
                 <>
                   {idx === midpoint && <AdBanner />}
@@ -272,6 +275,28 @@ export const CompanyPage = () => {
                         flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
                         'border-violet-200 dark:border-violet-800'}`}
                   >
+                    {userBet && (
+                      <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
+                        <button
+                          onClick={(ev) => { ev.stopPropagation(); removeBet(event.id) }}
+                          className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        >
+                          {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    {!userBet && anonVote && (
+                      <div className={`mb-2 ${anonVote.lastSide === 'no' ? 'flex justify-end' : ''}`}>
+                        <button
+                          onClick={(ev) => { ev.stopPropagation(); removeAnonymousVote(event.id) }}
+                          className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${anonVote.lastSide === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        >
+                          {anonVote.lastSide === 'yes' ? 'YES' : 'NO'} - {anonVote.count * 10} coins
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
                       {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (

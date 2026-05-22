@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { CheckCircle, Clock, ChevronRight, ChevronLeft } from 'lucide-react'
+import { CheckCircle, Clock, ChevronRight, ChevronLeft, X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
@@ -23,6 +23,7 @@ export const Bets = () => {
   const companies = useStore(s => s.companies)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const placeBet = useStore(s => s.placeBet)
+  const removeBet = useStore(s => s.removeBet)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
@@ -190,9 +191,18 @@ export const Bets = () => {
                   const isFirstCard = cardIndex === 0
                   cardIndex++
 
-                  const BetTag = (
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
-                      You bet {bet.amount} coins {bet.side === 'yes' ? 'YES' : 'NO'}
+                  const isActive = status === 'active'
+                  const BetTag = isActive ? (
+                    <button
+                      onClick={(ev) => { ev.stopPropagation(); removeBet(event.id) }}
+                      className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${bet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                    >
+                      {bet.side === 'yes' ? 'YES' : 'NO'} - {bet.amount} coins
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full ${bet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                      {bet.side === 'yes' ? 'YES' : 'NO'} - {bet.amount} coins
                     </span>
                   )
 
