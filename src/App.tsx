@@ -49,12 +49,15 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
   useEffect(() => {
     if (!scrollRef.current) return
     const el = scrollRef.current
-    if (scrollDirection === 'right') {
+    // If we're prioritizing a company, start at the beginning to show it
+    if (prioritizeCompany) {
+      el.scrollLeft = 0
+    } else if (scrollDirection === 'right') {
       el.scrollLeft = el.scrollWidth - el.clientWidth
     } else {
       el.scrollLeft = 0
     }
-  }, [scrollDirection])
+  }, [scrollDirection, prioritizeCompany])
 
   useEffect(() => {
     if (!scrollRef.current || isDragging || selectedCompanyId) return
