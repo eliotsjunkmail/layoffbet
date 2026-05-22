@@ -401,6 +401,7 @@ interface StoreState {
   placeAnonymousVote: (eventId: string, side: 'yes' | 'no', amount?: number) => boolean
   placeBet: (eventId: string, side: 'yes' | 'no', amount: number) => boolean
   removeBet: (eventId: string) => void
+  removeAnonymousVote: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'>) => void
   updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
@@ -476,6 +477,25 @@ export const useStore = create<StoreState>()(
           } : e),
         }))
         return true
+      },
+
+      removeAnonymousVote: (eventId) => {
+        const { anonVotedEvents, events, getEffectiveStatus } = get()
+        const vote = anonVotedEvents[eventId]
+        if (!vote) return
+        const event = events.find(e => e.id === eventId)
+        if (!event || getEffectiveStatus(event) !== 'active') return
+        const amount = vote.count * 10
+        const newVotes = { ...anonVotedEvents }
+        delete newVotes[eventId]
+        set(s => ({
+          anonVotedEvents: newVotes,
+          events: s.events.map(e => e.id === eventId ? {
+            ...e,
+            yesPool: vote.lastSide === 'yes' ? Math.max(0, e.yesPool - amount) : e.yesPool,
+            noPool:  vote.lastSide === 'no'  ? Math.max(0, e.noPool  - amount) : e.noPool,
+          } : e),
+        }))
       },
 
       addFeedback: (text, type) => set(s => ({
