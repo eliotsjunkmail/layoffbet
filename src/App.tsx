@@ -226,7 +226,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 type="text"
                 value={input}
                 onChange={e => { setInput(e.target.value); setError(false) }}
-                placeholder={selectedCompanyId ? 'Or enter code' : 'Enter code or select company'}
+                placeholder="Enter invite code"
                 autoComplete="off"
                 className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
               />
