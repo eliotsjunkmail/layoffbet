@@ -84,7 +84,7 @@ export const EventDetail = () => {
       if (placeAnonymousVote(id!, side, betAmount)) {
         setAnonCoinsSpent(prev => prev + betAmount)
         confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
+        showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
       } else {
         showToast('Prediction is no longer active')
       }
