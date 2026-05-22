@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem } from '../types'
-import { uid, isExpired } from '../utils/odds'
+import { uid, isExpired, validateNoPersonalNames } from '../utils/odds'
 
 const DAILY_COINS = 100
 const today = () => new Date().toISOString().split('T')[0]
@@ -414,8 +414,9 @@ interface StoreState {
   updateCompany: (id: string, name: string, description: string, industry: string) => void
   deleteCompany: (id: string) => void
 
-  addComment: (eventId: string, content: string) => void
-  deleteComment: (id: string) => void
+  addComment: (eventId: string, content: string) => { ok: boolean; error?: string }
+  editComment: (id: string, content: string) => { ok: boolean; error?: string }
+  deleteComment: (id: string) => boolean
   upvoteComment: (commentId: string) => void
   recordShare: (eventId: string) => void
   upvotedCommentIds: string[]
@@ -811,17 +812,54 @@ export const useStore = create<StoreState>()(
       },
 
       addComment: (eventId, content) => {
+        const { currentUser } = get()
+        if (!currentUser) return { ok: false, error: 'Must be logged in to comment' }
+
+        const trimmed = content.trim()
+        if (!trimmed) return { ok: false, error: 'Comment cannot be empty' }
+        if (!validateNoPersonalNames(trimmed)) return { ok: false, error: 'Please avoid using personal names in comments' }
+
         const comment: Comment = {
           id: `cmt-${uid()}`,
           eventId,
-          content: content.trim(),
+          userId: currentUser.id,
+          content: trimmed,
           createdAt: new Date().toISOString(),
         }
         set(s => ({ comments: [...s.comments, comment] }))
+        return { ok: true }
+      },
+
+      editComment: (id, content) => {
+        const { currentUser, comments } = get()
+        if (!currentUser) return { ok: false, error: 'Must be logged in to edit' }
+
+        const comment = comments.find(c => c.id === id)
+        if (!comment) return { ok: false, error: 'Comment not found' }
+        if (comment.userId !== currentUser.id && !currentUser.isAdmin) {
+          return { ok: false, error: 'You can only edit your own comments' }
+        }
+
+        const trimmed = content.trim()
+        if (!trimmed) return { ok: false, error: 'Comment cannot be empty' }
+        if (!validateNoPersonalNames(trimmed)) return { ok: false, error: 'Please avoid using personal names in comments' }
+
+        set(s => ({
+          comments: s.comments.map(c => c.id === id ? { ...c, content: trimmed, editedAt: new Date().toISOString() } : c)
+        }))
+        return { ok: true }
       },
 
       deleteComment: (id) => {
+        const { currentUser, comments } = get()
+        if (!currentUser) return false
+
+        const comment = comments.find(c => c.id === id)
+        if (!comment) return false
+        if (comment.userId !== currentUser.id && !currentUser.isAdmin) return false
+
         set(s => ({ comments: s.comments.filter(c => c.id !== id) }))
+        return true
       },
 
       upvoteComment: (commentId) => {

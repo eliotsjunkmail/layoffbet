@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
-import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2, Check } from 'lucide-react'
+import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2, Check, Edit2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -21,16 +21,20 @@ export const EventDetail = () => {
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const addComment = useStore(s => s.addComment)
+  const editComment = useStore(s => s.editComment)
   const deleteComment = useStore(s => s.deleteComment)
   const resolveEvent = useStore(s => s.resolveEvent)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
 
   const [commentText, setCommentText] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [commentError, setCommentError] = useState('')
   const [betAmount, setBetAmount] = useState(10)
   const [toast, setToast] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 50
@@ -113,8 +117,37 @@ export const EventDetail = () => {
     e.preventDefault()
     if (!commentText.trim()) return
     if (!currentUser) { setShowAuthModal(true); return }
-    addComment(id!, commentText)
+
+    if (editingCommentId) {
+      const result = editComment(editingCommentId, commentText)
+      if (result.ok) {
+        setCommentText('')
+        setEditingCommentId(null)
+        setCommentError('')
+      } else {
+        setCommentError(result.error || 'Error editing comment')
+      }
+    } else {
+      const result = addComment(id!, commentText)
+      if (result.ok) {
+        setCommentText('')
+        setCommentError('')
+      } else {
+        setCommentError(result.error || 'Error adding comment')
+      }
+    }
+  }
+
+  const handleEditComment = (comment: typeof comments[0]) => {
+    setEditingCommentId(comment.id)
+    setCommentText(comment.content)
+    setTimeout(() => textareaRef.current?.focus(), 0)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null)
     setCommentText('')
+    setCommentError('')
   }
 
   const handleShare = async () => {
@@ -299,28 +332,56 @@ export const EventDetail = () => {
             <div key={c.id} className="bg-gray-50 dark:bg-slate-900 rounded-xl p-3 group">
               <p className="text-sm text-gray-700 dark:text-slate-200 leading-relaxed">{c.content}</p>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-xs text-gray-400 dark:text-slate-600">{new Date(c.createdAt).toLocaleString()}</span>
-                {isAdmin && (
-                  <button onClick={() => deleteComment(c.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 transition-all">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                <span className="text-xs text-gray-400 dark:text-slate-600">{new Date(c.createdAt).toLocaleString()}{c.editedAt && ' (edited)'}</span>
+                {currentUser && (c.userId === currentUser.id || isAdmin) && (
+                  <div className="flex gap-1">
+                    <button onClick={() => handleEditComment(c)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-violet-500 transition-all">
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => deleteComment(c.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 transition-all">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
           ))}
         </div>
-        <form onSubmit={handleComment} className="flex gap-2">
-          <input
-            type="text"
+        <form onSubmit={handleComment} className="space-y-2">
+          <textarea
+            ref={textareaRef}
             value={commentText}
             onChange={e => setCommentText(e.target.value)}
-            placeholder={currentUser ? "Add an anonymous comment..." : "Sign in to comment..."}
-            maxLength={280}
-            className="flex-1 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+            onFocus={() => {
+              if (textareaRef.current) {
+                textareaRef.current.style.minHeight = '100px'
+              }
+            }}
+            onBlur={() => {
+              if (textareaRef.current && !commentText.trim() && !editingCommentId) {
+                textareaRef.current.style.minHeight = '40px'
+              }
+            }}
+            placeholder={currentUser ? (editingCommentId ? "Edit comment..." : "Add a comment...") : "Sign in to comment..."}
+            maxLength={500}
+            rows={1}
+            className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors resize-none overflow-hidden"
+            style={{ minHeight: editingCommentId ? '100px' : '40px' }}
           />
-          <button type="submit" disabled={!commentText.trim()} className="p-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors">
-            <Send className="w-4 h-4 text-white" />
-          </button>
+          {commentError && (
+            <p className="text-xs text-rose-500">{commentError}</p>
+          )}
+          <div className="flex gap-2">
+            <button type="submit" disabled={!commentText.trim()} className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-2 transition-colors flex items-center justify-center gap-2 text-white text-sm font-medium">
+              <Send className="w-4 h-4" />
+              {editingCommentId ? 'Update' : 'Comment'}
+            </button>
+            {editingCommentId && (
+              <button type="button" onClick={handleCancelEdit} className="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 rounded-xl px-3 py-2 transition-colors text-gray-700 dark:text-slate-300 text-sm font-medium">
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
