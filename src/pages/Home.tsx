@@ -213,7 +213,7 @@ export const Home = () => {
     const event = events.find(e => e.id === eventId)
     if (currentUser) {
       if (placeBet(eventId, side, 10)) {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 }, shapes: ['square'], scalar: 2, colors: ['#ec4899'], ticks: 200 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
@@ -221,7 +221,7 @@ export const Home = () => {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= 10) {
         if (placeAnonymousVote(eventId, side)) {
           setAnonCoinsSpent(prev => prev + 10)
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 }, shapes: ['square'], scalar: 2, colors: ['#ec4899'], ticks: 200 })
         } else {
           showToast('Prediction is no longer active')
         }
