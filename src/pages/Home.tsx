@@ -219,17 +219,17 @@ export const Home = () => {
 
     // Get the card element and calculate confetti origin
     const cardEl = document.querySelector(`[data-event-id="${eventId}"]`)
-    let confettiOrigin = { x: 0.5, y: 0.8 }
+    let confettiOrigin = { x: 0.5, y: 0.2 }
     if (cardEl) {
       const rect = cardEl.getBoundingClientRect()
       const x = (rect.left + rect.width / 2) / window.innerWidth
-      const y = (rect.bottom) / window.innerHeight
-      confettiOrigin = { x, y: Math.min(y, 0.95) }
+      const y = (rect.top) / window.innerHeight
+      confettiOrigin = { x, y: Math.max(y, 0.05) }
     }
 
     if (currentUser) {
       if (placeBet(eventId, side, betAmount)) {
-        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#be123c'], gravity: 1, ticks: 300 })
+        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 1, ticks: 300 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
@@ -237,7 +237,7 @@ export const Home = () => {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
           setAnonCoinsSpent(prev => prev + betAmount)
-          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#be123c'], gravity: 1, ticks: 300 })
+          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 1, ticks: 300 })
         } else {
           showToast('Prediction is no longer active')
         }
