@@ -61,7 +61,7 @@ export const Home = () => {
   const [coinsAddedThisSession, setCoinsAddedThisSession] = useState(0)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
-    return stored ? parseInt(stored) : 0
+    return stored ? parseInt(stored) : 50
   })
   const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
     const stored = localStorage.getItem('anonCoinsSpent')
