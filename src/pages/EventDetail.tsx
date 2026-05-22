@@ -263,7 +263,7 @@ export const EventDetail = () => {
               </div>
               {currentUser === null && remainingGuestCoins < betAmount && (
                 <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-2">
-                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-violet-600 dark:text-violet-400 hover:underline">Sign in</button> for 100 daily coins.
+                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-violet-600 dark:text-violet-400 hover:underline">Login</button> to get 100 coins daily.
                 </p>
               )}
             </>

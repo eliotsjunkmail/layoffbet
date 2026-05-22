@@ -622,7 +622,7 @@ export const Home = () => {
             <div className="flex-1 text-center sm:text-left">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
               <p className="text-sm text-gray-500 dark:text-slate-400 mb-3 sm:mb-0">
-                Create a free anonymous account to remember your bets and earn <strong className="text-violet-600 dark:text-violet-400">100 Coins daily</strong>.
+                Login and get <strong className="text-violet-600 dark:text-violet-400">100 coins daily</strong> to wager on predictions. It's Free!
               </p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -644,7 +644,7 @@ export const Home = () => {
           <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-4 text-center">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
             <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
-              Create a free anonymous account and get <strong className="text-violet-600 dark:text-violet-400">100 Coins daily</strong> to wager on predictions.
+              Login and get <strong className="text-violet-600 dark:text-violet-400">100 coins daily</strong> to wager on predictions. It's Free!
             </p>
             <Link to="/login" className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm">
               Get Started — It's Free <ArrowRight className="w-4 h-4" />

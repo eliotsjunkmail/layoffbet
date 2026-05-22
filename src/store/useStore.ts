@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem } from '../types'
 import { uid, isExpired } from '../utils/odds'
 
-const DAILY_COINS = 50
+const DAILY_COINS = 100
 const today = () => new Date().toISOString().split('T')[0]
 const futureDate = (days: number) => new Date(Date.now() + days * 86400000).toISOString()
 const pastDate = (days: number) => new Date(Date.now() - days * 86400000).toISOString()
