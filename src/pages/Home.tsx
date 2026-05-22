@@ -229,7 +229,7 @@ export const Home = () => {
 
     if (currentUser) {
       if (placeBet(eventId, side, betAmount)) {
-        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 1, ticks: 300 })
+        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 0.5, ticks: 600 })
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
@@ -237,7 +237,7 @@ export const Home = () => {
       if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
           setAnonCoinsSpent(prev => prev + betAmount)
-          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 1, ticks: 300 })
+          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: ['#d1206a'], gravity: 0.5, ticks: 600 })
         } else {
           showToast('Prediction is no longer active')
         }
