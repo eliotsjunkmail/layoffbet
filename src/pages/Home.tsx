@@ -620,7 +620,7 @@ export const Home = () => {
               </div>
               <div className="space-y-2">
                 {filtered.map(c => (
-                  <div key={c.id} className={c.slug === 'bny' ? 'sticky top-0 z-10 bg-white dark:bg-slate-900' : ''}>
+                  <div key={c.id} className={c.slug === 'bny' ? 'sticky top-14 z-30 bg-white dark:bg-slate-900 shadow-md' : ''}>
                     <CompanyRow company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
                   </div>
                 ))}
