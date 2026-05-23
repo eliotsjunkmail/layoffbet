@@ -166,9 +166,20 @@ export const Home = () => {
   }, [companies, query])
 
   const filtered = useMemo(() => {
-    return companies
+    const filtered = companies
       .filter(c => industry === 'All' || c.industry === industry)
+
+    const meta = filtered.find(c => c.slug === 'meta')
+    const bny = filtered.find(c => c.slug === 'bny')
+    const rest = filtered.filter(c => c.slug !== 'meta' && c.slug !== 'bny')
       .sort((a, b) => b.viewCount - a.viewCount)
+
+    const result = []
+    if (meta) result.push(meta)
+    if (bny) result.push(bny)
+    result.push(...rest)
+
+    return result
   }, [companies, industry])
 
   useEffect(() => {
@@ -609,7 +620,9 @@ export const Home = () => {
               </div>
               <div className="space-y-2">
                 {filtered.map(c => (
-                  <CompanyRow key={c.id} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
+                  <div key={c.id} className={c.slug === 'bny' ? 'sticky top-0 z-10 bg-white dark:bg-slate-900' : ''}>
+                    <CompanyRow company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
+                  </div>
                 ))}
               </div>
             </section>
