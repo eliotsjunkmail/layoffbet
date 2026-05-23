@@ -29,6 +29,7 @@ export const EventDetail = () => {
   const [commentText, setCommentText] = useState('')
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentError, setCommentError] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [betAmount, setBetAmount] = useState(10)
   const [toast, setToast] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -354,19 +355,19 @@ export const EventDetail = () => {
             onChange={e => setCommentText(e.target.value)}
             onFocus={() => {
               if (textareaRef.current) {
-                textareaRef.current.style.minHeight = '100px'
+                textareaRef.current.style.minHeight = '120px'
               }
             }}
             onBlur={() => {
               if (textareaRef.current && !commentText.trim() && !editingCommentId) {
-                textareaRef.current.style.minHeight = '40px'
+                textareaRef.current.style.minHeight = '60px'
               }
             }}
             placeholder={currentUser ? (editingCommentId ? "Edit comment..." : "Add a comment...") : "Sign in to comment..."}
             maxLength={500}
-            rows={1}
+            rows={3}
             className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors resize-none overflow-hidden"
-            style={{ minHeight: editingCommentId ? '100px' : '40px' }}
+            style={{ minHeight: editingCommentId ? '120px' : '60px' }}
           />
           {commentError && (
             <p className="text-xs text-rose-500">{commentError}</p>
