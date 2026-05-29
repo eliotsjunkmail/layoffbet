@@ -28,6 +28,7 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
   const didSwipe = useRef(false)
   const demoCancelled = useRef(false)
   const demoRaf = useRef<number | null>(null)
+  const isMouseDown = useRef(false)
 
   const progress = Math.min(Math.abs(dx) / THRESHOLD, 1)
   const isRight = dx > 0
@@ -108,6 +109,55 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
     else if (finalDx < -THRESHOLD) { didSwipe.current = true; onSwipeNo() }
   }
 
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (disabled || e.button !== 0) return
+    demoCancelled.current = true
+    if (demoRaf.current) cancelAnimationFrame(demoRaf.current)
+    isMouseDown.current = true
+    startX.current = e.clientX
+    startY.current = e.clientY
+    dirLocked.current = null
+    didSwipe.current = false
+    setActive(false)
+  }
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown.current || disabled) return
+    const newDx = e.clientX - startX.current
+    const newDy = e.clientY - startY.current
+    if (!dirLocked.current) {
+      if (Math.abs(newDx) > 6 || Math.abs(newDy) > 6) {
+        dirLocked.current = Math.abs(newDx) > Math.abs(newDy) ? 'h' : 'v'
+      }
+    }
+    if (dirLocked.current === 'h') {
+      e.preventDefault()
+      setActive(true)
+      setDx(newDx)
+    }
+  }
+
+  const onMouseUp = (e: React.MouseEvent) => {
+    isMouseDown.current = false
+    if (dirLocked.current !== 'h') { setDx(0); setActive(false); return }
+    const finalDx = e.clientX - startX.current
+    setActive(false)
+    setDx(0)
+    if (finalDx > THRESHOLD) { didSwipe.current = true; onSwipeYes() }
+    else if (finalDx < -THRESHOLD) { didSwipe.current = true; onSwipeNo() }
+  }
+
+  const onMouseLeave = (e: React.MouseEvent) => {
+    if (isMouseDown.current && dirLocked.current === 'h') {
+      isMouseDown.current = false
+      const finalDx = e.clientX - startX.current
+      setActive(false)
+      setDx(0)
+      if (finalDx > THRESHOLD) { didSwipe.current = true; onSwipeYes() }
+      else if (finalDx < -THRESHOLD) { didSwipe.current = true; onSwipeNo() }
+    }
+  }
+
   const rotation = dx * 0.035
 
   return (
@@ -149,6 +199,10 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
         onClick={() => { if (!didSwipe.current) onClick?.() }}
       >
         {children}
