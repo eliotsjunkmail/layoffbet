@@ -15,6 +15,7 @@ export const Login = () => {
   const [error, setError] = useState('')
   const login = useStore(s => s.login)
   const register = useStore(s => s.register)
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -27,7 +28,10 @@ export const Login = () => {
         setRemember(true)
       } catch {}
     }
-  }, [])
+
+    // Sync from server to get latest users (in case they just registered)
+    syncCommentsFromServer()
+  }, [syncCommentsFromServer])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
