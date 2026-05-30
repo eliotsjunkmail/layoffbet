@@ -1,27 +1,33 @@
 {
   "users": [
     {
-      "id": "user-c03a383d00ce4363",
-      "username": "testuser123",
+      "id": "user-9de303fb4e1e09a7",
+      "username": "testuser2",
       "password": "pass123",
       "coins": 100,
       "isAdmin": false,
-      "createdAt": "2026-05-30T17:37:45.016Z",
+      "createdAt": "2026-05-30T18:09:10.455Z",
       "lastCoinsDate": "2026-05-30",
       "anonymousNumber": 100001,
       "displayName": "Anon100001"
+    },
+    {
+      "id": "user-a13b74d4078c6be9",
+      "username": "newuser",
+      "password": "mypassword",
+      "coins": 100,
+      "isAdmin": false,
+      "createdAt": "2026-05-30T18:09:51.301Z",
+      "lastCoinsDate": "2026-05-30",
+      "anonymousNumber": 100002,
+      "displayName": "Anon100002"
     }
   ],
   "events": [],
   "bets": [],
   "comments": [],
   "companies": [],
-  "favorites": {
-    "test-user-1": [],
-    "user-c03a383d00ce4363": [
-      "comp-1"
-    ]
-  },
+  "favorites": {},
   "pinnedEvents": {},
   "feedback": [],
   "anonVotedEvents": {}

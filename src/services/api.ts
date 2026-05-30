@@ -1,5 +1,8 @@
 import type { User, Comment } from '../types'
 
+// Use relative URLs in production (same origin)
+// In development, this will fail because frontend is on 5174 and API is on 3000
+// But the Vite dev server should proxy API requests to the backend
 const API_BASE = ''
 
 export const api = {
