@@ -6,6 +6,8 @@ export interface User {
   isAdmin: boolean
   createdAt: string
   lastCoinsDate: string
+  anonymousNumber?: number
+  displayName?: string
 }
 
 export interface Company {
@@ -50,12 +52,14 @@ export interface Bet {
 
 export interface Comment {
   id: string
-  eventId: string
+  eventId?: string
+  companyId?: string
   userId: string
   content: string
   createdAt: string
   editedAt?: string
   upvotes?: number
+  displayName?: string
 }
 
 export type Theme = 'light' | 'dark'
