@@ -108,7 +108,7 @@ export const CompanyPage = () => {
     setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
   }
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 5000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
 
   const handleCancelBet = (eventId: string, isGuest: boolean) => {
     if (isGuest) {
