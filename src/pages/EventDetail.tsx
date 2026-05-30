@@ -35,7 +35,6 @@ export const EventDetail = () => {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 50

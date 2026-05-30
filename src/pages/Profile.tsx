@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Coins, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react'
+import { Coins, CheckCircle, XCircle, Clock, TrendingUp, Star } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { formatDate } from '../utils/odds'
@@ -8,6 +8,8 @@ export const Profile = () => {
   const currentUser = useStore(s => s.currentUser)
   const bets = useStore(s => s.bets)
   const events = useStore(s => s.events)
+  const companies = useStore(s => s.companies)
+  const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
 
   if (!currentUser) return null
@@ -62,6 +64,41 @@ export const Profile = () => {
           <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Your balance is topped up daily.</div>
         </div>
       </div>
+
+      {favoriteCompanyIds.length > 0 && (
+        <section className="mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">My Favorites ({favoriteCompanyIds.length})</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {favoriteCompanyIds.map(companyId => {
+              const company = companies.find(c => c.id === companyId)
+              if (!company) return null
+              return (
+                <Link
+                  key={companyId}
+                  to={`/company/${company.slug}`}
+                  className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-yellow-300 dark:hover:border-yellow-700 hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-sm font-bold text-white"
+                      style={{ backgroundColor: company.color }}
+                    >
+                      {company.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white truncate">{company.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{company.industry}</p>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {pending.length > 0 && (
         <section className="mb-5">
