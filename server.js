@@ -342,7 +342,7 @@ app.delete('/api/favorites/:userId/:companyId', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'dist')))
 
 // Fallback to index.html for SPA
-app.get('*', (req, res) => {
+app.get(/^(?!\/api\/).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'))
 })
 
