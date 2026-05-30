@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem } from '../types'
 import { uid, isExpired, validateNoPersonalNames } from '../utils/odds'
+import { api } from '../services/api'
 
 const DAILY_COINS = 100
 const today = () => new Date().toISOString().split('T')[0]
@@ -589,8 +590,16 @@ export const useStore = create<StoreState>()(
           isAdmin: false,
           createdAt: new Date().toISOString(),
           lastCoinsDate: today(),
+          anonymousNumber: get().users.reduce((max, u) => Math.max(max, u.anonymousNumber ?? 0), 0) + 1,
+          displayName: `anonymous-${get().users.reduce((max, u) => Math.max(max, u.anonymousNumber ?? 0), 0) + 1}`,
         }
         set(s => ({ users: [...s.users, user], currentUser: user }))
+        // Persist user to localStorage for session persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
+        }
+        // Sync with server in the background
+        api.register(username, password).catch(err => console.error('Failed to sync registration:', err))
         get().migrateGuestBets()
         return { ok: true }
       },

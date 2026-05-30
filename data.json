@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "id": "user-c03a383d00ce4363",
+      "username": "testuser123",
+      "password": "pass123",
+      "coins": 100,
+      "isAdmin": false,
+      "createdAt": "2026-05-30T17:37:45.016Z",
+      "lastCoinsDate": "2026-05-30",
+      "anonymousNumber": 100001,
+      "displayName": "Anon100001"
+    }
+  ],
+  "events": [],
+  "bets": [],
+  "comments": [],
+  "companies": [],
+  "favorites": {
+    "test-user-1": [],
+    "user-c03a383d00ce4363": [
+      "comp-1"
+    ]
+  },
+  "pinnedEvents": {},
+  "feedback": [],
+  "anonVotedEvents": {}
+}
