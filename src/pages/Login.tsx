@@ -13,6 +13,7 @@ export const Login = () => {
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
+  const [synced, setSynced] = useState(false)
   const login = useStore(s => s.login)
   const register = useStore(s => s.register)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
@@ -29,14 +30,20 @@ export const Login = () => {
       } catch {}
     }
 
-    // Sync from server to get latest users (in case they just registered)
-    syncCommentsFromServer()
+    // Sync from server to get latest users before allowing login
+    syncCommentsFromServer().then(() => {
+      setSynced(true)
+    }).catch(() => {
+      setSynced(true) // Mark synced even if it fails, to allow offline login
+    })
   }, [syncCommentsFromServer])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (mode === 'login') {
+      // Sync from server right before login to ensure we have latest users
+      await syncCommentsFromServer()
       const ok = login(username, password)
       if (ok) {
         if (remember) {
@@ -54,7 +61,10 @@ export const Login = () => {
         if (remember) {
           localStorage.setItem(REMEMBER_KEY, JSON.stringify({ username, password }))
         }
-        navigate('/')
+        // Wait a moment for server registration to complete, then navigate
+        setTimeout(() => {
+          navigate('/')
+        }, 500)
       } else {
         setError(result.error ?? 'Registration failed.')
       }
@@ -130,9 +140,10 @@ export const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-violet-200 dark:shadow-violet-900/30"
+              disabled={!synced}
+              className={`w-full font-semibold py-3 rounded-xl transition-colors shadow-md ${synced ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-violet-200 dark:shadow-violet-900/30' : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-slate-700 dark:text-slate-400'}`}
             >
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
+              {synced ? (mode === 'login' ? 'Sign In' : 'Create Account') : 'Loading...'}
             </button>
           </form>
 

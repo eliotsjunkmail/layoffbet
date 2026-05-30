@@ -528,7 +528,7 @@ export const useStore = create<StoreState>()(
 
       login: (username, password) => {
         const user = get().users.find(
-          u => u.username.toLowerCase() === username.toLowerCase() && u.password.toLowerCase() === password.toLowerCase()
+          u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
         )
         if (!user) return false
         set({ currentUser: user })
@@ -587,43 +587,37 @@ export const useStore = create<StoreState>()(
 
       register: (username, password) => {
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
-        const exists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
-        if (exists) return { ok: false, error: 'Username already taken.' }
-        const user: User = {
-          id: `user-${uid()}`,
-          username: username.trim(),
-          password,
-          coins: 100,
-          isAdmin: false,
-          createdAt: new Date().toISOString(),
-          lastCoinsDate: today(),
-          anonymousNumber: get().users.reduce((max, u) => Math.max(max, u.anonymousNumber ?? 0), 0) + 1,
-          displayName: `anonymous-${get().users.reduce((max, u) => Math.max(max, u.anonymousNumber ?? 0), 0) + 1}`,
-        }
-        console.log('[Store] Registering user locally:', user)
-        set(s => ({ users: [...s.users, user], currentUser: user }))
-        // Persist user to localStorage for session persistence
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
-          // Mark that sync should wait for registration to complete
-          localStorage.setItem('layoff-bets-registering', '1')
-        }
-        // Sync with server - wait for it to complete
-        console.log('[Store] Calling API to sync registration')
+
+        // Check locally first for immediate feedback on duplicate
+        const localExists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
+        if (localExists) return { ok: false, error: 'Username already taken.' }
+
+        // Register on server first (synchronous from user perspective, but validation is server-side)
+        console.log('[Store] Registering user on server:', username)
         api.register(username, password)
-          .then(() => {
-            console.log('[Store] Registration synced to server successfully')
+          .then((serverUser) => {
+            console.log('[Store] Registration successful on server:', serverUser)
+            // Add the server-returned user to local store
+            set(s => ({
+              users: [...s.users, serverUser],
+              currentUser: serverUser
+            }))
+            // Persist to localStorage
             if (typeof window !== 'undefined') {
-              localStorage.removeItem('layoff-bets-registering')
+              localStorage.setItem('layoff-bets-currentUser', JSON.stringify(serverUser))
             }
+            // Migrate guest bets after registration
+            get().migrateGuestBets()
           })
           .catch(err => {
-            console.error('[Store] Failed to sync registration:', err)
+            console.error('[Store] Registration failed on server:', err)
+            // Don't add to local store if server registration fails
+            set({ currentUser: null })
             if (typeof window !== 'undefined') {
-              localStorage.removeItem('layoff-bets-registering')
+              localStorage.removeItem('layoff-bets-currentUser')
             }
           })
-        get().migrateGuestBets()
+
         return { ok: true }
       },
 

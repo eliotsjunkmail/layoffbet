@@ -1,12 +1,12 @@
 {
   "users": [
     {
-      "id": "user-c8bd8fff74932241",
-      "username": "testuser123",
-      "password": "password123",
+      "id": "user-558e602666d849e8",
+      "username": "testuser456",
+      "password": "pass456",
       "coins": 100,
       "isAdmin": false,
-      "createdAt": "2026-05-30T18:24:32.428Z",
+      "createdAt": "2026-05-30T18:37:20.910Z",
       "lastCoinsDate": "2026-05-30",
       "anonymousNumber": 100001,
       "displayName": "Anon100001"
