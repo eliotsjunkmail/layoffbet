@@ -13,11 +13,14 @@ export const Login = () => {
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
+  const [toast, setToast] = useState('')
   const [synced, setSynced] = useState(false)
   const login = useStore(s => s.login)
   const register = useStore(s => s.register)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const navigate = useNavigate()
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
 
   useEffect(() => {
     const saved = localStorage.getItem(REMEMBER_KEY)
@@ -43,7 +46,9 @@ export const Login = () => {
     setError('')
     if (mode === 'login') {
       // Sync from server right before login to ensure we have latest users
+      console.log('[Login] Syncing from server before authentication...')
       await syncCommentsFromServer()
+      console.log('[Login] Server sync complete, attempting authentication')
       const ok = login(username, password)
       if (ok) {
         if (remember) {
@@ -51,6 +56,8 @@ export const Login = () => {
         } else {
           localStorage.removeItem(REMEMBER_KEY)
         }
+        console.log('[Login] Authentication successful, navigating to home')
+        showToast(`Welcome back! Synced from server and authenticated as ${username}`)
         navigate('/')
       } else {
         setError('Invalid username or password.')
@@ -61,10 +68,24 @@ export const Login = () => {
         if (remember) {
           localStorage.setItem(REMEMBER_KEY, JSON.stringify({ username, password }))
         }
-        // Wait a moment for server registration to complete, then navigate
-        setTimeout(() => {
-          navigate('/')
-        }, 500)
+        // Wait for server registration to complete and verify
+        showToast('Account created! Verifying with server...')
+        setTimeout(async () => {
+          console.log('[Registration] Verifying account was saved to server...')
+          await syncCommentsFromServer()
+          const users = useStore.getState().users
+          const savedUser = users.find(u => u.username.toLowerCase() === username.toLowerCase())
+          if (savedUser) {
+            console.log('[Registration] ✓ Account verified on server:', savedUser)
+            showToast(`✓ Account verified on server! Logging in...`)
+            setTimeout(() => {
+              navigate('/')
+            }, 500)
+          } else {
+            console.log('[Registration] ✗ Account not found on server after sync')
+            setError('Registration completed but could not verify account.')
+          }
+        }, 300)
       } else {
         setError(result.error ?? 'Registration failed.')
       }
@@ -150,6 +171,12 @@ export const Login = () => {
           <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-5">
             All participation is fully anonymous. No identity verification required.
           </p>
+
+          {toast && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+              {toast}
+            </div>
+          )}
         </div>
       </div>
       <div className="max-w-sm mx-auto w-full px-4">
