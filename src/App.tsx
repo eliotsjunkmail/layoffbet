@@ -341,11 +341,38 @@ const ScrollToTop = () => {
   return null
 }
 
+const DataSync = () => {
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
+  const restoreSession = useStore(s => s.restoreSession)
+
+  useEffect(() => {
+    const initApp = async () => {
+      // Restore user session from localStorage
+      restoreSession()
+
+      // Sync from server to get latest data
+      await syncCommentsFromServer()
+    }
+
+    initApp()
+
+    // Sync every 5 seconds to keep data updated
+    const interval = setInterval(() => {
+      syncCommentsFromServer()
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [syncCommentsFromServer, restoreSession])
+
+  return null
+}
+
 export const App = () => (
   <SiteGate>
   <BrowserRouter>
     <ThemeEffect />
     <ScrollToTop />
+    <DataSync />
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />

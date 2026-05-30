@@ -424,6 +424,8 @@ interface StoreState {
 
   getEffectiveStatus: (event: Event) => Event['status']
   banUser: (userId: string) => void
+  restoreSession: () => void
+  syncCommentsFromServer: () => Promise<void>
 }
 
 export const useStore = create<StoreState>()(
@@ -530,6 +532,10 @@ export const useStore = create<StoreState>()(
         )
         if (!user) return false
         set({ currentUser: user })
+        // Persist user to localStorage for session persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
+        }
         get().checkDailyCoins()
         get().migrateGuestBets()
         return true
@@ -538,7 +544,8 @@ export const useStore = create<StoreState>()(
       logout: () => {
         localStorage.removeItem('anonCoins')
         localStorage.removeItem('anonCoinsSpent')
-        set({ currentUser: null, guestCoins: 50 })
+        localStorage.removeItem('layoff-bets-currentUser')
+        set({ currentUser: null, guestCoins: 50, favoriteCompanyIds: [] })
       },
 
       migrateGuestBets: () => {
@@ -909,6 +916,48 @@ export const useStore = create<StoreState>()(
       banUser: (userId) => {
         if (userId === 'user-admin') return
         set(s => ({ users: s.users.filter(u => u.id !== userId) }))
+      },
+
+      restoreSession: () => {
+        if (typeof window === 'undefined') return
+        try {
+          const saved = localStorage.getItem('layoff-bets-currentUser')
+          if (saved) {
+            const user = JSON.parse(saved)
+            set({ currentUser: user })
+            // Verify user still exists in the users list
+            const users = get().users
+            if (!users.find(u => u.id === user.id)) {
+              localStorage.removeItem('layoff-bets-currentUser')
+              set({ currentUser: null })
+            }
+          }
+        } catch (e) {
+          console.error('Failed to restore session:', e)
+          localStorage.removeItem('layoff-bets-currentUser')
+        }
+      },
+
+      syncCommentsFromServer: async () => {
+        try {
+          const serverData = await api.sync()
+          if (serverData) {
+            const userId = get().currentUser?.id
+            set({
+              users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
+              events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
+              bets: serverData.bets || [],
+              comments: serverData.comments.length > 0 ? serverData.comments : SEED_COMMENTS,
+              companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
+              favoriteCompanyIds: (userId && serverData.favorites?.[userId]) || [],
+              pinnedEventIds: (userId && serverData.pinnedEvents?.[userId]) || [],
+              feedback: serverData.feedback || [],
+              anonVotedEvents: serverData.anonVotedEvents || {},
+            })
+          }
+        } catch (error) {
+          console.error('Failed to sync from server:', error)
+        }
       },
     }),
     {

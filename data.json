@@ -1,26 +1,15 @@
 {
   "users": [
     {
-      "id": "user-9de303fb4e1e09a7",
-      "username": "testuser2",
-      "password": "pass123",
+      "id": "user-7bc8d7a4911043b8",
+      "username": "alice",
+      "password": "password123",
       "coins": 100,
       "isAdmin": false,
-      "createdAt": "2026-05-30T18:09:10.455Z",
+      "createdAt": "2026-05-30T18:13:29.767Z",
       "lastCoinsDate": "2026-05-30",
       "anonymousNumber": 100001,
       "displayName": "Anon100001"
-    },
-    {
-      "id": "user-a13b74d4078c6be9",
-      "username": "newuser",
-      "password": "mypassword",
-      "coins": 100,
-      "isAdmin": false,
-      "createdAt": "2026-05-30T18:09:51.301Z",
-      "lastCoinsDate": "2026-05-30",
-      "anonymousNumber": 100002,
-      "displayName": "Anon100002"
     }
   ],
   "events": [],
