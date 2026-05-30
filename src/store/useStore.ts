@@ -600,13 +600,29 @@ export const useStore = create<StoreState>()(
           anonymousNumber: get().users.reduce((max, u) => Math.max(max, u.anonymousNumber ?? 0), 0) + 1,
           displayName: `anonymous-${get().users.reduce((max, u) => Math.max(max, u.anonymousNumber ?? 0), 0) + 1}`,
         }
+        console.log('[Store] Registering user locally:', user)
         set(s => ({ users: [...s.users, user], currentUser: user }))
         // Persist user to localStorage for session persistence
         if (typeof window !== 'undefined') {
           localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
+          // Mark that sync should wait for registration to complete
+          localStorage.setItem('layoff-bets-registering', '1')
         }
-        // Sync with server in the background
-        api.register(username, password).catch(err => console.error('Failed to sync registration:', err))
+        // Sync with server - wait for it to complete
+        console.log('[Store] Calling API to sync registration')
+        api.register(username, password)
+          .then(() => {
+            console.log('[Store] Registration synced to server successfully')
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('layoff-bets-registering')
+            }
+          })
+          .catch(err => {
+            console.error('[Store] Failed to sync registration:', err)
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('layoff-bets-registering')
+            }
+          })
         get().migrateGuestBets()
         return { ok: true }
       },

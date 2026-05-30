@@ -350,6 +350,20 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
+      // Wait a moment for registration API to complete if in progress
+      const registering = localStorage.getItem('layoff-bets-registering')
+      if (registering) {
+        console.log('[DataSync] Registration in progress, waiting...')
+        // Wait up to 5 seconds for registration to complete
+        for (let i = 0; i < 50; i++) {
+          if (!localStorage.getItem('layoff-bets-registering')) {
+            console.log('[DataSync] Registration completed')
+            break
+          }
+          await new Promise(r => setTimeout(r, 100))
+        }
+      }
+
       // Sync from server to get latest data
       await syncCommentsFromServer()
     }

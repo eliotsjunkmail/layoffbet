@@ -8,15 +8,26 @@ const API_BASE = ''
 export const api = {
   // User endpoints
   register: async (username: string, password: string): Promise<User> => {
-    const response = await fetch(`${API_BASE}/api/users/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
-    if (!response.ok) {
-      throw new Error('Registration failed')
+    console.log('[API] Registering user:', username)
+    try {
+      const response = await fetch(`${API_BASE}/api/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+      console.log('[API] Register response status:', response.status)
+      if (!response.ok) {
+        const error = await response.text()
+        console.error('[API] Register error:', error)
+        throw new Error('Registration failed')
+      }
+      const data = await response.json()
+      console.log('[API] Register success:', data)
+      return data
+    } catch (error) {
+      console.error('[API] Register exception:', error)
+      throw error
     }
-    return response.json()
   },
 
   login: async (username: string, password: string): Promise<User> => {
