@@ -446,11 +446,21 @@ export const useStore = create<StoreState>()(
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
-      toggleFavoriteCompany: (companyId) => set(s => ({
-        favoriteCompanyIds: s.favoriteCompanyIds.includes(companyId)
-          ? s.favoriteCompanyIds.filter(id => id !== companyId)
-          : [...s.favoriteCompanyIds, companyId],
-      })),
+      toggleFavoriteCompany: (companyId) => {
+        set(s => {
+          const isCurrentlyFavorite = s.favoriteCompanyIds.includes(companyId)
+          const updated = isCurrentlyFavorite
+            ? s.favoriteCompanyIds.filter(id => id !== companyId)
+            : [...s.favoriteCompanyIds, companyId]
+          const userId = s.currentUser?.id || 'guest'
+          if (isCurrentlyFavorite) {
+            api.removeFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
+          } else {
+            api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
+          }
+          return { favoriteCompanyIds: updated }
+        })
+      },
 
       togglePinnedEvent: (eventId) => set(s => ({
         pinnedEventIds: s.pinnedEventIds.includes(eventId)
