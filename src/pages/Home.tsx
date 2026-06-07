@@ -72,6 +72,16 @@ export const Home = () => {
   const updateCoins = useStore(s => s.updateCoins)
   const removeBet = useStore(s => s.removeBet)
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
+  const anonFavInitialized = useRef(false)
+
+  useEffect(() => {
+    if (anonFavInitialized.current) return
+    const storedCompanyId = localStorage.getItem('lb-anon-favorite-company')
+    if (storedCompanyId && !currentUser && !favoriteCompanyIds.includes(storedCompanyId)) {
+      anonFavInitialized.current = true
+      toggleFavoriteCompany(storedCompanyId)
+    }
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
