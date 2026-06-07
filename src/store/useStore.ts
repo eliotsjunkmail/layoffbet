@@ -426,25 +426,25 @@ export const useStore = create<StoreState>()(
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
       toggleFavoriteCompany: (companyId) => {
-        set(s => {
-          const isCurrentlyFavorite = s.favoriteCompanyIds.includes(companyId)
-          const updated = isCurrentlyFavorite
-            ? s.favoriteCompanyIds.filter(id => id !== companyId)
-            : [...s.favoriteCompanyIds, companyId]
-          const userId = s.currentUser?.id || 'guest'
-          if (isCurrentlyFavorite) {
-            api.removeFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
-          } else {
-            api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
-          }
+        const currentState = get()
+        const isCurrentlyFavorite = currentState.favoriteCompanyIds.includes(companyId)
+        const updated = isCurrentlyFavorite
+          ? currentState.favoriteCompanyIds.filter(id => id !== companyId)
+          : [...currentState.favoriteCompanyIds, companyId]
 
-          // For anonymous users, explicitly persist all favorites to localStorage
-          if (!s.currentUser && typeof window !== 'undefined') {
-            localStorage.setItem('lb-anon-favorites', JSON.stringify(updated))
-          }
+        const userId = currentState.currentUser?.id || 'guest'
+        if (isCurrentlyFavorite) {
+          api.removeFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
+        } else {
+          api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
+        }
 
-          return { favoriteCompanyIds: updated }
-        })
+        // For anonymous users, explicitly persist to localStorage BEFORE updating store
+        if (!currentState.currentUser && typeof window !== 'undefined') {
+          localStorage.setItem('lb-anon-favorites', JSON.stringify(updated))
+        }
+
+        set({ favoriteCompanyIds: updated })
       },
 
       togglePinnedEvent: (eventId) => set(s => ({
