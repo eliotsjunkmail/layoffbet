@@ -125,6 +125,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
+  const currentUser = useStore(s => s.currentUser)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
@@ -144,6 +145,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+
+  useEffect(() => {
+    if (!currentUser) {
+      localStorage.removeItem(GATE_KEY)
+      setUnlocked(false)
+    }
+  }, [currentUser])
 
   if (unlocked) return <>{children}</>
 
