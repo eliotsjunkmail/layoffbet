@@ -929,13 +929,17 @@ export const useStore = create<StoreState>()(
           const serverData = await api.sync()
           if (serverData) {
             const userId = get().currentUser?.id
+            const currentFavs = get().favoriteCompanyIds
+            const serverFavs = userId && serverData.favorites?.[userId]
+            const newFavs = serverFavs || currentFavs
+            console.log('[syncCommentsFromServer] userId:', userId, 'currentFavs:', currentFavs, 'serverFavs:', serverFavs, 'newFavs:', newFavs)
             set({
               users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
               events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
               bets: serverData.bets || [],
               comments: serverData.comments.length > 0 ? serverData.comments : SEED_COMMENTS,
               companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
-              favoriteCompanyIds: (userId && serverData.favorites?.[userId]) || get().favoriteCompanyIds,
+              favoriteCompanyIds: newFavs,
               pinnedEventIds: (userId && serverData.pinnedEvents?.[userId]) || get().pinnedEventIds,
               feedback: serverData.feedback || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
