@@ -82,7 +82,7 @@ export const Home = () => {
 
     anonFavInitialized.current = true
     toggleFavoriteCompany(storedCompanyId)
-  }, [currentUser, favoriteCompanyIds, toggleFavoriteCompany])
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))

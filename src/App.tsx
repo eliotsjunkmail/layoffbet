@@ -364,11 +364,21 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
-      // For anonymous users, restore favorites from localStorage
+      // For anonymous users, restore favorites from localStorage or cookie
       const currentUser = useStore.getState().currentUser
       const currentFavs = useStore.getState().favoriteCompanyIds
       if (!currentUser) {
-        const anonFavs = localStorage.getItem('lb-anon-favorites')
+        let anonFavs = localStorage.getItem('lb-anon-favorites')
+
+        // Fallback to cookie if localStorage is empty
+        if (!anonFavs) {
+          const cookies = document.cookie.split(';')
+          const cookieFav = cookies.find(c => c.trim().startsWith('lb-anon-favorites='))
+          if (cookieFav) {
+            anonFavs = cookieFav.split('=')[1]
+          }
+        }
+
         if (anonFavs) {
           try {
             const favs = JSON.parse(anonFavs)

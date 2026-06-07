@@ -439,9 +439,13 @@ export const useStore = create<StoreState>()(
           api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
         }
 
-        // For anonymous users, explicitly persist to localStorage BEFORE updating store
+        // For anonymous users, persist to both localStorage and cookie
         if (!currentState.currentUser && typeof window !== 'undefined') {
           localStorage.setItem('lb-anon-favorites', JSON.stringify(updated))
+          // Store in cookie with 30 day expiration
+          const expiryDate = new Date()
+          expiryDate.setDate(expiryDate.getDate() + 30)
+          document.cookie = `lb-anon-favorites=${JSON.stringify(updated)}; expires=${expiryDate.toUTCString()}; path=/`
         }
 
         set({ favoriteCompanyIds: updated })
