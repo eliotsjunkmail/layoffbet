@@ -935,8 +935,8 @@ export const useStore = create<StoreState>()(
               bets: serverData.bets || [],
               comments: serverData.comments.length > 0 ? serverData.comments : SEED_COMMENTS,
               companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
-              favoriteCompanyIds: (userId && serverData.favorites?.[userId]) || [],
-              pinnedEventIds: (userId && serverData.pinnedEvents?.[userId]) || [],
+              favoriteCompanyIds: (userId && serverData.favorites?.[userId]) || get().favoriteCompanyIds,
+              pinnedEventIds: (userId && serverData.pinnedEvents?.[userId]) || get().pinnedEventIds,
               feedback: serverData.feedback || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
             })
