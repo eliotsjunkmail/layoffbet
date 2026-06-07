@@ -56,8 +56,11 @@ export const Login = () => {
         } else {
           localStorage.removeItem(REMEMBER_KEY)
         }
-        console.log('[Login] Authentication successful, navigating to home')
-        showToast(`Welcome back! Synced from server and authenticated as ${username}`)
+        console.log('[Login] Authentication successful, syncing user data...')
+        // Sync again after login to load user's favorites and other data
+        await syncCommentsFromServer()
+        console.log('[Login] User data synced, navigating to home')
+        showToast(`Welcome back! Logged in as ${username}`)
         navigate('/')
       } else {
         setError('Invalid username or password.')
