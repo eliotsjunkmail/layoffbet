@@ -58,7 +58,6 @@ export const Home = () => {
     return stored ? JSON.parse(stored) : true
   })
   const [hidingComments, setHidingComments] = useState(false)
-  const [coinsAddedThisSession, setCoinsAddedThisSession] = useState(0)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 50
@@ -213,28 +212,6 @@ export const Home = () => {
     setShowDropdown(false)
   }, [location.key])
 
-  // Add coins every 3 seconds (max 50 coins per session)
-  useEffect(() => {
-    if (coinsAddedThisSession >= 50) return
-
-    const interval = setInterval(() => {
-      setCoinsAddedThisSession(prev => {
-        if (prev >= 50) return prev
-        if (currentUser) {
-          updateCoins(1)
-        } else {
-          setAnonCoins(prev => prev + 1)
-        }
-        // Trigger puff animation
-        const puffId = Math.random().toString(36).substring(7)
-        setCoinPuff({ id: puffId, x: 50, y: 50 })
-        setTimeout(() => setCoinPuff(null), 600)
-        return prev + 1
-      })
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [coinsAddedThisSession, currentUser, updateCoins])
 
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
@@ -335,12 +312,6 @@ export const Home = () => {
               <button onClick={() => {
                 if (currentUser && userStats) {
                   navigate('/bets')
-                } else if (!currentUser && coinsAddedThisSession < 50) {
-                  setAnonCoins(prev => prev + 1)
-                  setCoinsAddedThisSession(prev => prev + 1)
-                  const puffId = Math.random().toString(36).substring(7)
-                  setCoinPuff({ id: puffId, x: 50, y: 50 })
-                  setTimeout(() => setCoinPuff(null), 600)
                 }
               }} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
