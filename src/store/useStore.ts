@@ -928,15 +928,23 @@ export const useStore = create<StoreState>()(
         try {
           const serverData = await api.sync()
           if (serverData) {
-            const userId = get().currentUser?.id
+            const currentUser = get().currentUser
+            const userId = currentUser?.id
+            const currentFavs = get().favoriteCompanyIds
+            const currentPinned = get().pinnedEventIds
+
+            // For logged-in users, use server data. For anonymous users, preserve local favorites
+            const newFavs = userId && serverData.favorites?.[userId] ? serverData.favorites[userId] : currentFavs
+            const newPinned = userId && serverData.pinnedEvents?.[userId] ? serverData.pinnedEvents[userId] : currentPinned
+
             set({
               users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
               events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
               bets: serverData.bets || [],
               comments: serverData.comments.length > 0 ? serverData.comments : SEED_COMMENTS,
               companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
-              favoriteCompanyIds: (userId && serverData.favorites?.[userId]) || get().favoriteCompanyIds,
-              pinnedEventIds: (userId && serverData.pinnedEvents?.[userId]) || get().pinnedEventIds,
+              favoriteCompanyIds: newFavs,
+              pinnedEventIds: newPinned,
               feedback: serverData.feedback || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
             })
