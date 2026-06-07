@@ -437,6 +437,12 @@ export const useStore = create<StoreState>()(
           } else {
             api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
           }
+
+          // For anonymous users, explicitly persist all favorites to localStorage
+          if (!s.currentUser && typeof window !== 'undefined') {
+            localStorage.setItem('lb-anon-favorites', JSON.stringify(updated))
+          }
+
           return { favoriteCompanyIds: updated }
         })
       },

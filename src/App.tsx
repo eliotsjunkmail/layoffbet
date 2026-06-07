@@ -364,6 +364,20 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
+      // For anonymous users, restore favorites from localStorage
+      const currentUser = useStore.getState().currentUser
+      if (!currentUser) {
+        const anonFavs = localStorage.getItem('lb-anon-favorites')
+        if (anonFavs) {
+          try {
+            const favs = JSON.parse(anonFavs)
+            useStore.setState({ favoriteCompanyIds: favs })
+          } catch (e) {
+            console.error('Failed to restore anonymous favorites:', e)
+          }
+        }
+      }
+
       // Wait a moment for registration API to complete if in progress
       const registering = localStorage.getItem('layoff-bets-registering')
       if (registering) {
