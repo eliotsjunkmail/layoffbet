@@ -751,34 +751,36 @@ const CompanyRow = ({
   const prob = topEvent ? getProbability(topEvent.yesPool, topEvent.noPool) : null
 
   return (
-    <Link
-      to={`/${company.slug}`}
-      className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
-    >
-      <CompanyLogo name={company.name} id={company.id} industry={company.industry} color={company.color} sentiment={sentiment} size="md" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{company.name}</span>
-          {activeBets > 0 && (
-            <span className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
-              {activeBets} active
+    <div className="flex items-center gap-2">
+      <Link
+        to={`/${company.slug}`}
+        className="flex-1 flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
+      >
+        <CompanyLogo name={company.name} id={company.id} industry={company.industry} color={company.color} sentiment={sentiment} size="md" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{company.name}</span>
+            {activeBets > 0 && (
+              <span className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
+                {activeBets} active
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 mt-0.5">
+            <span className="text-xs text-gray-400 dark:text-slate-500">{company.industry}</span>
+            <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
+              <Eye className="w-3 h-3" />{fmtViews(company.viewCount)}
             </span>
-          )}
+            {prob && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{prob.yes}% YES</span>}
+          </div>
         </div>
-        <div className="flex items-center gap-3 mt-0.5">
-          <span className="text-xs text-gray-400 dark:text-slate-500">{company.industry}</span>
-          <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
-            <Eye className="w-3 h-3" />{fmtViews(company.viewCount)}
-          </span>
-          {prob && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{prob.yes}% YES</span>}
-        </div>
-      </div>
+      </Link>
       <button
         onClick={onStar}
-        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700 group-hover:text-gray-300 dark:group-hover:text-slate-500 hover:text-amber-400'}`}
+        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700 hover:text-amber-400'}`}
       >
         <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
       </button>
-    </Link>
+    </div>
   )
 }
