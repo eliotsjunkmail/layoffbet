@@ -361,10 +361,6 @@ const DataSync = () => {
       // This ensures persist middleware has loaded saved state
       await new Promise(r => setTimeout(r, 50))
 
-      // Check what favorites are loaded after rehydration
-      const favs = useStore.getState().favoriteCompanyIds
-      console.log('[DataSync] After rehydration, favoriteCompanyIds:', favs)
-
       // Restore user session from localStorage
       restoreSession()
 
@@ -383,9 +379,7 @@ const DataSync = () => {
       }
 
       // Sync from server to get latest data
-      console.log('[DataSync] Before sync, favoriteCompanyIds:', useStore.getState().favoriteCompanyIds)
       await syncCommentsFromServer()
-      console.log('[DataSync] After sync, favoriteCompanyIds:', useStore.getState().favoriteCompanyIds)
     }
 
     initApp()
