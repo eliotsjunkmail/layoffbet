@@ -357,6 +357,10 @@ const DataSync = () => {
 
   useEffect(() => {
     const initApp = async () => {
+      // Wait briefly for store rehydration to complete
+      // This ensures persist middleware has loaded saved state
+      await new Promise(r => setTimeout(r, 50))
+
       // Restore user session from localStorage
       restoreSession()
 
