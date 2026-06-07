@@ -10,6 +10,7 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
 
   const handleLogout = () => {
     logout()
+    localStorage.removeItem('lb-gate-v2')
     onClose()
     navigate('/')
   }
