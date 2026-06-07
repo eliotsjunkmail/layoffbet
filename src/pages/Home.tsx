@@ -76,12 +76,14 @@ export const Home = () => {
 
   useEffect(() => {
     if (anonFavInitialized.current) return
+    if (currentUser) return
     const storedCompanyId = localStorage.getItem('lb-anon-favorite-company')
-    if (storedCompanyId && !currentUser && !favoriteCompanyIds.includes(storedCompanyId)) {
-      anonFavInitialized.current = true
-      toggleFavoriteCompany(storedCompanyId)
-    }
-  }, [])
+    if (!storedCompanyId) return
+    if (favoriteCompanyIds.includes(storedCompanyId)) return
+
+    anonFavInitialized.current = true
+    toggleFavoriteCompany(storedCompanyId)
+  }, [currentUser, favoriteCompanyIds, toggleFavoriteCompany])
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
@@ -131,7 +133,6 @@ export const Home = () => {
     return bIdx - aIdx
   })
   const hasFavorites = favorites.length > 0
-  const defaultCompany = companies.find(c => c.slug === 'meta')
 
   const activeEventsByCompany = useMemo(() => {
     const map: Record<string, number> = {}
@@ -434,8 +435,8 @@ export const Home = () => {
           )}
         </div>
 
-        {/* Company sections (favorites or default Meta for new users) */}
-        {(hasFavorites ? favorites : (defaultCompany ? [defaultCompany] : [])).map((c, cIdx) => {
+        {/* Company sections (favorites) */}
+        {favorites.map((c, cIdx) => {
           const betOrder = (eventId: string) => {
             if (!currentUser) return 2
             const b = bets.find(bet => bet.eventId === eventId && bet.userId === currentUser.id)
