@@ -357,21 +357,25 @@ const DataSync = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      // Wait briefly for store rehydration to complete
-      // This ensures persist middleware has loaded saved state
-      await new Promise(r => setTimeout(r, 50))
+      // Wait for store rehydration to complete
+      // This ensures persist middleware has fully loaded saved state
+      await new Promise(r => setTimeout(r, 100))
 
       // Restore user session from localStorage
       restoreSession()
 
       // For anonymous users, restore favorites from localStorage
       const currentUser = useStore.getState().currentUser
+      const currentFavs = useStore.getState().favoriteCompanyIds
       if (!currentUser) {
         const anonFavs = localStorage.getItem('lb-anon-favorites')
         if (anonFavs) {
           try {
             const favs = JSON.parse(anonFavs)
-            useStore.setState({ favoriteCompanyIds: favs })
+            // Only update if different from current
+            if (JSON.stringify(favs) !== JSON.stringify(currentFavs)) {
+              useStore.setState({ favoriteCompanyIds: favs })
+            }
           } catch (e) {
             console.error('Failed to restore anonymous favorites:', e)
           }
