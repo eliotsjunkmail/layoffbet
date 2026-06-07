@@ -36,7 +36,11 @@ export const Search = () => {
   }, [events, getEffectiveStatus])
 
   const matchedCompanies = q
-    ? companies.filter(c => c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q))
+    ? companies.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.industry.toLowerCase().includes(q) ||
+        c.aliases?.some(alias => alias.toLowerCase().includes(q))
+      )
     : [...companies].sort((a, b) => b.viewCount - a.viewCount)
 
   const matchedEvents = q

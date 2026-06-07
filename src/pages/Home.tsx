@@ -160,7 +160,11 @@ export const Home = () => {
     if (!query.trim()) return []
     const q = query.toLowerCase()
     return companies
-      .filter(c => c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q))
+      .filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.industry.toLowerCase().includes(q) ||
+        c.aliases?.some(alias => alias.toLowerCase().includes(q))
+      )
       .sort((a, b) => b.viewCount - a.viewCount)
       .slice(0, 6)
   }, [companies, query])
