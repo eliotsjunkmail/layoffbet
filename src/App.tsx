@@ -247,8 +247,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 That's not right — try again
               </p>
             )}
-            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm tracking-wide">
-              Continue →
+            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
+              Enter anonymously
             </button>
           </form>
         </div>
