@@ -43,6 +43,10 @@ export const Home = () => {
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
+  const users = useStore(s => s.users)
+
+  // Get the user ID (for anonymous users, find their server-side ID)
+  const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
@@ -121,24 +125,43 @@ export const Home = () => {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
 
   const userStats = useMemo(() => {
-    if (!currentUser) return null
-    const userBets = bets.filter(b => b.userId === currentUser.id)
-    const activeBetCount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).length
-    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-    const activeBetAmount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).reduce((sum, b) => sum + b.amount, 0)
-    return {
-      coins: currentUser.coins - activeBetAmount,
-      totalBets: userBets.length,
-      activeBets: activeBetCount,
-      totalBetAmount,
+    // For logged-in users
+    if (currentUser) {
+      const userBets = bets.filter(b => b.userId === currentUser.id)
+      const activeBetCount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      const activeBetAmount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).reduce((sum, b) => sum + b.amount, 0)
+      return {
+        coins: currentUser.coins - activeBetAmount,
+        totalBets: userBets.length,
+        activeBets: activeBetCount,
+        totalBetAmount,
+      }
     }
-  }, [currentUser, bets, events, getEffectiveStatus])
+
+    // For anonymous users, use server bets if anonymous user exists
+    if (anonUser) {
+      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
+      const activeBetCount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      return {
+        totalBets: userBets.length,
+        activeBets: activeBetCount,
+        totalBetAmount,
+      }
+    }
+
+    return null
+  }, [currentUser, anonUser, bets, events, getEffectiveStatus])
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id)).sort((a, b) => {
     const aIdx = favoriteCompanyIds.indexOf(a.id)
@@ -359,12 +382,12 @@ export const Home = () => {
                 <>
                   <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
                   </button>
                   <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{anonCoinsSpent}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
                     <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
                   </button>
                 </>
@@ -452,7 +475,10 @@ export const Home = () => {
                 <div className="space-y-2.5">
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
-                    const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
+                    const userBet = currentUser
+                      ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id)
+                      : anonUser ? bets.find(b => b.eventId === e.id && b.userId === anonUser.id && !b.id.startsWith('pending-'))
+                      : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)
                     const midpoint = Math.floor(activeEvents.length / 2)
                     return (
