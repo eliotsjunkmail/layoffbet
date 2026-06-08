@@ -68,8 +68,8 @@ const SEED_COMPANIES: Company[] = [
 
 const ADMIN_USER: User = {
   id: 'user-admin',
-  username: 'eliot',
-  password: 'Eliot123',
+  username: 'admin',
+  password: 'admin',
   coins: 100,
   isAdmin: true,
   createdAt: pastDate(60),
@@ -367,6 +367,7 @@ interface StoreState {
   register: (username: string, password: string) => { ok: boolean; error?: string }
   checkDailyCoins: () => void
   updateCoins: (amount: number) => void
+  addCoin: () => Promise<void>
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
@@ -540,16 +541,10 @@ export const useStore = create<StoreState>()(
       deleteFeedback: (id) => set(s => ({ feedback: s.feedback.filter(f => f.id !== id) })),
 
       login: (username, password) => {
-        const users = get().users
-        console.log('[Login] Attempting login for:', username, 'with', users.length, 'users available')
-        const user = users.find(
+        const user = get().users.find(
           u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
         )
-        if (!user) {
-          console.log('[Login] User not found or password mismatch')
-          return false
-        }
-        console.log('[Login] Authentication successful for:', username)
+        if (!user) return false
         set({ currentUser: user })
         // Persist user to localStorage for session persistence
         if (typeof window !== 'undefined') {
@@ -564,7 +559,6 @@ export const useStore = create<StoreState>()(
         localStorage.removeItem('anonCoins')
         localStorage.removeItem('anonCoinsSpent')
         localStorage.removeItem('layoff-bets-currentUser')
-        localStorage.removeItem('lb-gate-v2')
         set({ currentUser: null, guestCoins: 50, favoriteCompanyIds: [] })
       },
 
@@ -609,12 +603,11 @@ export const useStore = create<StoreState>()(
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
 
         // Check locally first for immediate feedback on duplicate
-        const users = get().users
-        const localExists = users.some(u => u.username.toLowerCase() === username.toLowerCase())
+        const localExists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
         if (localExists) return { ok: false, error: 'Username already taken.' }
 
-        // Register on server (asynchronous, but we return immediately)
-        console.log('[Store] Registering user on server:', username, 'with', users.length, 'existing users')
+        // Register on server first (synchronous from user perspective, but validation is server-side)
+        console.log('[Store] Registering user on server:', username)
         api.register(username, password)
           .then((serverUser) => {
             console.log('[Store] Registration successful on server:', serverUser)
@@ -628,7 +621,6 @@ export const useStore = create<StoreState>()(
               localStorage.setItem('layoff-bets-currentUser', JSON.stringify(serverUser))
             }
             // Migrate guest bets after registration
-            get().checkDailyCoins()
             get().migrateGuestBets()
           })
           .catch(err => {
@@ -665,6 +657,20 @@ export const useStore = create<StoreState>()(
         }))
       },
 
+      addCoin: async () => {
+        const { currentUser } = get()
+        if (!currentUser) return
+        try {
+          const updated = await api.addCoin(currentUser.id)
+          set(s => ({
+            currentUser: updated,
+            users: s.users.map(u => u.id === updated.id ? updated : u),
+          }))
+        } catch (error) {
+          console.error('Failed to add coin:', error)
+        }
+      },
+
       placeBet: (eventId, side, amount) => {
         const { currentUser, guestCoins, events, bets } = get()
         const isGuest = !currentUser
@@ -681,13 +687,31 @@ export const useStore = create<StoreState>()(
         if (!existing) {
           if (!isGuest && amount > 100) return false
           if (userCoins < amount) return false
-          const bet: Bet = { id: `bet-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }
-          const newCoins = isGuest ? guestCoins - amount : Math.min(currentUser.coins - amount, 999)
+
+          const newCoins = isGuest ? guestCoins - amount : Math.max(0, currentUser.coins - amount)
+          const tempBetId = `pending-${uid()}`
+
+          // For both logged-in and guest users, create local bet immediately
+          const bet: Bet = { id: tempBetId, eventId, userId, side, amount, createdAt: new Date().toISOString() }
           set(s => ({
             bets: [...s.bets, bet],
-            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
             ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
+            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
           }))
+
+          // For logged-in users, also send to server
+          if (!isGuest) {
+            api.placeBet({ eventId, userId, side, amount })
+              .then(() => {
+                api.updateUser(userId, { coins: newCoins })
+                  .then(() => {
+                    get().syncCommentsFromServer()
+                  })
+                  .catch(err => console.error('Failed to update coins:', err))
+              })
+              .catch(err => console.error('Failed to place bet:', err))
+          }
+
           return true
         }
 
@@ -746,6 +770,21 @@ export const useStore = create<StoreState>()(
         if (!event || getEffectiveStatus(event) !== 'active') return
 
         const newCoins = isGuest ? guestCoins + bet.amount : Math.min(currentUser.coins + bet.amount, 999)
+
+        if (!isGuest) {
+          // Remove from server and update coins
+          api.removeBet(bet.id)
+            .then(() => {
+              api.updateUser(userId, { coins: newCoins })
+                .then(() => {
+                  get().syncCommentsFromServer()
+                })
+                .catch(err => console.error('Failed to update coins:', err))
+            })
+            .catch(err => console.error('Failed to remove bet from server:', err))
+        }
+
+        // Update local state optimistically
         set(s => ({
           bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
           events: s.events.map(e => e.id === eventId ? {
@@ -986,12 +1025,18 @@ export const useStore = create<StoreState>()(
 
             // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
             const serverBets = serverData.bets || []
-            const mergedBets = [...serverBets]
-            for (const localBet of currentBets) {
+            // Replace pending bets with server bets, keep other local bets
+            const pendingBets = currentBets.filter(b => b.id.startsWith('pending-'))
+            const otherLocalBets = currentBets.filter(b => !b.id.startsWith('pending-'))
+
+            let mergedBets = [...serverBets]
+            // Keep local bets that aren't pending and don't exist on server
+            for (const localBet of otherLocalBets) {
               if (!serverBets.find(sb => sb.id === localBet.id)) {
                 mergedBets.push(localBet)
               }
             }
+            // Pending bets are replaced by server bets, so don't include them
 
             if (JSON.stringify(newFavs) !== JSON.stringify(currentFavs)) {
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
@@ -1034,17 +1079,11 @@ export const useStore = create<StoreState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
-        // Ensure seed users are always present
-        if (!state.users || state.users.length === 0) {
-          state.users = SEED_USERS
-          console.log('[Store] Restored seed users')
+        const idx = state.users.findIndex(u => u.id === 'user-admin')
+        if (idx === -1) {
+          state.users = [ADMIN_USER, ...state.users]
         } else {
-          // Ensure admin user exists
-          const adminExists = state.users.find(u => u.id === 'user-admin')
-          if (!adminExists) {
-            state.users = [ADMIN_USER, ...state.users]
-            console.log('[Store] Added missing admin user')
-          }
+          state.users[idx] = { ...state.users[idx], username: 'admin', password: 'admin', isAdmin: true }
         }
       },
     }

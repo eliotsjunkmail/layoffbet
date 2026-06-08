@@ -22,7 +22,7 @@ const DEFAULT_DATA = {
       id: 'user-admin',
       username: 'eliot',
       password: 'Eliot123',
-      coins: 100,
+      coins: 999,
       isAdmin: true,
       createdAt: new Date().toISOString(),
       lastCoinsDate: new Date().toISOString().split('T')[0],
@@ -149,6 +149,13 @@ app.post('/api/users/login', async (req, res) => {
   const data = await readData()
   const user = data.users.find(u => u.username === username && u.password === password)
   if (!user) return res.status(401).json({ error: 'Invalid credentials' })
+
+  // Reset admin coins to 999 on every login
+  if (user.isAdmin) {
+    user.coins = 999
+    await writeData(data)
+  }
+
   res.json(user)
 })
 
@@ -157,6 +164,15 @@ app.put('/api/users/:id', async (req, res) => {
   const user = data.users.find(u => u.id === req.params.id)
   if (!user) return res.status(404).json({ error: 'User not found' })
   Object.assign(user, req.body)
+  await writeData(data)
+  res.json(user)
+})
+
+app.post('/api/users/:id/coins', async (req, res) => {
+  const data = await readData()
+  const user = data.users.find(u => u.id === req.params.id)
+  if (!user) return res.status(404).json({ error: 'User not found' })
+  user.coins = (user.coins || 0) + 1
   await writeData(data)
   res.json(user)
 })

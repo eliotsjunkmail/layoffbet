@@ -110,6 +110,54 @@ export const api = {
     }
   },
 
+  // Bets endpoints
+  placeBet: async (bet: Omit<any, 'id' | 'createdAt'>) => {
+    const response = await fetch(`${API_BASE}/api/bets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bet),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to place bet')
+    }
+    return response.json()
+  },
+
+  removeBet: async (betId: string) => {
+    const response = await fetch(`${API_BASE}/api/bets/${betId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to remove bet')
+    }
+    return response.json()
+  },
+
+  updateUser: async (userId: string, data: any) => {
+    const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update user')
+    }
+    return response.json()
+  },
+
+  // Add coin endpoint
+  addCoin: async (userId: string) => {
+    const response = await fetch(`${API_BASE}/api/users/${userId}/coins`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to add coin')
+    }
+    return response.json()
+  },
+
   // Sync endpoint
   sync: async () => {
     const response = await fetch(`${API_BASE}/api/sync`)
