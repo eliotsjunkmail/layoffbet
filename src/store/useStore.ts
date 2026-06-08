@@ -1032,7 +1032,7 @@ export const useStore = create<StoreState>()(
             let mergedBets = [...serverBets]
             // Keep local bets that aren't pending and don't exist on server
             for (const localBet of otherLocalBets) {
-              if (!serverBets.find(sb => sb.id === localBet.id)) {
+              if (!serverBets.find((sb: Bet) => sb.id === localBet.id)) {
                 mergedBets.push(localBet)
               }
             }
