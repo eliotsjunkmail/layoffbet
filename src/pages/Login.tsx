@@ -15,6 +15,7 @@ export const Login = () => {
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [synced, setSynced] = useState(false)
+  const messageParam = searchParams.get('message')
   const login = useStore(s => s.login)
   const register = useStore(s => s.register)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
@@ -106,6 +107,12 @@ export const Login = () => {
             <h1 className="text-2xl font-bold tracking-tight">Layoff Bet</h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Anonymous prediction markets</p>
           </div>
+
+          {messageParam === 'login-to-save-favorites' && (
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl px-4 py-3 text-blue-600 dark:text-blue-300 text-sm mb-6">
+              Sign in or create an account to save your favorite companies
+            </div>
+          )}
 
           <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1 mb-6">
             <button

@@ -230,6 +230,13 @@ export const Home = () => {
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
+
+    if (!currentUser) {
+      // Redirect anonymous users to login with a message
+      navigate('/login?message=login-to-save-favorites')
+      return
+    }
+
     toggleFavoriteCompany(companyId)
   }
 

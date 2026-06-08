@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import type { ReactNode } from 'react'
 
@@ -124,7 +124,9 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 }
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate()
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
+  const companies = useStore(s => s.companies)
   const currentUser = useStore(s => s.currentUser)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
@@ -158,12 +160,20 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
-      if (selectedCompanyId) {
-        toggleFavoriteCompany(selectedCompanyId)
-        localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
-      }
       localStorage.setItem(GATE_KEY, '1')
       setUnlocked(true)
+
+      // If a company was selected, navigate to it; otherwise go home
+      if (selectedCompanyId) {
+        const company = companies.find(c => c.id === selectedCompanyId)
+        if (company) {
+          navigate(`/${company.slug}`)
+        } else {
+          navigate('/')
+        }
+      } else {
+        navigate('/')
+      }
     } else {
       setError(true); setShake(true); setInput('')
       setTimeout(() => setShake(false), 500)
