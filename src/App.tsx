@@ -146,10 +146,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
+  // If user logs in, bypass the gate. Don't clear gate for anonymous users.
   useEffect(() => {
-    if (!currentUser) {
-      localStorage.removeItem(GATE_KEY)
-      setUnlocked(false)
+    if (currentUser) {
+      setUnlocked(true)
     }
   }, [currentUser])
 
