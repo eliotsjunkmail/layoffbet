@@ -441,16 +441,41 @@ export const useStore = create<StoreState>()(
           api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
         }
 
-        // For anonymous users, persist to both localStorage and cookie
+        // Update store state first
+        set({ favoriteCompanyIds: updated })
+
+        // For anonymous users, persist to both localStorage and cookie AFTER store update
         if (!currentState.currentUser && typeof window !== 'undefined') {
+          // Store in the persist middleware key so it's properly saved
+          const fullState = get()
+          const stateToSave = {
+            users: fullState.users,
+            companies: fullState.companies,
+            events: fullState.events,
+            bets: fullState.bets,
+            comments: fullState.comments,
+            currentUser: fullState.currentUser,
+            theme: fullState.theme,
+            onboardingCompanyId: fullState.onboardingCompanyId,
+            favoriteCompanyIds: updated,
+            pinnedEventIds: fullState.pinnedEventIds,
+            feedback: fullState.feedback,
+            anonVotedEvents: fullState.anonVotedEvents,
+            companyLastVisit: fullState.companyLastVisit,
+            upvotedCommentIds: fullState.upvotedCommentIds,
+          }
+          localStorage.setItem('layoff-bets-store-v6', JSON.stringify(stateToSave))
+
+          // Also backup to lb-anon-favorites for cookie
           localStorage.setItem('lb-anon-favorites', JSON.stringify(updated))
+
           // Store in cookie with 30 day expiration
           const expiryDate = new Date()
           expiryDate.setDate(expiryDate.getDate() + 30)
           document.cookie = `lb-anon-favorites=${JSON.stringify(updated)}; expires=${expiryDate.toUTCString()}; path=/`
-        }
 
-        set({ favoriteCompanyIds: updated })
+          console.log('[toggleFavoriteCompany] persisted to localStorage and cookie')
+        }
       },
 
       togglePinnedEvent: (eventId) => set(s => ({
