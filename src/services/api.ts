@@ -110,6 +110,18 @@ export const api = {
     }
   },
 
+  // Add coin endpoint
+  addCoin: async (userId: string) => {
+    const response = await fetch(`${API_BASE}/api/users/${userId}/coins`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to add coin')
+    }
+    return response.json()
+  },
+
   // Sync endpoint
   sync: async () => {
     const response = await fetch(`${API_BASE}/api/sync`)

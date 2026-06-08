@@ -367,6 +367,7 @@ interface StoreState {
   register: (username: string, password: string) => { ok: boolean; error?: string }
   checkDailyCoins: () => void
   updateCoins: (amount: number) => void
+  addCoin: () => Promise<void>
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
@@ -654,6 +655,20 @@ export const useStore = create<StoreState>()(
           currentUser: updated,
           users: s.users.map(u => u.id === updated.id ? updated : u),
         }))
+      },
+
+      addCoin: async () => {
+        const { currentUser } = get()
+        if (!currentUser) return
+        try {
+          const updated = await api.addCoin(currentUser.id)
+          set(s => ({
+            currentUser: updated,
+            users: s.users.map(u => u.id === updated.id ? updated : u),
+          }))
+        } catch (error) {
+          console.error('Failed to add coin:', error)
+        }
       },
 
       placeBet: (eventId, side, amount) => {
