@@ -66,7 +66,18 @@ const SEED_COMPANIES: Company[] = [
   { id: 'comp-53', name: 'Meta', color: '#1877F2',                        slug: 'meta',               description: 'Facebook parent company providing social media, virtual reality, and advertising technology platforms worldwide',       industry: 'Technology',             viewCount: 201234, createdAt: pastDate(60) },
 ]
 
+const ADMIN_USER: User = {
+  id: 'user-admin',
+  username: 'eliot',
+  password: 'Eliot123',
+  coins: 100,
+  isAdmin: true,
+  createdAt: pastDate(60),
+  lastCoinsDate: today(),
+}
+
 const SEED_USERS: User[] = [
+  ADMIN_USER,
   {
     id: 'user-eliot',
     username: 'eliotsjunkmail@gmail.com',
@@ -1017,6 +1028,13 @@ export const useStore = create<StoreState>()(
         if (!state.users || state.users.length === 0) {
           state.users = SEED_USERS
           console.log('[Store] Restored seed users')
+        } else {
+          // Ensure admin user exists
+          const adminExists = state.users.find(u => u.id === 'user-admin')
+          if (!adminExists) {
+            state.users = [ADMIN_USER, ...state.users]
+            console.log('[Store] Added missing admin user')
+          }
         }
       },
     }
