@@ -553,6 +553,7 @@ export const useStore = create<StoreState>()(
         localStorage.removeItem('anonCoins')
         localStorage.removeItem('anonCoinsSpent')
         localStorage.removeItem('layoff-bets-currentUser')
+        localStorage.removeItem('lb-gate-v2')
         set({ currentUser: null, guestCoins: 50, favoriteCompanyIds: [] })
       },
 
