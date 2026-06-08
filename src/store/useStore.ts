@@ -694,6 +694,11 @@ export const useStore = create<StoreState>()(
             events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
             ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
           }))
+          // Persist to server for logged-in users
+          if (!isGuest) {
+            api.placeBet({ eventId, userId, side, amount }).catch(err => console.error('Failed to persist bet:', err))
+            api.updateUser(userId, { coins: newCoins }).catch(err => console.error('Failed to update user coins:', err))
+          }
           return true
         }
 
@@ -761,6 +766,11 @@ export const useStore = create<StoreState>()(
           } : e),
           ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
         }))
+        // Remove from server for logged-in users
+        if (!isGuest && bet) {
+          api.removeBet(bet.id).catch(err => console.error('Failed to remove bet from server:', err))
+          api.updateUser(userId, { coins: newCoins }).catch(err => console.error('Failed to update user coins:', err))
+        }
       },
 
       getUserBet: (eventId) => {
