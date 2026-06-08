@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
-import { Search as SearchIcon, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 const GATE_KEY = 'lb-gate-v2'
@@ -125,16 +124,14 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 }
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
-  const navigate = useNavigate()
-  const companies = useStore(s => s.companies)
+  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const currentUser = useStore(s => s.currentUser)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
-  const [codeEntered, setCodeEntered] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -161,23 +158,17 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
-      setCodeEntered(true)
+      if (selectedCompanyId) {
+        toggleFavoriteCompany(selectedCompanyId)
+        localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+      }
+      localStorage.setItem(GATE_KEY, '1')
+      setUnlocked(true)
     } else {
       setError(true); setShake(true); setInput('')
       setTimeout(() => setShake(false), 500)
     }
   }
-
-  const handleCompanySelect = (companyId: string) => {
-    localStorage.setItem(GATE_KEY, '1')
-    navigate(`/${companies.find(c => c.id === companyId)?.slug}`)
-  }
-
-  const searchResults = searchQuery.trim() ? companies.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.aliases?.some(alias => alias.toLowerCase().includes(searchQuery.toLowerCase()))
-  ).slice(0, 10) : []
 
   const adminLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -227,69 +218,39 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
+        {/* Company scrollers */}
+        <div className="mb-6 space-y-2">
+          <CompanyScroller letter="A" scrollDirection="right" speed={0.2} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} prioritizeCompany="BNY" />
+          <CompanyScroller letter="C" scrollDirection="right" speed={0.1} selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <div className="text-center">
+            <div className="text-xs text-slate-500">and more…</div>
+          </div>
+        </div>
 
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-          {!codeEntered ? (
-            <form onSubmit={submit} className="space-y-3">
-              <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={e => { setInput(e.target.value); setError(false) }}
-                  placeholder="Enter invite code"
-                  autoComplete="off"
-                  className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
-                />
-              </div>
-              {error && (
-                <p className="text-xs text-rose-400 flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
-                  That's not right — try again
-                </p>
-              )}
-              <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
-                Enter anonymously
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-4 py-3">
-                <SearchIcon className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search for a company..."
-                  autoFocus
-                  className="flex-1 bg-transparent text-white placeholder-slate-600 focus:outline-none text-sm"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="text-slate-500 hover:text-slate-400">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {searchResults.length > 0 ? (
-                  searchResults.map(company => (
-                    <button
-                      key={company.id}
-                      onClick={() => handleCompanySelect(company.id)}
-                      className="w-full text-left px-4 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-sm"
-                    >
-                      <div className="font-medium text-white">{company.name}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{company.industry}</div>
-                    </button>
-                  ))
-                ) : searchQuery ? (
-                  <p className="text-xs text-slate-500 text-center py-4">No companies found</p>
-                ) : (
-                  <p className="text-xs text-slate-500 text-center py-4">Start typing to search</p>
-                )}
-              </div>
+          <form onSubmit={submit} className="space-y-3">
+            <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
+              <input
+                type="text"
+                value={input}
+                onChange={e => { setInput(e.target.value); setError(false) }}
+                placeholder="Enter invite code"
+                autoComplete="off"
+                className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
+              />
             </div>
-          )}
+            {error && (
+              <p className="text-xs text-rose-400 flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
+                That's not right — try again
+              </p>
+            )}
+            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm tracking-wide">
+              Continue →
+            </button>
+          </form>
         </div>
 
         <div className="text-center mt-6">
