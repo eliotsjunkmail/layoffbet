@@ -384,7 +384,7 @@ export const Home = () => {
             {/* Dropdown */}
             {showDropdown && typeaheadResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
-                <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id); setShowDropdown(false); setQuery('') }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
+                <SearchResultsList currentUser={currentUser} results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id); setShowDropdown(false); setQuery('') }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
               </div>
             )}
             {showDropdown && query && typeaheadResults.length === 0 && (
@@ -423,14 +423,16 @@ export const Home = () => {
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
                 </Link>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={e => handleStar(e, c.id)}
-                    className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                  >
-                    <Star className={`w-6 h-6 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
-                  </button>
-                </div>
+                {currentUser && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={e => handleStar(e, c.id)}
+                      className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    >
+                      <Star className={`w-6 h-6 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
+                    </button>
+                  </div>
+                )}
               </div>
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
@@ -602,7 +604,7 @@ export const Home = () => {
               <div className="space-y-2">
                 {filtered.map(c => (
                   <div key={c.id} className={c.slug === 'bny' ? 'sticky top-14 z-30 bg-white dark:bg-slate-900 shadow-md' : ''}>
-                    <CompanyRow company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
+                    <CompanyRow currentUser={currentUser} company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
                   </div>
                 ))}
               </div>
@@ -658,8 +660,9 @@ export const Home = () => {
 }
 
 const SearchResultsList = ({
-  results, favoriteCompanyIds, activeEventsByCompany, sentimentByCompany, onSelect, onStar, onSeeAll,
+  currentUser, results, favoriteCompanyIds, activeEventsByCompany, sentimentByCompany, onSelect, onStar, onSeeAll,
 }: {
+  currentUser: ReturnType<typeof useStore.getState>['currentUser']
   results: ReturnType<typeof useStore.getState>['companies']
   favoriteCompanyIds: string[]
   activeEventsByCompany: Record<string, number>
@@ -686,12 +689,14 @@ const SearchResultsList = ({
               {activeBets > 0 && <span className="text-violet-600 dark:text-violet-400">{activeBets} active</span>}
             </div>
           </div>
-          <button
-            onClick={e => { e.stopPropagation(); onStar(e, c.id) }}
-            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
-          >
-            <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
-          </button>
+          {currentUser && (
+            <button
+              onClick={e => { e.stopPropagation(); onStar(e, c.id) }}
+              className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
+            >
+              <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
+            </button>
+          )}
         </div>
       )
     })}
@@ -705,8 +710,9 @@ const SearchResultsList = ({
 )
 
 const CompanyRow = ({
-  company, activeBets, topEvent, isFav, onStar, sentiment,
+  currentUser, company, activeBets, topEvent, isFav, onStar, sentiment,
 }: {
+  currentUser: ReturnType<typeof useStore.getState>['currentUser']
   company: ReturnType<typeof useStore.getState>['companies'][0]
   activeBets: number
   topEvent?: ReturnType<typeof useStore.getState>['events'][0]
@@ -741,12 +747,14 @@ const CompanyRow = ({
           </div>
         </div>
       </Link>
-      <button
-        onClick={onStar}
-        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700 hover:text-amber-400'}`}
-      >
-        <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
-      </button>
+      {currentUser && (
+        <button
+          onClick={onStar}
+          className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700 hover:text-amber-400'}`}
+        >
+          <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
+        </button>
+      )}
     </div>
   )
 }

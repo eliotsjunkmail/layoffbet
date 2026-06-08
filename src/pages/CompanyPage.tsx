@@ -320,19 +320,15 @@ export const CompanyPage = () => {
                       {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
                       <span>Share</span>
                     </button>
-                    <button
-                      onClick={() => {
-                        if (!currentUser) {
-                          navigate('/login?message=login-to-save-favorites')
-                          return
-                        }
-                        toggleFavoriteCompany(company.id)
-                      }}
-                      className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
-                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
-                    </button>
+                    {currentUser && (
+                      <button
+                        onClick={() => toggleFavoriteCompany(company.id)}
+                        className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+                        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500 mt-1">
