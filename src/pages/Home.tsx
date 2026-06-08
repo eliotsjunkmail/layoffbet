@@ -8,6 +8,7 @@ import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
 import { getProbability, betMovementStr } from '../utils/odds'
+import { cookieUtils } from '../utils/cookies'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
 
@@ -68,35 +69,13 @@ export const Home = () => {
   })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
+  const [favCompanyCookie, setFavCompanyCookie] = useState<string | null>(() => {
+    // Get favorite from cookie for anonymous users
+    return currentUser ? null : cookieUtils.getFavoriteCompany()
+  })
   const updateCoins = useStore(s => s.updateCoins)
   const removeBet = useStore(s => s.removeBet)
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
-  const anonFavInitialized = useRef(false)
-
-  useEffect(() => {
-    if (anonFavInitialized.current) {
-      console.log('[Home] anonFavInitialized already true, skipping')
-      return
-    }
-    if (currentUser) {
-      console.log('[Home] logged in user, skipping')
-      return
-    }
-    const storedCompanyId = localStorage.getItem('lb-anon-favorite-company')
-    console.log('[Home] storedCompanyId:', storedCompanyId, 'currentFavs:', favoriteCompanyIds)
-    if (!storedCompanyId) {
-      console.log('[Home] no stored company, skipping')
-      return
-    }
-    if (favoriteCompanyIds.includes(storedCompanyId)) {
-      console.log('[Home] company already favorited, skipping')
-      return
-    }
-
-    console.log('[Home] toggling company to favorite:', storedCompanyId)
-    anonFavInitialized.current = true
-    toggleFavoriteCompany(storedCompanyId)
-  }, [])
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
@@ -140,11 +119,17 @@ export const Home = () => {
     }
   }, [currentUser, bets, events, getEffectiveStatus])
 
-  const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id)).sort((a, b) => {
-    const aIdx = favoriteCompanyIds.indexOf(a.id)
-    const bIdx = favoriteCompanyIds.indexOf(b.id)
-    return bIdx - aIdx
-  })
+  // For anonymous users, show only the company from the cookie
+  // For logged-in users, show all favorited companies
+  const favorites = currentUser
+    ? companies.filter(c => favoriteCompanyIds.includes(c.id)).sort((a, b) => {
+        const aIdx = favoriteCompanyIds.indexOf(a.id)
+        const bIdx = favoriteCompanyIds.indexOf(b.id)
+        return bIdx - aIdx
+      })
+    : favCompanyCookie
+      ? companies.filter(c => c.id === favCompanyCookie)
+      : []
   const hasFavorites = favorites.length > 0
 
   const activeEventsByCompany = useMemo(() => {
@@ -230,7 +215,22 @@ export const Home = () => {
   const handleStar = (e: React.MouseEvent, companyId: string) => {
     e.preventDefault()
     e.stopPropagation()
-    toggleFavoriteCompany(companyId)
+    if (currentUser) {
+      // Logged-in user: use store
+      toggleFavoriteCompany(companyId)
+    } else {
+      // Anonymous user: update cookie
+      const currentFav = cookieUtils.getFavoriteCompany()
+      if (currentFav === companyId) {
+        // Already favorited, remove it
+        cookieUtils.clearFavoriteCompany()
+        setFavCompanyCookie(null)
+      } else {
+        // Not favorited, set it
+        cookieUtils.setFavoriteCompany(companyId)
+        setFavCompanyCookie(companyId)
+      }
+    }
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
@@ -403,7 +403,25 @@ export const Home = () => {
             {/* Dropdown */}
             {showDropdown && typeaheadResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
-                <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id); setShowDropdown(false); setQuery('') }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
+                <SearchResultsList
+                  results={typeaheadResults}
+                  favoriteCompanyIds={favoriteCompanyIds}
+                  favCompanyCookie={favCompanyCookie}
+                  isLoggedIn={!!currentUser}
+                  activeEventsByCompany={activeEventsByCompany}
+                  sentimentByCompany={sentimentByCompany}
+                  onSelect={c => {
+                    if (currentUser) {
+                      if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id)
+                    } else {
+                      handleStar(new MouseEvent('click') as any, c.id)
+                    }
+                    setShowDropdown(false);
+                    setQuery('')
+                  }}
+                  onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }}
+                  onSeeAll={() => { setShowDropdown(false); navigate('/search') }}
+                />
               </div>
             )}
             {showDropdown && query && typeaheadResults.length === 0 && (
@@ -447,7 +465,10 @@ export const Home = () => {
                     onClick={e => handleStar(e, c.id)}
                     className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                   >
-                    <Star className={`w-6 h-6 ${favoriteCompanyIds.includes(c.id) ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
+                    {(() => {
+                      const isFav = currentUser ? favoriteCompanyIds.includes(c.id) : favCompanyCookie === c.id
+                      return <Star className={`w-6 h-6 ${isFav ? 'fill-amber-400 text-amber-400' : 'text-gray-500 dark:text-slate-500 hover:text-amber-400'}`} />
+                    })()}
                   </button>
                 </div>
               </div>
@@ -619,11 +640,14 @@ export const Home = () => {
                 </span>
               </div>
               <div className="space-y-2">
-                {filtered.map(c => (
-                  <div key={c.id} className={c.slug === 'bny' ? 'sticky top-14 z-30 bg-white dark:bg-slate-900 shadow-md' : ''}>
-                    <CompanyRow company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
-                  </div>
-                ))}
+                {filtered.map(c => {
+                  const isFav = currentUser ? favoriteCompanyIds.includes(c.id) : favCompanyCookie === c.id
+                  return (
+                    <div key={c.id} className={c.slug === 'bny' ? 'sticky top-14 z-30 bg-white dark:bg-slate-900 shadow-md' : ''}>
+                      <CompanyRow company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={isFav} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
+                    </div>
+                  )
+                })}
               </div>
             </section>
           </>
@@ -677,10 +701,12 @@ export const Home = () => {
 }
 
 const SearchResultsList = ({
-  results, favoriteCompanyIds, activeEventsByCompany, sentimentByCompany, onSelect, onStar, onSeeAll,
+  results, favoriteCompanyIds, favCompanyCookie, isLoggedIn, activeEventsByCompany, sentimentByCompany, onSelect, onStar, onSeeAll,
 }: {
   results: ReturnType<typeof useStore.getState>['companies']
   favoriteCompanyIds: string[]
+  favCompanyCookie: string | null
+  isLoggedIn: boolean
   activeEventsByCompany: Record<string, number>
   sentimentByCompany: Record<string, number>
   onSelect: (c: ReturnType<typeof useStore.getState>['companies'][0]) => void
@@ -689,7 +715,7 @@ const SearchResultsList = ({
 }) => (
   <>
     {results.map(c => {
-      const isFav = favoriteCompanyIds.includes(c.id)
+      const isFav = isLoggedIn ? favoriteCompanyIds.includes(c.id) : favCompanyCookie === c.id
       const activeBets = activeEventsByCompany[c.id] ?? 0
       return (
         <div
