@@ -540,10 +540,16 @@ export const useStore = create<StoreState>()(
       deleteFeedback: (id) => set(s => ({ feedback: s.feedback.filter(f => f.id !== id) })),
 
       login: (username, password) => {
-        const user = get().users.find(
+        const users = get().users
+        console.log('[Login] Attempting login for:', username, 'with', users.length, 'users available')
+        const user = users.find(
           u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
         )
-        if (!user) return false
+        if (!user) {
+          console.log('[Login] User not found or password mismatch')
+          return false
+        }
+        console.log('[Login] Authentication successful for:', username)
         set({ currentUser: user })
         // Persist user to localStorage for session persistence
         if (typeof window !== 'undefined') {
@@ -602,11 +608,12 @@ export const useStore = create<StoreState>()(
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
 
         // Check locally first for immediate feedback on duplicate
-        const localExists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
+        const users = get().users
+        const localExists = users.some(u => u.username.toLowerCase() === username.toLowerCase())
         if (localExists) return { ok: false, error: 'Username already taken.' }
 
-        // Register on server first (synchronous from user perspective, but validation is server-side)
-        console.log('[Store] Registering user on server:', username)
+        // Register on server (asynchronous, but we return immediately)
+        console.log('[Store] Registering user on server:', username, 'with', users.length, 'existing users')
         api.register(username, password)
           .then((serverUser) => {
             console.log('[Store] Registration successful on server:', serverUser)
@@ -620,6 +627,7 @@ export const useStore = create<StoreState>()(
               localStorage.setItem('layoff-bets-currentUser', JSON.stringify(serverUser))
             }
             // Migrate guest bets after registration
+            get().checkDailyCoins()
             get().migrateGuestBets()
           })
           .catch(err => {
