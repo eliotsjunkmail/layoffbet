@@ -159,6 +159,37 @@ app.post('/api/users/login', async (req, res) => {
   res.json(user)
 })
 
+app.post('/api/users/anonymous', async (req, res) => {
+  const { anonUserId } = req.body
+  const data = await readData()
+
+  // If anonUserId provided, try to get existing user
+  if (anonUserId) {
+    const existing = data.users.find(u => u.id === anonUserId)
+    if (existing) {
+      return res.json(existing)
+    }
+  }
+
+  // Create new anonymous user
+  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
+  const user = {
+    id: 'anon-' + crypto.randomBytes(8).toString('hex'),
+    username: null,
+    password: null,
+    coins: 50,
+    isAdmin: false,
+    isAnonymous: true,
+    createdAt: new Date().toISOString(),
+    lastCoinsDate: new Date().toISOString().split('T')[0],
+    anonymousNumber: maxAnonNum + 1,
+    displayName: `Anon${maxAnonNum + 1}`,
+  }
+  data.users.push(user)
+  await writeData(data)
+  res.json(user)
+})
+
 app.put('/api/users/:id', async (req, res) => {
   const data = await readData()
   const user = data.users.find(u => u.id === req.params.id)

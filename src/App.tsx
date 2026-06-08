@@ -349,6 +349,7 @@ const ScrollToTop = () => {
 const DataSync = () => {
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const restoreSession = useStore(s => s.restoreSession)
+  const initializeAnonymousUser = useStore(s => s.initializeAnonymousUser)
 
   useEffect(() => {
     const initApp = async () => {
@@ -359,9 +360,14 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
+      // Initialize anonymous user with server-side storage
+      const currentUser = useStore.getState().currentUser
+      if (!currentUser) {
+        await initializeAnonymousUser()
+      }
+
       // For anonymous users, fallback to cookie if localStorage has no favorites
       // (persist middleware handles normal restore via 'layoff-bets-store-v6' key)
-      const currentUser = useStore.getState().currentUser
       const currentFavs = useStore.getState().favoriteCompanyIds
       if (!currentUser && (!currentFavs || currentFavs.length === 0)) {
         // Only restore from cookie if no favorites in store
@@ -406,7 +412,7 @@ const DataSync = () => {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [syncCommentsFromServer, restoreSession])
+  }, [syncCommentsFromServer, restoreSession, initializeAnonymousUser])
 
   return null
 }

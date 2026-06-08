@@ -363,6 +363,7 @@ interface StoreState {
 
   login: (username: string, password: string) => boolean
   logout: () => void
+  initializeAnonymousUser: () => Promise<void>
   migrateGuestBets: () => void
   register: (username: string, password: string) => { ok: boolean; error?: string }
   checkDailyCoins: () => void
@@ -562,6 +563,27 @@ export const useStore = create<StoreState>()(
         set({ currentUser: null, guestCoins: 50, favoriteCompanyIds: [] })
       },
 
+      initializeAnonymousUser: async () => {
+        try {
+          // Try to get existing anonymous user ID from localStorage
+          const storedAnonUserId = localStorage.getItem('layoff-bets-anonUserId')
+
+          // Create or retrieve anonymous user from server
+          const anonUser = await api.createOrGetAnonymousUser(storedAnonUserId)
+
+          // Store the anonymous user ID locally
+          localStorage.setItem('layoff-bets-anonUserId', anonUser.id)
+
+          // Update store with anonymous user
+          set(s => ({
+            users: [...s.users.filter(u => u.id !== anonUser.id), anonUser],
+            guestCoins: anonUser.coins || 50,
+          }))
+        } catch (error) {
+          console.error('Failed to initialize anonymous user:', error)
+        }
+      },
+
       migrateGuestBets: () => {
         const { currentUser, anonVotedEvents, bets, events } = get()
         if (!currentUser) return
@@ -672,9 +694,11 @@ export const useStore = create<StoreState>()(
       },
 
       placeBet: (eventId, side, amount) => {
-        const { currentUser, guestCoins, events, bets } = get()
+        const { currentUser, guestCoins, events, bets, users } = get()
         const isGuest = !currentUser
-        const userId = currentUser?.id ?? 'user-guest'
+        // Use anonymous user from server if available, fallback to 'user-guest'
+        const anonUser = users.find(u => u.isAnonymous)
+        const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         const userCoins = currentUser?.coins ?? guestCoins
 
         const event = events.find(e => e.id === eventId)
@@ -761,9 +785,11 @@ export const useStore = create<StoreState>()(
       },
 
       removeBet: (eventId) => {
-        const { currentUser, guestCoins, bets, events, getEffectiveStatus } = get()
+        const { currentUser, guestCoins, bets, events, getEffectiveStatus, users } = get()
         const isGuest = !currentUser
-        const userId = currentUser?.id ?? 'user-guest'
+        // Use anonymous user from server if available, fallback to 'user-guest'
+        const anonUser = users.find(u => u.isAnonymous)
+        const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         const bet = bets.find(b => b.eventId === eventId && b.userId === userId)
         if (!bet) return
         const event = events.find(e => e.id === eventId)
@@ -797,8 +823,10 @@ export const useStore = create<StoreState>()(
       },
 
       getUserBet: (eventId) => {
-        const { currentUser, bets } = get()
-        const userId = currentUser?.id ?? 'user-guest'
+        const { currentUser, bets, users } = get()
+        // Use anonymous user from server if available, fallback to 'user-guest'
+        const anonUser = users.find(u => u.isAnonymous)
+        const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         return bets.find(b => b.eventId === eventId && b.userId === userId)
       },
 
