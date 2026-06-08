@@ -124,7 +124,6 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 }
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
-  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const currentUser = useStore(s => s.currentUser)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
@@ -159,7 +158,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
       if (selectedCompanyId) {
-        toggleFavoriteCompany(selectedCompanyId)
         localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
       }
       localStorage.setItem(GATE_KEY, '1')
