@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
-import { cookieUtils } from './utils/cookies'
 import type { ReactNode } from 'react'
 
 const GATE_KEY = 'lb-gate-v2'
@@ -160,8 +159,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
       if (selectedCompanyId) {
-        // Store selected company as favorite in session cookie for anonymous users
-        cookieUtils.setFavoriteCompany(selectedCompanyId)
+        toggleFavoriteCompany(selectedCompanyId)
+        localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
       }
       localStorage.setItem(GATE_KEY, '1')
       setUnlocked(true)
