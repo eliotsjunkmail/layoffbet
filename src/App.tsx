@@ -364,30 +364,23 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
-      // For anonymous users, restore favorites from localStorage or cookie
+      // For anonymous users, fallback to cookie if localStorage has no favorites
+      // (persist middleware handles normal restore via 'layoff-bets-store-v6' key)
       const currentUser = useStore.getState().currentUser
       const currentFavs = useStore.getState().favoriteCompanyIds
-      if (!currentUser) {
-        let anonFavs = localStorage.getItem('lb-anon-favorites')
-
-        // Fallback to cookie if localStorage is empty
-        if (!anonFavs) {
-          const cookies = document.cookie.split(';')
-          const cookieFav = cookies.find(c => c.trim().startsWith('lb-anon-favorites='))
-          if (cookieFav) {
-            anonFavs = cookieFav.split('=')[1]
-          }
-        }
-
-        if (anonFavs) {
+      if (!currentUser && (!currentFavs || currentFavs.length === 0)) {
+        // Only restore from cookie if no favorites in store
+        const cookies = document.cookie.split(';')
+        const cookieFav = cookies.find(c => c.trim().startsWith('lb-anon-favorites='))
+        if (cookieFav) {
           try {
-            const favs = JSON.parse(anonFavs)
-            // Only update if different from current
-            if (JSON.stringify(favs) !== JSON.stringify(currentFavs)) {
+            const favStr = cookieFav.split('=')[1]
+            const favs = JSON.parse(favStr)
+            if (Array.isArray(favs) && favs.length > 0) {
               useStore.setState({ favoriteCompanyIds: favs })
             }
           } catch (e) {
-            console.error('Failed to restore anonymous favorites:', e)
+            console.error('Failed to restore anonymous favorites from cookie:', e)
           }
         }
       }
