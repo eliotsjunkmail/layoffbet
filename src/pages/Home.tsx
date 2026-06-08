@@ -120,25 +120,47 @@ export const Home = () => {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
 
+  // Get the user ID (for anonymous users, find their server-side ID)
+  const anonUser = !currentUser ? companies.length > 0 ? useStore(s => s.users).find(u => u.isAnonymous) : null : null
+
   const userStats = useMemo(() => {
-    if (!currentUser) return null
-    const userBets = bets.filter(b => b.userId === currentUser.id)
-    const activeBetCount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).length
-    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-    const activeBetAmount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).reduce((sum, b) => sum + b.amount, 0)
-    return {
-      coins: currentUser.coins - activeBetAmount,
-      totalBets: userBets.length,
-      activeBets: activeBetCount,
-      totalBetAmount,
+    // For logged-in users
+    if (currentUser) {
+      const userBets = bets.filter(b => b.userId === currentUser.id)
+      const activeBetCount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      const activeBetAmount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).reduce((sum, b) => sum + b.amount, 0)
+      return {
+        coins: currentUser.coins - activeBetAmount,
+        totalBets: userBets.length,
+        activeBets: activeBetCount,
+        totalBetAmount,
+      }
     }
-  }, [currentUser, bets, events, getEffectiveStatus])
+
+    // For anonymous users, use server bets if anonymous user exists
+    if (anonUser) {
+      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
+      const activeBetCount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      return {
+        totalBets: userBets.length,
+        activeBets: activeBetCount,
+        totalBetAmount,
+      }
+    }
+
+    return null
+  }, [currentUser, anonUser, bets, events, getEffectiveStatus])
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id)).sort((a, b) => {
     const aIdx = favoriteCompanyIds.indexOf(a.id)
@@ -248,24 +270,20 @@ export const Home = () => {
       confettiOrigin = { x, y: Math.max(y, 0.05) }
     }
 
-    if (currentUser) {
-      if (placeBet(eventId, side, betAmount)) {
-        setHasPlacedFirstBet(true)
-        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-      } else {
-        showToast('Not enough coins or 100-coin limit reached')
-      }
+    // Use placeBet for both logged-in and anonymous users
+    if (placeBet(eventId, side, betAmount)) {
+      setHasPlacedFirstBet(true)
+      confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
     } else {
-      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
-        if (placeAnonymousVote(eventId, side)) {
-          setHasPlacedFirstBet(true)
-          setAnonCoinsSpent(prev => prev + betAmount)
-          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+      if (!currentUser) {
+        // For anonymous users, show if not enough coins
+        if (Math.max(0, anonCoins - anonCoinsSpent) < betAmount) {
+          showToast('Not enough coins')
         } else {
           showToast('Prediction is no longer active')
         }
       } else {
-        showToast('Not enough coins')
+        showToast('Not enough coins or 100-coin limit reached')
       }
     }
   }
@@ -359,12 +377,12 @@ export const Home = () => {
                 <>
                   <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
                   </button>
                   <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{anonCoinsSpent}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
                     <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
                   </button>
                 </>
@@ -452,7 +470,10 @@ export const Home = () => {
                 <div className="space-y-2.5">
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
-                    const userBet = currentUser ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id) : undefined
+                    const userBet = currentUser
+                      ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id)
+                      : anonUser ? bets.find(b => b.eventId === e.id && b.userId === anonUser.id && !b.id.startsWith('pending-'))
+                      : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)
                     const midpoint = Math.floor(activeEvents.length / 2)
                     return (
