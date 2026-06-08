@@ -688,14 +688,21 @@ export const useStore = create<StoreState>()(
           if (!isGuest && amount > 100) return false
           if (userCoins < amount) return false
 
-          const newCoins = isGuest ? guestCoins - amount : Math.max(0, Math.min(currentUser.coins - amount, 999))
+          const newCoins = isGuest ? guestCoins - amount : Math.max(0, currentUser.coins - amount)
+          const tempBetId = `pending-${uid()}`
 
-          // For logged-in users, send bet to server first
+          // For both logged-in and guest users, create local bet immediately
+          const bet: Bet = { id: tempBetId, eventId, userId, side, amount, createdAt: new Date().toISOString() }
+          set(s => ({
+            bets: [...s.bets, bet],
+            ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
+            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
+          }))
+
+          // For logged-in users, also send to server
           if (!isGuest) {
-            // Create bet on server immediately
             api.placeBet({ eventId, userId, side, amount })
               .then(() => {
-                // After bet is created, update coins and sync
                 api.updateUser(userId, { coins: newCoins })
                   .then(() => {
                     get().syncCommentsFromServer()
@@ -703,23 +710,8 @@ export const useStore = create<StoreState>()(
                   .catch(err => console.error('Failed to update coins:', err))
               })
               .catch(err => console.error('Failed to place bet:', err))
-
-            // Update local state optimistically
-            set(s => ({
-              currentUser: { ...currentUser, coins: newCoins },
-              users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u),
-              events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-            }))
-            return true
           }
 
-          // For guests, create local bet
-          const bet: Bet = { id: `bet-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }
-          set(s => ({
-            bets: [...s.bets, bet],
-            guestCoins: newCoins,
-            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-          }))
           return true
         }
 
@@ -1033,12 +1025,18 @@ export const useStore = create<StoreState>()(
 
             // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
             const serverBets = serverData.bets || []
-            const mergedBets = [...serverBets]
-            for (const localBet of currentBets) {
+            // Replace pending bets with server bets, keep other local bets
+            const pendingBets = currentBets.filter(b => b.id.startsWith('pending-'))
+            const otherLocalBets = currentBets.filter(b => !b.id.startsWith('pending-'))
+
+            let mergedBets = [...serverBets]
+            // Keep local bets that aren't pending and don't exist on server
+            for (const localBet of otherLocalBets) {
               if (!serverBets.find(sb => sb.id === localBet.id)) {
                 mergedBets.push(localBet)
               }
             }
+            // Pending bets are replaced by server bets, so don't include them
 
             if (JSON.stringify(newFavs) !== JSON.stringify(currentFavs)) {
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
