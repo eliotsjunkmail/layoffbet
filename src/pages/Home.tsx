@@ -43,10 +43,6 @@ export const Home = () => {
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
-  const users = useStore(s => s.users)
-
-  // Get the user ID (for anonymous users, find their server-side ID)
-  const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
