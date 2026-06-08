@@ -52,7 +52,6 @@ export const Home = () => {
   const [toast, setToast] = useState('')
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
-  const [dismissedLoginBanner, setDismissedLoginBanner] = useState(false)
   const [showComments, setShowComments] = useState(() => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
@@ -588,41 +587,29 @@ export const Home = () => {
 
         {/* Industry filter + Browse — hidden once user has favorites */}
 
-        {/* Login Banner for guests */}
-        {!currentUser && !dismissedLoginBanner && (
-          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-4 flex items-start justify-between gap-4">
-            <div className="flex-1 text-center sm:text-left">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
-              <p className="text-sm text-gray-500 dark:text-slate-400 mb-3 sm:mb-0">
-                Login and get <strong className="text-violet-600 dark:text-violet-400">100 coins daily</strong> to wager on predictions. It's Free!
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Link to="/login" className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
-                Sign In <ArrowRight className="w-4 h-4" />
-              </Link>
-              <button
-                onClick={() => setDismissedLoginBanner(true)}
-                className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Active bets pills for guests */}
+        {!currentUser && (() => {
+          const companiesWithActiveBets = companies
+            .filter(c => (activeEventsByCompany[c.id] ?? 0) > 0)
+            .sort((a, b) => (activeEventsByCompany[b.id] ?? 0) - (activeEventsByCompany[a.id] ?? 0))
 
-        {/* CTA for guests (hidden when banner shown) */}
-        {!currentUser && dismissedLoginBanner && (
-          <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl p-5 mb-4 text-center">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Ready to bet?</h3>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
-              Login and get <strong className="text-violet-600 dark:text-violet-400">100 coins daily</strong> to wager on predictions. It's Free!
-            </p>
-            <Link to="/login" className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm">
-              Get Started — It's Free <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        )}
+          return companiesWithActiveBets.length > 0 ? (
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+              <div className="flex flex-wrap gap-2">
+                {companiesWithActiveBets.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => navigate(`/company/${c.id}`)}
+                    className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium text-sm rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                  >
+                    {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null
+        })()}
       </div>
 
       {toast && (
