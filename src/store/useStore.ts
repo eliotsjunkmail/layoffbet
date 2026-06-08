@@ -687,18 +687,39 @@ export const useStore = create<StoreState>()(
         if (!existing) {
           if (!isGuest && amount > 100) return false
           if (userCoins < amount) return false
+
+          const newCoins = isGuest ? guestCoins - amount : Math.max(0, Math.min(currentUser.coins - amount, 999))
+
+          // For logged-in users, send bet to server first
+          if (!isGuest) {
+            // Create bet on server immediately
+            api.placeBet({ eventId, userId, side, amount })
+              .then(() => {
+                // After bet is created, update coins and sync
+                api.updateUser(userId, { coins: newCoins })
+                  .then(() => {
+                    get().syncCommentsFromServer()
+                  })
+                  .catch(err => console.error('Failed to update coins:', err))
+              })
+              .catch(err => console.error('Failed to place bet:', err))
+
+            // Update local state optimistically
+            set(s => ({
+              currentUser: { ...currentUser, coins: newCoins },
+              users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u),
+              events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
+            }))
+            return true
+          }
+
+          // For guests, create local bet
           const bet: Bet = { id: `bet-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }
-          const newCoins = isGuest ? guestCoins - amount : Math.min(currentUser.coins - amount, 999)
           set(s => ({
             bets: [...s.bets, bet],
+            guestCoins: newCoins,
             events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-            ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
           }))
-          // Persist to server for logged-in users
-          if (!isGuest) {
-            api.placeBet({ eventId, userId, side, amount }).catch(err => console.error('Failed to persist bet:', err))
-            api.updateUser(userId, { coins: newCoins }).catch(err => console.error('Failed to update user coins:', err))
-          }
           return true
         }
 
@@ -757,6 +778,21 @@ export const useStore = create<StoreState>()(
         if (!event || getEffectiveStatus(event) !== 'active') return
 
         const newCoins = isGuest ? guestCoins + bet.amount : Math.min(currentUser.coins + bet.amount, 999)
+
+        if (!isGuest) {
+          // Remove from server and update coins
+          api.removeBet(bet.id)
+            .then(() => {
+              api.updateUser(userId, { coins: newCoins })
+                .then(() => {
+                  get().syncCommentsFromServer()
+                })
+                .catch(err => console.error('Failed to update coins:', err))
+            })
+            .catch(err => console.error('Failed to remove bet from server:', err))
+        }
+
+        // Update local state optimistically
         set(s => ({
           bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
           events: s.events.map(e => e.id === eventId ? {
@@ -766,11 +802,6 @@ export const useStore = create<StoreState>()(
           } : e),
           ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
         }))
-        // Remove from server for logged-in users
-        if (!isGuest && bet) {
-          api.removeBet(bet.id).catch(err => console.error('Failed to remove bet from server:', err))
-          api.updateUser(userId, { coins: newCoins }).catch(err => console.error('Failed to update user coins:', err))
-        }
       },
 
       getUserBet: (eventId) => {
