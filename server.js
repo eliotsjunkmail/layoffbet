@@ -17,19 +17,7 @@ const DATA_FILE = path.join(__dirname, 'data.json')
 
 // Default data structure
 const DEFAULT_DATA = {
-  users: [
-    {
-      id: 'user-admin',
-      username: 'eliot',
-      password: 'Eliot123',
-      coins: 100,
-      isAdmin: true,
-      createdAt: new Date().toISOString(),
-      lastCoinsDate: new Date().toISOString().split('T')[0],
-      anonymousNumber: 100000,
-      displayName: 'Eliot'
-    }
-  ],
+  users: [],
   events: [],
   bets: [],
   comments: [],
