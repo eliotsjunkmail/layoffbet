@@ -10,13 +10,42 @@
       "lastCoinsDate": "2026-05-30",
       "anonymousNumber": 100001,
       "displayName": "Anon100001"
+    },
+    {
+      "id": "user-0502e76918e558e5",
+      "username": "testuser1780885492",
+      "password": "password123",
+      "coins": 100,
+      "isAdmin": false,
+      "createdAt": "2026-06-08T02:24:52.086Z",
+      "lastCoinsDate": "2026-06-08",
+      "anonymousNumber": 100002,
+      "displayName": "Anon100002"
+    },
+    {
+      "id": "user-a4c2c9e26451887a",
+      "username": "testuser123",
+      "password": "password123",
+      "coins": 100,
+      "isAdmin": false,
+      "createdAt": "2026-06-08T02:25:12.771Z",
+      "lastCoinsDate": "2026-06-08",
+      "anonymousNumber": 100003,
+      "displayName": "Anon100003"
     }
   ],
   "events": [],
   "bets": [],
   "comments": [],
   "companies": [],
-  "favorites": {},
+  "favorites": {
+    "user-0502e76918e558e5": [
+      "comp-test"
+    ],
+    "user-a4c2c9e26451887a": [
+      "comp-apple"
+    ]
+  },
   "pinnedEvents": {},
   "feedback": [],
   "anonVotedEvents": {}
