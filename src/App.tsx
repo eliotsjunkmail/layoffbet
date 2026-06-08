@@ -124,7 +124,6 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 }
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
-  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const currentUser = useStore(s => s.currentUser)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
@@ -146,10 +145,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
+  // If user logs in, bypass the gate. Don't clear gate for anonymous users.
   useEffect(() => {
-    if (!currentUser) {
-      localStorage.removeItem(GATE_KEY)
-      setUnlocked(false)
+    if (currentUser) {
+      setUnlocked(true)
     }
   }, [currentUser])
 
@@ -159,7 +158,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
       if (selectedCompanyId) {
-        toggleFavoriteCompany(selectedCompanyId)
         localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
       }
       localStorage.setItem(GATE_KEY, '1')
@@ -351,6 +349,7 @@ const ScrollToTop = () => {
 const DataSync = () => {
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const restoreSession = useStore(s => s.restoreSession)
+  const initializeAnonymousUser = useStore(s => s.initializeAnonymousUser)
 
   useEffect(() => {
     const initApp = async () => {
@@ -361,9 +360,14 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
+      // Initialize anonymous user with server-side storage
+      const currentUser = useStore.getState().currentUser
+      if (!currentUser) {
+        await initializeAnonymousUser()
+      }
+
       // For anonymous users, fallback to cookie if localStorage has no favorites
       // (persist middleware handles normal restore via 'layoff-bets-store-v6' key)
-      const currentUser = useStore.getState().currentUser
       const currentFavs = useStore.getState().favoriteCompanyIds
       if (!currentUser && (!currentFavs || currentFavs.length === 0)) {
         // Only restore from cookie if no favorites in store
@@ -408,7 +412,7 @@ const DataSync = () => {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [syncCommentsFromServer, restoreSession])
+  }, [syncCommentsFromServer, restoreSession, initializeAnonymousUser])
 
   return null
 }

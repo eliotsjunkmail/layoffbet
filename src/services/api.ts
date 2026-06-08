@@ -42,6 +42,18 @@ export const api = {
     return response.json()
   },
 
+  createOrGetAnonymousUser: async (anonUserId?: string): Promise<User> => {
+    const response = await fetch(`${API_BASE}/api/users/anonymous`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ anonUserId }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to create anonymous user')
+    }
+    return response.json()
+  },
+
   // Comments endpoints
   addComment: async (comment: Comment): Promise<Comment> => {
     const response = await fetch(`${API_BASE}/api/comments`, {

@@ -6,6 +6,14 @@ import { Footer } from '../components/Footer'
 
 const REMEMBER_KEY = 'next-layoff-remember'
 
+// Hide browser autocomplete/password manager icons
+const hideAutocompleteIconsStyle = `
+  input[type="text"]::-webkit-search-cancel-button,
+  input[type="password"]::-webkit-credentials-auto-fill-button {
+    display: none;
+  }
+`
+
 export const Login = () => {
   const [searchParams] = useSearchParams()
   const [mode, setMode] = useState<'login' | 'register'>(searchParams.get('mode') === 'register' ? 'register' : 'login')
@@ -97,6 +105,7 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-white flex flex-col">
+      <style>{hideAutocompleteIconsStyle}</style>
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="flex flex-col items-center mb-8">
@@ -131,7 +140,7 @@ export const Login = () => {
                 onChange={e => setUsername(e.target.value)}
                 placeholder="username or email"
                 className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all"
-                autoComplete="username"
+                autoComplete="off"
               />
             </div>
             <div>
@@ -142,7 +151,7 @@ export const Login = () => {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                autoComplete="off"
               />
             </div>
 
