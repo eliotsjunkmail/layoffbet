@@ -978,10 +978,20 @@ export const useStore = create<StoreState>()(
             const userId = currentUser?.id
             const currentFavs = get().favoriteCompanyIds
             const currentPinned = get().pinnedEventIds
+            const currentBets = get().bets
 
             // For logged-in users, use server data. For anonymous users, preserve local favorites
             const newFavs = userId && serverData.favorites?.[userId] ? serverData.favorites[userId] : currentFavs
             const newPinned = userId && serverData.pinnedEvents?.[userId] ? serverData.pinnedEvents[userId] : currentPinned
+
+            // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
+            const serverBets = serverData.bets || []
+            const mergedBets = [...serverBets]
+            for (const localBet of currentBets) {
+              if (!serverBets.find(sb => sb.id === localBet.id)) {
+                mergedBets.push(localBet)
+              }
+            }
 
             if (JSON.stringify(newFavs) !== JSON.stringify(currentFavs)) {
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
@@ -990,7 +1000,7 @@ export const useStore = create<StoreState>()(
             set({
               users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
               events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
-              bets: serverData.bets || [],
+              bets: mergedBets,
               comments: serverData.comments.length > 0 ? serverData.comments : SEED_COMMENTS,
               companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
               favoriteCompanyIds: newFavs,
