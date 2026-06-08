@@ -413,11 +413,6 @@ export const Home = () => {
             )}
           </div>
 
-          {!currentUser && (
-            <p className="text-xs text-gray-400 dark:text-slate-500 mb-0">
-              Swipe left or right to bet — no sign-in needed
-            </p>
-          )}
         </div>
 
         {/* Company sections (favorites) */}
@@ -592,42 +587,6 @@ export const Home = () => {
         {hasFavorites && <div className="mb-2" />}
 
         {/* Industry filter + Browse — hidden once user has favorites */}
-        {!hasFavorites && (
-          <>
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-              {INDUSTRIES.map(ind => (
-                <button
-                  key={ind}
-                  onClick={() => setIndustry(ind)}
-                  className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${
-                    industry === ind
-                      ? 'bg-violet-600 border-violet-600 text-white'
-                      : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-violet-300 dark:hover:border-violet-700'
-                  }`}
-                >
-                  {ind}
-                </button>
-              ))}
-            </div>
-
-            <section className="mb-4">
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Browse Companies</h2>
-                <span className="text-xs bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                  {filtered.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {filtered.map(c => (
-                  <div key={c.id} className={c.slug === 'bny' ? 'sticky top-14 z-30 bg-white dark:bg-slate-900 shadow-md' : ''}>
-                    <CompanyRow company={c} activeBets={activeEventsByCompany[c.id] ?? 0} topEvent={topEventByCompany[c.id]} isFav={favoriteCompanyIds.includes(c.id)} onStar={e => handleStar(e, c.id)} sentiment={sentimentByCompany[c.id]} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
 
         {/* Login Banner for guests */}
         {!currentUser && !dismissedLoginBanner && (
@@ -705,12 +664,6 @@ const SearchResultsList = ({
               {activeBets > 0 && <span className="text-violet-600 dark:text-violet-400">{activeBets} active</span>}
             </div>
           </div>
-          <button
-            onClick={e => { e.stopPropagation(); onStar(e, c.id) }}
-            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600 hover:text-amber-400'}`}
-          >
-            <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
-          </button>
         </div>
       )
     })}
@@ -760,12 +713,6 @@ const CompanyRow = ({
           </div>
         </div>
       </Link>
-      <button
-        onClick={onStar}
-        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isFav ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700 hover:text-amber-400'}`}
-      >
-        <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400' : ''}`} />
-      </button>
     </div>
   )
 }
