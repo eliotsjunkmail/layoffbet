@@ -271,24 +271,20 @@ export const Home = () => {
       confettiOrigin = { x, y: Math.max(y, 0.05) }
     }
 
-    if (currentUser) {
-      if (placeBet(eventId, side, betAmount)) {
-        setHasPlacedFirstBet(true)
-        confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-      } else {
-        showToast('Not enough coins or 100-coin limit reached')
-      }
+    // Use placeBet for both logged-in and anonymous users
+    if (placeBet(eventId, side, betAmount)) {
+      setHasPlacedFirstBet(true)
+      confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
     } else {
-      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
-        if (placeAnonymousVote(eventId, side)) {
-          setHasPlacedFirstBet(true)
-          setAnonCoinsSpent(prev => prev + betAmount)
-          confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+      if (!currentUser) {
+        // For anonymous users, show if not enough coins
+        if (Math.max(0, anonCoins - anonCoinsSpent) < betAmount) {
+          showToast('Not enough coins')
         } else {
           showToast('Prediction is no longer active')
         }
       } else {
-        showToast('Not enough coins')
+        showToast('Not enough coins or 100-coin limit reached')
       }
     }
   }
