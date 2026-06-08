@@ -6,6 +6,14 @@ import { Footer } from '../components/Footer'
 
 const REMEMBER_KEY = 'next-layoff-remember'
 
+// Hide browser autocomplete/password manager icons
+const hideAutocompleteIconsStyle = `
+  input[type="text"]::-webkit-search-cancel-button,
+  input[type="password"]::-webkit-credentials-auto-fill-button {
+    display: none;
+  }
+`
+
 export const Login = () => {
   const [searchParams] = useSearchParams()
   const [mode, setMode] = useState<'login' | 'register'>(searchParams.get('mode') === 'register' ? 'register' : 'login')
@@ -98,6 +106,7 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-white flex flex-col">
+      <style>{hideAutocompleteIconsStyle}</style>
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="flex flex-col items-center mb-8">
