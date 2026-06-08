@@ -9,7 +9,6 @@ const LAUNCH_DATE_KEY = 'lb-launch-date'
 const DEFAULT_LAUNCH = '2026-09-01'
 const GATE_ADMIN_USER = 'admin'
 const GATE_ADMIN_PASS = 'admin'
-const ANON_FAVORITE_COMPANY_KEY = 'lb-anon-favorite-company'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -125,7 +124,6 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate()
-  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const companies = useStore(s => s.companies)
   const currentUser = useStore(s => s.currentUser)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
