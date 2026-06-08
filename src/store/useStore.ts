@@ -69,7 +69,7 @@ const SEED_COMPANIES: Company[] = [
 const ADMIN_USER: User = {
   id: 'user-admin',
   username: 'admin',
-  password: 'admin',
+  password: 'admin123',
   coins: 100,
   isAdmin: true,
   createdAt: pastDate(60),
