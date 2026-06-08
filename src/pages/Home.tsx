@@ -74,12 +74,26 @@ export const Home = () => {
   const anonFavInitialized = useRef(false)
 
   useEffect(() => {
-    if (anonFavInitialized.current) return
-    if (currentUser) return
+    if (anonFavInitialized.current) {
+      console.log('[Home] anonFavInitialized already true, skipping')
+      return
+    }
+    if (currentUser) {
+      console.log('[Home] logged in user, skipping')
+      return
+    }
     const storedCompanyId = localStorage.getItem('lb-anon-favorite-company')
-    if (!storedCompanyId) return
-    if (favoriteCompanyIds.includes(storedCompanyId)) return
+    console.log('[Home] storedCompanyId:', storedCompanyId, 'currentFavs:', favoriteCompanyIds)
+    if (!storedCompanyId) {
+      console.log('[Home] no stored company, skipping')
+      return
+    }
+    if (favoriteCompanyIds.includes(storedCompanyId)) {
+      console.log('[Home] company already favorited, skipping')
+      return
+    }
 
+    console.log('[Home] toggling company to favorite:', storedCompanyId)
     anonFavInitialized.current = true
     toggleFavoriteCompany(storedCompanyId)
   }, [])

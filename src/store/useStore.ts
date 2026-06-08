@@ -432,6 +432,8 @@ export const useStore = create<StoreState>()(
           ? currentState.favoriteCompanyIds.filter(id => id !== companyId)
           : [...currentState.favoriteCompanyIds, companyId]
 
+        console.log(`[toggleFavoriteCompany] ${companyId}: ${isCurrentlyFavorite ? 'removing' : 'adding'}, new favs:`, updated)
+
         const userId = currentState.currentUser?.id || 'guest'
         if (isCurrentlyFavorite) {
           api.removeFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
@@ -946,6 +948,10 @@ export const useStore = create<StoreState>()(
             // For logged-in users, use server data. For anonymous users, preserve local favorites
             const newFavs = userId && serverData.favorites?.[userId] ? serverData.favorites[userId] : currentFavs
             const newPinned = userId && serverData.pinnedEvents?.[userId] ? serverData.pinnedEvents[userId] : currentPinned
+
+            if (JSON.stringify(newFavs) !== JSON.stringify(currentFavs)) {
+              console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
+            }
 
             set({
               users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
