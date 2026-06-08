@@ -9,6 +9,20 @@ const today = () => new Date().toISOString().split('T')[0]
 const futureDate = (days: number) => new Date(Date.now() + days * 86400000).toISOString()
 const pastDate = (days: number) => new Date(Date.now() - days * 86400000).toISOString()
 
+// Session ID management for anonymous users
+const ANON_SESSION_KEY = 'lb-anon-session-id'
+
+const getOrCreateSessionId = (): string => {
+  if (typeof window === 'undefined') return ''
+  let sessionId = localStorage.getItem(ANON_SESSION_KEY)
+  if (!sessionId) {
+    sessionId = `anon-${uid()}`
+    localStorage.setItem(ANON_SESSION_KEY, sessionId)
+    console.log('[Session] Created new anonymous session:', sessionId)
+  }
+  return sessionId
+}
+
 const SEED_COMPANIES: Company[] = [
   { id: 'comp-1',  name: 'Accenture Inc', color: '#A100F2',             slug: 'accenture',          description: 'Global professional services firm specializing in IT consulting, digital transformation, and outsourcing',          industry: 'Consulting',             viewCount: 142341, createdAt: pastDate(60) },
   { id: 'comp-2',  name: 'ADP', color: '#003DA5',                         slug: 'adp',                description: 'Leading provider of payroll, HR, and workforce management solutions for businesses of all sizes',                  industry: 'HR Technology',          viewCount: 89204,  createdAt: pastDate(58) },
@@ -346,6 +360,7 @@ const SEED_COMMENTS: Comment[] = [
 
 interface StoreState {
   currentUser: User | null
+  anonSessionId: string
   guestCoins: number
   users: User[]
   companies: Company[]
@@ -408,6 +423,7 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       currentUser: null,
+      anonSessionId: getOrCreateSessionId(),
       guestCoins: 50,
       users: SEED_USERS,
       companies: SEED_COMPANIES,
@@ -434,48 +450,17 @@ export const useStore = create<StoreState>()(
 
         console.log(`[toggleFavoriteCompany] ${companyId}: ${isCurrentlyFavorite ? 'removing' : 'adding'}, new favs:`, updated)
 
-        const userId = currentState.currentUser?.id || 'guest'
+        // Use session ID for anonymous users, user ID for logged-in users
+        const userId = currentState.currentUser?.id || currentState.anonSessionId
         if (isCurrentlyFavorite) {
           api.removeFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
         } else {
           api.addFavorite(userId, companyId).catch(err => console.error('Failed to sync favorite:', err))
         }
 
-        // Update store state first
+        // Update store state
         set({ favoriteCompanyIds: updated })
-
-        // For anonymous users, persist to both localStorage and cookie AFTER store update
-        if (!currentState.currentUser && typeof window !== 'undefined') {
-          // Store in the persist middleware key so it's properly saved
-          const fullState = get()
-          const stateToSave = {
-            users: fullState.users,
-            companies: fullState.companies,
-            events: fullState.events,
-            bets: fullState.bets,
-            comments: fullState.comments,
-            currentUser: fullState.currentUser,
-            theme: fullState.theme,
-            onboardingCompanyId: fullState.onboardingCompanyId,
-            favoriteCompanyIds: updated,
-            pinnedEventIds: fullState.pinnedEventIds,
-            feedback: fullState.feedback,
-            anonVotedEvents: fullState.anonVotedEvents,
-            companyLastVisit: fullState.companyLastVisit,
-            upvotedCommentIds: fullState.upvotedCommentIds,
-          }
-          localStorage.setItem('layoff-bets-store-v6', JSON.stringify(stateToSave))
-
-          // Also backup to lb-anon-favorites for cookie
-          localStorage.setItem('lb-anon-favorites', JSON.stringify(updated))
-
-          // Store in cookie with 30 day expiration
-          const expiryDate = new Date()
-          expiryDate.setDate(expiryDate.getDate() + 30)
-          document.cookie = `lb-anon-favorites=${JSON.stringify(updated)}; expires=${expiryDate.toUTCString()}; path=/`
-
-          console.log('[toggleFavoriteCompany] persisted to localStorage and cookie')
-        }
+        console.log('[toggleFavoriteCompany] synced to server with userId:', userId)
       },
 
       togglePinnedEvent: (eventId) => set(s => ({
