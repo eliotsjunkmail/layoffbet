@@ -542,7 +542,7 @@ export const useStore = create<StoreState>()(
 
       login: (username, password) => {
         const user = get().users.find(
-          u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+          u => u.username && u.password && u.username.toLowerCase() === username.toLowerCase() && u.password === password
         )
         if (!user) return false
         set({ currentUser: user })
@@ -603,7 +603,7 @@ export const useStore = create<StoreState>()(
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
 
         // Check locally first for immediate feedback on duplicate
-        const localExists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
+        const localExists = get().users.some(u => u.username && u.username.toLowerCase() === username.toLowerCase())
         if (localExists) return { ok: false, error: 'Username already taken.' }
 
         // Register on server first (synchronous from user perspective, but validation is server-side)
@@ -1032,7 +1032,7 @@ export const useStore = create<StoreState>()(
             let mergedBets = [...serverBets]
             // Keep local bets that aren't pending and don't exist on server
             for (const localBet of otherLocalBets) {
-              if (!serverBets.find(sb => sb.id === localBet.id)) {
+              if (!serverBets.find((sb: Bet) => sb.id === localBet.id)) {
                 mergedBets.push(localBet)
               }
             }

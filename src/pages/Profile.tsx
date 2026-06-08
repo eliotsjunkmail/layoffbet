@@ -12,7 +12,7 @@ export const Profile = () => {
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
 
-  if (!currentUser) return null
+  if (!currentUser || !currentUser.username) return null
 
   const userBets = bets.filter(b => b.userId === currentUser.id)
   const betsWithEvents = userBets
