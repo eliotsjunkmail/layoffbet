@@ -372,27 +372,6 @@ const DataSync = () => {
       // Restore user session from localStorage
       restoreSession()
 
-      // For anonymous users, fallback to cookie if localStorage has no favorites
-      // (persist middleware handles normal restore via 'layoff-bets-store-v6' key)
-      const currentUser = useStore.getState().currentUser
-      const currentFavs = useStore.getState().favoriteCompanyIds
-      if (!currentUser && (!currentFavs || currentFavs.length === 0)) {
-        // Only restore from cookie if no favorites in store
-        const cookies = document.cookie.split(';')
-        const cookieFav = cookies.find(c => c.trim().startsWith('lb-anon-favorites='))
-        if (cookieFav) {
-          try {
-            const favStr = cookieFav.split('=')[1]
-            const favs = JSON.parse(favStr)
-            if (Array.isArray(favs) && favs.length > 0) {
-              useStore.setState({ favoriteCompanyIds: favs })
-            }
-          } catch (e) {
-            console.error('Failed to restore anonymous favorites from cookie:', e)
-          }
-        }
-      }
-
       // Wait a moment for registration API to complete if in progress
       const registering = localStorage.getItem('layoff-bets-registering')
       if (registering) {
