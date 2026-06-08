@@ -543,7 +543,7 @@ export const useStore = create<StoreState>()(
 
       login: (username, password) => {
         const user = get().users.find(
-          u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+          u => u.username && u.password && u.username.toLowerCase() === username.toLowerCase() && u.password === password
         )
         if (!user) return false
         set({ currentUser: user })
@@ -566,7 +566,7 @@ export const useStore = create<StoreState>()(
       initializeAnonymousUser: async () => {
         try {
           // Try to get existing anonymous user ID from localStorage
-          const storedAnonUserId = localStorage.getItem('layoff-bets-anonUserId')
+          const storedAnonUserId = localStorage.getItem('layoff-bets-anonUserId') || undefined
 
           // Create or retrieve anonymous user from server
           const anonUser = await api.createOrGetAnonymousUser(storedAnonUserId)
@@ -625,7 +625,7 @@ export const useStore = create<StoreState>()(
         if (!username || !password) return { ok: false, error: 'Username and password are required.' }
 
         // Check locally first for immediate feedback on duplicate
-        const localExists = get().users.some(u => u.username.toLowerCase() === username.toLowerCase())
+        const localExists = get().users.some(u => u.username && u.username.toLowerCase() === username.toLowerCase())
         if (localExists) return { ok: false, error: 'Username already taken.' }
 
         // Register on server first (synchronous from user perspective, but validation is server-side)

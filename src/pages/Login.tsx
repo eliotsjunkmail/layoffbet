@@ -85,7 +85,7 @@ export const Login = () => {
           console.log('[Registration] Verifying account was saved to server...')
           await syncCommentsFromServer()
           const users = useStore.getState().users
-          const savedUser = users.find(u => u.username.toLowerCase() === username.toLowerCase())
+          const savedUser = users.find(u => u.username && u.username.toLowerCase() === username.toLowerCase())
           if (savedUser) {
             console.log('[Registration] ✓ Account verified on server:', savedUser)
             showToast(`✓ Account verified on server! Logging in...`)

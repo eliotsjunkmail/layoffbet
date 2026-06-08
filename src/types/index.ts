@@ -1,9 +1,10 @@
 export interface User {
   id: string
-  username: string
-  password: string
+  username?: string | null
+  password?: string | null
   coins: number
   isAdmin: boolean
+  isAnonymous?: boolean
   createdAt: string
   lastCoinsDate: string
   anonymousNumber?: number
