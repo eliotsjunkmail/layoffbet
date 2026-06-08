@@ -20,14 +20,14 @@ const DEFAULT_DATA = {
   users: [
     {
       id: 'user-admin',
-      username: 'admin',
-      password: 'admin123',
+      username: 'eliot',
+      password: 'Eliot123',
       coins: 100,
       isAdmin: true,
       createdAt: new Date().toISOString(),
       lastCoinsDate: new Date().toISOString().split('T')[0],
       anonymousNumber: 100000,
-      displayName: 'Admin'
+      displayName: 'Eliot'
     }
   ],
   events: [],
