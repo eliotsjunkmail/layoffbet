@@ -1023,11 +1023,17 @@ export const useStore = create<StoreState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
-        const idx = state.users.findIndex(u => u.id === 'user-admin')
-        if (idx === -1) {
-          state.users = [ADMIN_USER, ...state.users]
+        // Ensure seed users are always present
+        if (!state.users || state.users.length === 0) {
+          state.users = SEED_USERS
+          console.log('[Store] Restored seed users')
         } else {
-          state.users[idx] = { ...state.users[idx], username: 'admin', password: 'admin', isAdmin: true }
+          // Ensure admin user exists
+          const adminExists = state.users.find(u => u.id === 'user-admin')
+          if (!adminExists) {
+            state.users = [ADMIN_USER, ...state.users]
+            console.log('[Store] Added missing admin user')
+          }
         }
       },
     }
