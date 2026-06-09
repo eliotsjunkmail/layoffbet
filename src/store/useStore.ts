@@ -717,18 +717,20 @@ export const useStore = create<StoreState>()(
 
           // For both logged-in and guest users, create local bet immediately
           const bet: Bet = { id: tempBetId, eventId, userId, side, amount, createdAt: new Date().toISOString() }
-          set(s => {
-            const baseState = { bets: [...s.bets, bet] as any }
-            if (currentUser) {
-              baseState.currentUser = { ...currentUser, coins: newCoins }
-              baseState.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-            } else if (anonUser) {
-              baseState.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
-            } else {
-              baseState.guestCoins = newCoins
+          set((s): any => {
+            let stateUpdate: any = {
+              bets: [...s.bets, bet],
+              events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e)
             }
-            baseState.events = s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e)
-            return baseState
+            if (currentUser) {
+              stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+              stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+            } else if (anonUser) {
+              stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+            } else {
+              stateUpdate.guestCoins = newCoins
+            }
+            return stateUpdate
           })
 
           // Send to server for both logged-in and anonymous users
@@ -753,20 +755,20 @@ export const useStore = create<StoreState>()(
           if (!isGuest && newAmount > 100) return false
           if (userCoins < amount) return false
           const newCoins = isGuest && !anonUser ? guestCoins - amount : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) - amount, 999)
-          set(s => {
-            const baseState = {
+          set((s): any => {
+            let stateUpdate: any = {
               bets: s.bets.map(b => b.id === existing.id ? { ...b, amount: newAmount } : b),
               events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-            } as any
-            if (currentUser) {
-              baseState.currentUser = { ...currentUser, coins: newCoins }
-              baseState.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-            } else if (anonUser) {
-              baseState.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
-            } else {
-              baseState.guestCoins = newCoins
             }
-            return baseState
+            if (currentUser) {
+              stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+              stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+            } else if (anonUser) {
+              stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+            } else {
+              stateUpdate.guestCoins = newCoins
+            }
+            return stateUpdate
           })
           return true
         }
@@ -790,24 +792,24 @@ export const useStore = create<StoreState>()(
           newBets = withoutExisting
         }
 
-        set(s => {
-          const baseState = {
+        set((s): any => {
+          let stateUpdate: any = {
             bets: newBets,
             events: s.events.map(e => e.id !== eventId ? e : {
               ...e,
               yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? cancelled : 0) + (side === 'yes' ? remainder : 0)),
               noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? cancelled : 0) + (side === 'no'  ? remainder : 0)),
             }),
-          } as any
-          if (currentUser) {
-            baseState.currentUser = { ...currentUser, coins: newCoins }
-            baseState.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-          } else if (anonUser) {
-            baseState.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
-          } else {
-            baseState.guestCoins = newCoins
           }
-          return baseState
+          if (currentUser) {
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+          } else if (anonUser) {
+            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+          } else {
+            stateUpdate.guestCoins = newCoins
+          }
+          return stateUpdate
         })
         return true
       },
@@ -839,24 +841,24 @@ export const useStore = create<StoreState>()(
         }
 
         // Update local state optimistically
-        set(s => {
-          const baseState = {
+        set((s): any => {
+          let stateUpdate: any = {
             bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
             events: s.events.map(e => e.id === eventId ? {
               ...e,
               yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
               noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
             } : e),
-          } as any
-          if (currentUser) {
-            baseState.currentUser = { ...currentUser, coins: newCoins }
-            baseState.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-          } else if (anonUser) {
-            baseState.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
-          } else {
-            baseState.guestCoins = newCoins
           }
-          return baseState
+          if (currentUser) {
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+          } else if (anonUser) {
+            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+          } else {
+            stateUpdate.guestCoins = newCoins
+          }
+          return stateUpdate
         })
       },
 
