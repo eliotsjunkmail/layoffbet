@@ -165,7 +165,7 @@ export const CompanyPage = () => {
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
-    const betAmount = currentUser ? 20 : 10  // 20 coins for logged-in users, 10 for anonymous
+    const betAmount = 10  // 10 coins for all users
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, betAmount) : ''
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 

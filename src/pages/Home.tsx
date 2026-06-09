@@ -284,7 +284,7 @@ export const Home = () => {
     lastBetTimeRef.current = now
 
     const event = events.find(e => e.id === eventId)
-    const betAmount = currentUser ? 20 : 10  // 20 coins for logged-in users, 10 for anonymous
+    const betAmount = 10  // 10 coins for all users
     const confettiColor = '#d1206a'
 
     // Get the card element and calculate confetti origin
