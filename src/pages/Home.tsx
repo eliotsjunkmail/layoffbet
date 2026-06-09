@@ -67,6 +67,7 @@ export const Home = () => {
   })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
+  const lastBetTimeRef = useRef(0)  // Track last bet time to prevent duplicates
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -272,6 +273,14 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    // Prevent duplicate bets within 500ms
+    const now = Date.now()
+    if (now - lastBetTimeRef.current < 500) {
+      console.log('[Home] Duplicate bet prevented within 500ms')
+      return
+    }
+    lastBetTimeRef.current = now
+
     const event = events.find(e => e.id === eventId)
     const betAmount = 10
     const confettiColor = '#d1206a'
