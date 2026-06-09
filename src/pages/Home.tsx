@@ -141,7 +141,7 @@ export const Home = () => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = allUserBets.reduce((sum, b) => sum + b.amount, 0)
+      const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
       const activeBetAmount = syncedUserBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
@@ -503,7 +503,7 @@ export const Home = () => {
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const userBet = currentUser
-                      ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id)
+                      ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id && !b.id.startsWith('pending-'))
                       : anonUser ? bets.find(b => b.eventId === e.id && b.userId === anonUser.id && !b.id.startsWith('pending-'))
                       : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)

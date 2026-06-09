@@ -106,7 +106,7 @@ export const Feed = () => {
         <div className="space-y-3">
           {sorted.map(event => {
             const prob = getProbability(event.yesPool, event.noPool)
-            const userBet = bets.find(b => b.eventId === event.id && b.userId === currentUser?.id)
+            const userBet = bets.find(b => b.eventId === event.id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
             return (
               <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between mb-1.5">

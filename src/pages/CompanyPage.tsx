@@ -128,7 +128,7 @@ export const CompanyPage = () => {
 
   const userStats = useMemo(() => {
     if (currentUser) {
-      const userBets = bets.filter(b => b.userId === currentUser.id)
+      const userBets = bets.filter(b => b.userId === currentUser.id && !b.id.startsWith('pending-'))
       const activeBetCount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
@@ -381,7 +381,7 @@ export const CompanyPage = () => {
                   const exhausted = !currentUser && anonCount >= 10
                   const eventComments = comments.filter(c => c.eventId === event.id)
                   const midpoint = Math.floor(active.length / 2)
-                  const userBet = currentUser ? bets.find(b => b.eventId === event.id && b.userId === currentUser.id) : null
+                  const userBet = currentUser ? bets.find(b => b.eventId === event.id && b.userId === currentUser.id && !b.id.startsWith('pending-')) : null
                   return (
                     <>
                       {idx === midpoint && <AdBanner />}

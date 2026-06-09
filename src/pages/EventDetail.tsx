@@ -65,7 +65,7 @@ export const EventDetail = () => {
   const status = getEffectiveStatus(event)
   const prob = getProbability(event.yesPool, event.noPool)
   const eventComments = comments.filter(c => c.eventId === id).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-  const userBet = bets.find(b => b.eventId === id && b.userId === currentUser?.id)
+  const userBet = bets.find(b => b.eventId === id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
   const totalPool = event.yesPool + event.noPool
   const isCreator = event.creatorId === currentUser?.id
   const isAdmin = currentUser?.isAdmin

@@ -70,7 +70,7 @@ export const Bets = () => {
 
   const userStats = useMemo(() => {
     if (currentUser) {
-      const userBets = bets.filter(b => b.userId === currentUser.id)
+      const userBets = bets.filter(b => b.userId === currentUser.id && !b.id.startsWith('pending-'))
       const activeBetCount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
