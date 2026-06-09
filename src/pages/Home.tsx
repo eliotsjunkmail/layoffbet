@@ -498,7 +498,7 @@ export const Home = () => {
                           {userBet && (
                             <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
                               <button
-                                onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, false) }}
+                                onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, !currentUser) }}
                                 className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                               >
                                 {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
