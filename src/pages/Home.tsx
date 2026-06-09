@@ -124,10 +124,14 @@ export const Home = () => {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
 
   // Get the user ID (for anonymous users, find their server-side ID)
-  const anonUser = !currentUser ? companies.length > 0 ? useStore(s => s.users).find(u => u.isAnonymous) : null : null
-  if (!currentUser && companies.length > 0) {
-    console.log('[Home] Looking for anonUser - users:', useStore(s => s.users).map(u => ({ id: u.id, isAnonymous: u.isAnonymous })), 'found anonUser:', anonUser?.id)
-  }
+  const anonUser = !currentUser ? (() => {
+    const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+    const users = useStore(s => s.users)
+    if (anonUserId) {
+      return users.find(u => u.id === anonUserId)
+    }
+    return companies.length > 0 ? users.find(u => u.isAnonymous) : null
+  })() : null
 
   const userStats = useMemo(() => {
     // For logged-in users

@@ -67,7 +67,13 @@ export const Bets = () => {
     }
   }
 
-  const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
+  const anonUser = !currentUser ? (() => {
+    const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+    if (anonUserId) {
+      return users.find(u => u.id === anonUserId)
+    }
+    return companies.length > 0 ? users.find(u => u.isAnonymous) : null
+  })() : null
 
   const userStats = useMemo(() => {
     if (currentUser) {
