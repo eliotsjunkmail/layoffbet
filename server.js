@@ -200,9 +200,9 @@ app.post('/api/users/login', async (req, res) => {
 
 app.get('/api/next-anon-id', async (req, res) => {
   const data = await readData()
-  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
+  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 0)
   const nextNum = maxAnonNum + 1
-  const username = `Anonymous${String(nextNum).slice(-5)}`
+  const username = `Anon${String(nextNum).padStart(7, '0')}`
   res.json({ username, nextNumber: nextNum })
 })
 
@@ -219,9 +219,9 @@ app.post('/api/users/anonymous', async (req, res) => {
   }
 
   // Create new anonymous user
-  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
+  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 0)
   const nextNum = maxAnonNum + 1
-  const anonUsername = `Anonymous${String(nextNum).slice(-5)}`
+  const anonUsername = `Anon${String(nextNum).padStart(7, '0')}`
   const user = {
     id: 'anon-' + crypto.randomBytes(8).toString('hex'),
     username: anonUsername,
