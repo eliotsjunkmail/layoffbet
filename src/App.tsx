@@ -303,8 +303,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         <div className="text-center mt-8 space-y-2">
           <p className="text-xs text-slate-600">v1.26</p>
-          <p className="text-xs text-slate-700">Anonymous prediction markets</p>
-          <p className="text-xs text-slate-700">Usernames are not verified</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => setShowGuidelines(true)} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
