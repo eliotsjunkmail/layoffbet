@@ -736,7 +736,11 @@ export const useStore = create<StoreState>()(
           // Send to server for both logged-in and anonymous users
           if (currentUser || anonUser) {
             api.placeBet({ eventId, userId, side, amount })
-              .then(() => {
+              .then((serverBet) => {
+                // Replace pending bet ID with server bet ID in the store
+                set(s => ({
+                  bets: s.bets.map(b => b.id === tempBetId ? { ...serverBet } : b)
+                }))
                 api.updateUser(userId, { coins: newCoins })
                   .then(() => {
                     get().syncCommentsFromServer()
