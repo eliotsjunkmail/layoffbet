@@ -111,17 +111,8 @@ export const CompanyPage = () => {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
 
-  const handleCancelBet = (eventId: string, isGuest: boolean) => {
-    if (isGuest) {
-      const vote = anonVotedEvents[eventId]
-      if (vote) {
-        const amount = vote.count * 10
-        setAnonCoinsSpent(prev => Math.max(0, prev - amount))
-        removeAnonymousVote(eventId)
-      }
-    } else {
-      removeBet(eventId)
-    }
+  const handleCancelBet = (eventId: string) => {
+    removeBet(eventId)
   }
 
   const anonUser = !currentUser ? (() => {
@@ -384,7 +375,7 @@ export const CompanyPage = () => {
                         {userBet && (
                           <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
                             <button
-                              onClick={(ev) => { ev.stopPropagation(); handleCancelBet(event.id, !currentUser) }}
+                              onClick={(ev) => { ev.stopPropagation(); handleCancelBet(event.id) }}
                               className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                             >
                               {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
@@ -395,7 +386,7 @@ export const CompanyPage = () => {
                         {!userBet && anonVote && !anonUser && (
                           <div className={`mb-2 ${anonVote.lastSide === 'no' ? 'flex justify-end' : ''}`}>
                             <button
-                              onClick={(ev) => { ev.stopPropagation(); handleCancelBet(event.id, true) }}
+                              onClick={(ev) => { ev.stopPropagation(); removeAnonymousVote(event.id) }}
                               className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${anonVote.lastSide === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                             >
                               {anonVote.lastSide === 'yes' ? 'YES' : 'NO'} - {anonVote.count * 10} coins
