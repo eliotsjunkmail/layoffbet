@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
+import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 const API_BASE = ''
@@ -134,6 +135,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
   const [anonUsername, setAnonUsername] = useState<string>('')
   const [loadingAnonId, setLoadingAnonId] = useState(true)
+  const [showGuidelines, setShowGuidelines] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -302,7 +305,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           <p className="text-xs text-slate-600">v1.26</p>
           <p className="text-xs text-slate-700">Anonymous prediction markets</p>
           <p className="text-xs text-slate-700">Usernames are not verified</p>
-          <button onClick={() => { setAdminOpen(true); setAdminStep('login') }} className="text-slate-800 hover:text-slate-600 text-xs transition-colors">·</button>
+          <div className="flex items-center justify-center gap-2 text-xs">
+            <button onClick={() => setShowGuidelines(true)} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
+            <span className="text-slate-600">·</span>
+            <button onClick={() => setShowPrivacy(true)} className="text-slate-600 hover:text-slate-500 transition-colors">Privacy Policy</button>
+            <span className="text-slate-600">·</span>
+            <button onClick={() => { setAdminOpen(true); setAdminStep('login') }} className="text-slate-800 hover:text-slate-600 transition-colors">·</button>
+          </div>
         </div>
       </div>
 
@@ -334,6 +343,91 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Content Guidelines Bottom Sheet */}
+      {showGuidelines && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowGuidelines(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-slate-900 flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800">
+              <h2 className="font-semibold text-gray-900 dark:text-white">Content Guidelines</h2>
+              <button onClick={() => setShowGuidelines(false)} className="p-1 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4 text-sm text-gray-700 dark:text-slate-300">
+              <p className="text-gray-600 dark:text-slate-400">
+                Layoff Bets is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+              </p>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
+                <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                  <li>• Illegal content of any kind</li>
+                  <li>• Harassment, threats, or targeted bullying</li>
+                  <li>• Personal identifying information or confidential data</li>
+                  <li>• Impersonating users, companies, or public figures</li>
+                  <li>• Sexually explicit or NSFW content</li>
+                  <li>• Spam, coordinated manipulation, or bot activity</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Event Quality Standards</h3>
+                <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                  <li>• Events must be specific and verifiable</li>
+                  <li>• Events tied to real companies only</li>
+                  <li>• No events designed to manipulate or spread misinformation</li>
+                  <li>• No duplicate events for the same prediction</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Privacy Policy Bottom Sheet */}
+      {showPrivacy && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowPrivacy(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-slate-900 flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800">
+              <h2 className="font-semibold text-gray-900 dark:text-white">Privacy Policy</h2>
+              <button onClick={() => setShowPrivacy(false)} className="p-1 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4 text-sm text-gray-700 dark:text-slate-300">
+              <div>
+                <p className="text-gray-500 dark:text-slate-500 text-xs mb-2">Last updated: May 2026</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
+                <p className="text-gray-600 dark:text-slate-400">
+                  Layoff Bets is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Collect</h3>
+                <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                  <li>• IP address (fraud prevention)</li>
+                  <li>• Browser cookies (session management)</li>
+                  <li>• Usage data (events, bets, comments)</li>
+                  <li>• Account data (username, password, coins)</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Do Not Collect</h3>
+                <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                  <li>• Real names or personal identifiers</li>
+                  <li>• Email addresses</li>
+                  <li>• Employer or employment status</li>
+                  <li>• Location data beyond region</li>
+                  <li>• Financial or payment information</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       <style>{`
