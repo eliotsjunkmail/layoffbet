@@ -139,7 +139,7 @@ export const CompanyPage = () => {
         return event && getEffectiveStatus(event) === 'active'
       }).reduce((sum, b) => sum + b.amount, 0)
       return {
-        coins: currentUser.coins - activeBetAmount,
+        coins: currentUser.coins,
         totalBets: userBets.length,
         activeBets: activeBetCount,
         totalBetAmount,

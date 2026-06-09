@@ -150,7 +150,7 @@ export const Home = () => {
       console.log('[userStats] currentUser.id:', currentUser.id, 'allUserBets:', allUserBets, 'syncedUserBets:', syncedUserBets, 'totalBetAmount:', totalBetAmount)
 
       return {
-        coins: currentUser.coins - activeBetAmount,
+        coins: currentUser.coins,
         totalBets: allUserBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
