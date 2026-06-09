@@ -701,6 +701,8 @@ export const useStore = create<StoreState>()(
         const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         const userCoins = currentUser?.coins ?? guestCoins
 
+        console.log('[placeBet] userId:', userId, 'anonUser:', anonUser, 'currentUser:', currentUser?.id, 'isGuest:', isGuest)
+
         const event = events.find(e => e.id === eventId)
         if (!event) return false
         if (get().getEffectiveStatus(event) !== 'active') return false
@@ -1083,6 +1085,8 @@ export const useStore = create<StoreState>()(
               }
             }
             // Pending bets are replaced by server bets, so don't include them
+
+            console.log('[syncCommentsFromServer] bet merge - currentBets:', currentBets.length, 'serverBets:', serverBets.length, 'pendingBets:', pendingBets.length, 'mergedBets:', mergedBets.length, 'currentBets:', currentBets)
 
             if (JSON.stringify(newFavs) !== JSON.stringify(currentFavs)) {
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
