@@ -4,7 +4,7 @@ import { useStore } from './store/useStore'
 import type { ReactNode } from 'react'
 
 const GATE_KEY = 'lb-gate-v2'
-const GATE_ANS = 'pershing'
+const GATE_CODES = ['pershing', 'hello']
 const LAUNCH_DATE_KEY = 'lb-launch-date'
 const DEFAULT_LAUNCH = '2026-09-01'
 const GATE_ADMIN_USER = 'admin'
@@ -181,7 +181,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim().toLowerCase() === GATE_ANS) {
+    if (GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
         // Create anonymous user account
         const anonRes = await fetch('http://localhost:3001/api/users/anonymous', {
