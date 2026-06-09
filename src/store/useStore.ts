@@ -835,47 +835,44 @@ export const useStore = create<StoreState>()(
       },
 
       removeBet: (eventId) => {
-        const { currentUser, guestCoins, bets, events, getEffectiveStatus, users } = get()
-        const isGuest = !currentUser
+        const { currentUser, bets, events, getEffectiveStatus, users } = get()
 
-        // Find the bet to remove
-        let bet
+        // Find the bet to remove - look for any bet with this eventId
+        // For logged-in users, must match their ID
+        // For anonymous users, find by anonUserId from localStorage
+        let bet: Bet | undefined
+        let userId: string | undefined
+        let anonUser: User | undefined
+
         if (currentUser) {
-          // For logged-in users, find bet by userId
           bet = bets.find(b => b.eventId === eventId && b.userId === currentUser.id)
+          userId = currentUser.id
         } else {
-          // For anonymous users, find the bet by looking up anonUser ID from localStorage
+          // For anonymous users, try to find by stored ID first
           const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
-          const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
+          anonUser = anonUserId ? users.find(u => u.id === anonUserId) : undefined
+
           if (anonUser) {
-            bet = bets.find(b => b.eventId === eventId && b.userId === anonUser.id)
-          } else {
-            // Fallback: find any non-pending bet for this event by an anonymous user
-            bet = bets.find(b => b.eventId === eventId && !b.userId.startsWith('pending-') && users.some(u => u.id === b.userId && u.isAnonymous))
+            bet = bets.find(b => b.eventId === eventId && b.userId === anonUser!.id)
+            userId = anonUser.id
           }
         }
 
-        if (!bet) return
+        if (!bet || !userId) return
 
-        const userId = bet.userId
-        const anonUser = !currentUser ? users.find(u => u.id === userId) : null
-        const event = events.find(e => e.id === eventId)
-        if (!event || getEffectiveStatus(event) !== 'active') return
+        // Get updated user and coins
+        anonUser = !currentUser ? users.find(u => u.id === userId) : undefined
+        const newCoins = Math.min((currentUser?.coins ?? anonUser?.coins ?? 0) + bet.amount, 999)
 
-        const newCoins = isGuest && !anonUser ? guestCoins + bet.amount : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) + bet.amount, 999)
-
-        if (currentUser || anonUser) {
-          // Remove from server and update coins for both logged-in and anonymous users
-          api.removeBet(bet.id)
-            .then(() => {
-              api.updateUser(userId, { coins: newCoins })
-                .then(() => {
-                  get().syncCommentsFromServer()
-                })
+        // Send to server
+        api.removeBet(bet.id)
+          .then(() => {
+            if (currentUser || anonUser) {
+              api.updateUser(userId!, { coins: newCoins })
                 .catch(err => console.error('Failed to update coins:', err))
-            })
-            .catch(err => console.error('Failed to remove bet from server:', err))
-        }
+            }
+          })
+          .catch(err => console.error('Failed to remove bet:', err))
 
         // Update local state optimistically
         set((s): any => {
@@ -891,9 +888,7 @@ export const useStore = create<StoreState>()(
             stateUpdate.currentUser = { ...currentUser, coins: newCoins }
             stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
           } else if (anonUser) {
-            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
-          } else {
-            stateUpdate.guestCoins = newCoins
+            stateUpdate.users = s.users.map(u => u.id === userId ? { ...u, coins: newCoins } : u)
           }
           return stateUpdate
         })
