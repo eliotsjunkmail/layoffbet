@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import type { ReactNode } from 'react'
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001'
 const GATE_KEY = 'lb-gate-v2'
 const GATE_CODES = ['pershing', 'hello']
 const LAUNCH_DATE_KEY = 'lb-launch-date'
@@ -151,11 +152,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchAnonId = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/next-anon-id')
+        const res = await fetch(`${API_BASE}/api/next-anon-id`)
         const data = await res.json()
         setAnonUsername(data.username)
       } catch (err) {
         console.error('Failed to fetch anonymous ID:', err)
+        setAnonUsername('Anon0000001') // Fallback
       } finally {
         setLoadingAnonId(false)
       }
@@ -184,7 +186,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     if (GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
         // Create anonymous user account
-        const anonRes = await fetch('http://localhost:3001/api/users/anonymous', {
+        const anonRes = await fetch(`${API_BASE}/api/users/anonymous`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
