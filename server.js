@@ -114,7 +114,7 @@ app.post('/api/reset', async (req, res) => {
 
 // ===== USERS =====
 app.post('/api/users/register', async (req, res) => {
-  const { username, password } = req.body
+  const { username, password, anonUserId } = req.body
   if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
 
   const data = await readData()
@@ -122,19 +122,58 @@ app.post('/api/users/register', async (req, res) => {
     return res.status(400).json({ error: 'User exists' })
   }
 
-  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
-  const user = {
-    id: 'user-' + crypto.randomBytes(8).toString('hex'),
-    username,
-    password,
-    coins: 100,
-    isAdmin: false,
-    createdAt: new Date().toISOString(),
-    lastCoinsDate: new Date().toISOString().split('T')[0],
-    anonymousNumber: maxAnonNum + 1,
-    displayName: `Anon${maxAnonNum + 1}`,
+  let user
+  let anonUser = null
+
+  // Check if registering from anonymous user
+  if (anonUserId) {
+    anonUser = data.users.find(u => u.id === anonUserId && u.isAnonymous)
   }
-  data.users.push(user)
+
+  if (anonUser && anonUser.username === username) {
+    // Same username - just convert anonymous user to normal user
+    anonUser.password = password
+    anonUser.isAnonymous = false
+    user = anonUser
+  } else {
+    // Different username or no anonymous user - create new user
+    const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
+    user = {
+      id: 'user-' + crypto.randomBytes(8).toString('hex'),
+      username,
+      password,
+      coins: anonUser ? anonUser.coins : 100,
+      isAdmin: false,
+      createdAt: anonUser ? anonUser.createdAt : new Date().toISOString(),
+      lastCoinsDate: new Date().toISOString().split('T')[0],
+      anonymousNumber: maxAnonNum + 1,
+      displayName: username,
+    }
+    data.users.push(user)
+
+    // If registering with different username, migrate data from anonymous user
+    if (anonUser) {
+      // Migrate bets
+      data.bets = data.bets.map(b => b.userId === anonUser.id ? { ...b, userId: user.id } : b)
+
+      // Migrate favorites
+      if (data.favorites[anonUser.id]) {
+        data.favorites[user.id] = data.favorites[anonUser.id]
+        delete data.favorites[anonUser.id]
+      }
+
+      // Migrate pinned events
+      if (data.pinnedEvents[anonUser.id]) {
+        data.pinnedEvents[user.id] = data.pinnedEvents[anonUser.id]
+        delete data.pinnedEvents[anonUser.id]
+      }
+
+      // Mark anonymous user as inactive/migrated
+      anonUser.migrated = true
+      anonUser.migratedToUserId = user.id
+    }
+  }
+
   await writeData(data)
   res.json(user)
 })
@@ -159,6 +198,14 @@ app.post('/api/users/login', async (req, res) => {
   res.json(user)
 })
 
+app.get('/api/next-anon-id', async (req, res) => {
+  const data = await readData()
+  const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
+  const nextNum = maxAnonNum + 1
+  const username = `Anonymous${String(nextNum).slice(-5)}`
+  res.json({ username, nextNumber: nextNum })
+})
+
 app.post('/api/users/anonymous', async (req, res) => {
   const { anonUserId } = req.body
   const data = await readData()
@@ -173,17 +220,19 @@ app.post('/api/users/anonymous', async (req, res) => {
 
   // Create new anonymous user
   const maxAnonNum = Math.max(...data.users.map(u => u.anonymousNumber ?? 0), 100000)
+  const nextNum = maxAnonNum + 1
+  const anonUsername = `Anonymous${String(nextNum).slice(-5)}`
   const user = {
     id: 'anon-' + crypto.randomBytes(8).toString('hex'),
-    username: null,
+    username: anonUsername,
     password: null,
     coins: 50,
     isAdmin: false,
     isAnonymous: true,
     createdAt: new Date().toISOString(),
     lastCoinsDate: new Date().toISOString().split('T')[0],
-    anonymousNumber: maxAnonNum + 1,
-    displayName: `Anon${maxAnonNum + 1}`,
+    anonymousNumber: nextNum,
+    displayName: anonUsername,
   }
   data.users.push(user)
   await writeData(data)

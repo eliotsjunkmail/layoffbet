@@ -131,6 +131,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
+  const [anonUsername, setAnonUsername] = useState<string>('')
+  const [loadingAnonId, setLoadingAnonId] = useState(true)
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -145,6 +147,26 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
+  // Fetch next anonymous username on mount
+  useEffect(() => {
+    const fetchAnonId = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/next-anon-id')
+        const data = await res.json()
+        setAnonUsername(data.username)
+      } catch (err) {
+        console.error('Failed to fetch anonymous ID:', err)
+      } finally {
+        setLoadingAnonId(false)
+      }
+    }
+    if (!unlocked) {
+      fetchAnonId()
+    } else {
+      setLoadingAnonId(false)
+    }
+  }, [unlocked])
+
   // If user logs in, bypass the gate. Reset gate when user logs out.
   useEffect(() => {
     if (currentUser) {
@@ -157,14 +179,31 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   if (unlocked) return <>{children}</>
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim().toLowerCase() === GATE_ANS) {
-      if (selectedCompanyId) {
-        localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+      try {
+        // Create anonymous user account
+        const anonRes = await fetch('http://localhost:3001/api/users/anonymous', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        })
+        const anonUser = await anonRes.json()
+
+        // Store anonymous user ID
+        localStorage.setItem('lb-anon-user-id', anonUser.id)
+
+        if (selectedCompanyId) {
+          localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+        }
+        localStorage.setItem(GATE_KEY, '1')
+        setUnlocked(true)
+      } catch (err) {
+        console.error('Failed to create anonymous user:', err)
+        setError(true); setShake(true); setInput('')
+        setTimeout(() => setShake(false), 500)
       }
-      localStorage.setItem(GATE_KEY, '1')
-      setUnlocked(true)
     } else {
       setError(true); setShake(true); setInput('')
       setTimeout(() => setShake(false), 500)
@@ -245,8 +284,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 That's not right — try again
               </p>
             )}
-            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
-              Enter anonymously
+            <button type="submit" disabled={loadingAnonId} className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              {loadingAnonId ? 'Loading...' : `Enter as ${anonUsername}`}
             </button>
           </form>
         </div>

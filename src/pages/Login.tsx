@@ -44,10 +44,22 @@ export const Login = () => {
     // Sync from server to get latest users before allowing login
     syncCommentsFromServer().then(() => {
       setSynced(true)
+
+      // After syncing, if in register mode and no saved credentials, prepopulate with anonymous username
+      if (!saved && mode === 'register') {
+        const anonUserId = localStorage.getItem('lb-anon-user-id')
+        if (anonUserId) {
+          const users = useStore.getState().users
+          const anonUser = users.find(u => u.id === anonUserId && u.isAnonymous)
+          if (anonUser && anonUser.username) {
+            setUsername(anonUser.username)
+          }
+        }
+      }
     }).catch(() => {
       setSynced(true) // Mark synced even if it fails, to allow offline login
     })
-  }, [syncCommentsFromServer])
+  }, [syncCommentsFromServer, mode])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
