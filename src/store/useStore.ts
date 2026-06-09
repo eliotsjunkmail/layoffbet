@@ -697,9 +697,10 @@ export const useStore = create<StoreState>()(
         const { currentUser, guestCoins, events, bets, users } = get()
         const isGuest = !currentUser
         // Use anonymous user from server if available, fallback to 'user-guest'
-        const anonUser = users.find(u => u.isAnonymous)
+        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+        const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
         const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
-        const userCoins = currentUser?.coins ?? guestCoins
+        const userCoins = currentUser?.coins ?? anonUser?.coins ?? guestCoins
 
         const event = events.find(e => e.id === eventId)
         if (!event) return false
@@ -837,7 +838,8 @@ export const useStore = create<StoreState>()(
         const { currentUser, guestCoins, bets, events, getEffectiveStatus, users } = get()
         const isGuest = !currentUser
         // Use anonymous user from server if available, fallback to 'user-guest'
-        const anonUser = users.find(u => u.isAnonymous)
+        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+        const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
         const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         const bet = bets.find(b => b.eventId === eventId && b.userId === userId)
         if (!bet) return
@@ -884,7 +886,8 @@ export const useStore = create<StoreState>()(
       getUserBet: (eventId) => {
         const { currentUser, bets, users } = get()
         // Use anonymous user from server if available, fallback to 'user-guest'
-        const anonUser = users.find(u => u.isAnonymous)
+        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+        const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
         const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         return bets.find(b => b.eventId === eventId && b.userId === userId)
       },
