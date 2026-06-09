@@ -786,32 +786,24 @@ export const useStore = create<StoreState>()(
           return true
         }
 
-        // ── Opposite side: net out the positions ──────────────────────────
-        const cancelled = Math.min(amount, existing.amount)
-        const remainder = amount - cancelled
-        const netCost = remainder
+        // ── Opposite side: cancel existing bet and create new one ──────────────────────────
+        // When betting opposite side: cancel the existing bet (coins returned) and place new bet with swipe amount
+        const netCost = amount  // Cost of the new bet
         if (userCoins < netCost) return false
 
         const newCoins = isGuest && !anonUser ? guestCoins - netCost : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) - netCost, 999)
 
-        // Rebuild bets array
+        // Remove existing bet and create new bet with swipe amount
         const withoutExisting = bets.filter(b => b.id !== existing.id)
-        let newBets: Bet[]
-        if (existing.amount > cancelled) {
-          newBets = bets.map(b => b.id === existing.id ? { ...b, amount: b.amount - cancelled } : b)
-        } else if (remainder > 0) {
-          newBets = [...withoutExisting, { id: `bet-${uid()}`, eventId, userId, side, amount: remainder, createdAt: new Date().toISOString() }]
-        } else {
-          newBets = withoutExisting
-        }
+        const newBets = [...withoutExisting, { id: `bet-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }]
 
         set((s): any => {
           let stateUpdate: any = {
             bets: newBets,
             events: s.events.map(e => e.id !== eventId ? e : {
               ...e,
-              yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? cancelled : 0) + (side === 'yes' ? remainder : 0)),
-              noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? cancelled : 0) + (side === 'no'  ? remainder : 0)),
+              yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? existing.amount : 0) + (side === 'yes' ? amount : 0)),
+              noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? existing.amount : 0) + (side === 'no'  ? amount : 0)),
             }),
           }
           if (currentUser) {
@@ -827,21 +819,13 @@ export const useStore = create<StoreState>()(
 
         // Update server for opposite side bets
         if (currentUser || anonUser) {
-          if (existing.amount > cancelled) {
-            // Reduce existing bet amount
-            api.updateBet(existing.id, { amount: existing.amount - cancelled })
-              .catch(err => console.error('Failed to update bet:', err))
-          } else {
-            // Remove existing bet
-            api.removeBet(existing.id)
-              .catch(err => console.error('Failed to remove bet:', err))
-          }
-          if (remainder > 0) {
-            // Create new bet for remainder - we'll send it to server right away
-            const newBetData = { eventId, userId, side, amount: remainder }
-            api.placeBet(newBetData)
-              .catch(err => console.error('Failed to place remainder bet:', err))
-          }
+          // Remove existing bet
+          api.removeBet(existing.id)
+            .catch(err => console.error('Failed to remove bet:', err))
+          // Create new bet with swipe amount
+          const newBetData = { eventId, userId, side, amount }
+          api.placeBet(newBetData)
+            .catch(err => console.error('Failed to place new bet:', err))
           api.updateUser(userId, { coins: newCoins })
             .catch(err => console.error('Failed to update coins:', err))
         }
