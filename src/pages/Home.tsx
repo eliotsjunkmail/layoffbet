@@ -68,6 +68,8 @@ export const Home = () => {
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
   const lastBetTimeRef = useRef(0)  // Track last bet time to prevent duplicates
+  const [showAnonBetPrompt, setShowAnonBetPrompt] = useState(false)
+  const anonPromptDismissedRef = useRef(() => localStorage.getItem('lb-anon-bet-prompt-dismissed') === '1')
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -170,7 +172,7 @@ export const Home = () => {
       console.log('[userStats] anonUser.id:', anonUser.id, 'allAnonBets:', allAnonBets.length, 'pendingBets:', pendingBets.length, 'userBets:', userBets.length, 'totalBetAmount:', totalBetAmount)
 
       return {
-        totalBets: userBets.length,
+        totalBets: -1,  // -1 indicates "not tracked for anonymous users, show dash"
         activeBets: activeBetCount,
         totalBetAmount,
       }
@@ -282,7 +284,7 @@ export const Home = () => {
     lastBetTimeRef.current = now
 
     const event = events.find(e => e.id === eventId)
-    const betAmount = 10
+    const betAmount = currentUser ? 20 : 10  // 20 coins for logged-in users, 10 for anonymous
     const confettiColor = '#d1206a'
 
     // Get the card element and calculate confetti origin
@@ -299,6 +301,11 @@ export const Home = () => {
     if (placeBet(eventId, side, betAmount)) {
       setHasPlacedFirstBet(true)
       confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+
+      // Show prompt for anonymous users to create account (only once)
+      if (!currentUser && !anonPromptDismissedRef.current()) {
+        setTimeout(() => setShowAnonBetPrompt(true), 500)
+      }
     } else {
       if (!currentUser) {
         // For anonymous users, show if not enough coins
@@ -402,7 +409,7 @@ export const Home = () => {
                 <>
                   <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBets === -1 ? '—' : (userStats?.totalBets ?? 0)}</div>
                     <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
                   </button>
                   <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
@@ -664,6 +671,38 @@ export const Home = () => {
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
+        </div>
+      )}
+
+      {/* Anonymous user betting prompt */}
+      {showAnonBetPrompt && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-end">
+          <div className="w-full bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Track Your Bets</h2>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
+              Create an account to save your betting history and track all your predictions in one place.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  localStorage.setItem('lb-anon-bet-prompt-dismissed', '1')
+                  setShowAnonBetPrompt(false)
+                }}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Not Now
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('lb-anon-bet-prompt-dismissed', '1')
+                  navigate('/login')
+                }}
+                className="flex-1 px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium transition-colors"
+              >
+                Sign In / Register
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </Layout>
