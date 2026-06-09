@@ -848,9 +848,9 @@ export const useStore = create<StoreState>()(
           bet = bets.find(b => b.eventId === eventId && b.userId === currentUser.id)
           userId = currentUser.id
         } else {
-          // For anonymous users, try to find by stored ID first
+          // For anonymous users, try to find by stored ID first, then fallback to any anonymous user
           const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
-          anonUser = anonUserId ? users.find(u => u.id === anonUserId) : undefined
+          anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
 
           if (anonUser) {
             bet = bets.find(b => b.eventId === eventId && b.userId === anonUser!.id)
