@@ -293,7 +293,7 @@ export const CompanyPage = () => {
       </button>
 
       {/* User Metrics — full width above 2-col grid */}
-      {userStats && (
+      {userStats ? (
         <div className="mb-5 pb-1">
           <div className="grid grid-cols-3 gap-3">
             <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col">
