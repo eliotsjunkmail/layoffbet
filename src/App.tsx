@@ -127,6 +127,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
@@ -209,6 +210,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
         }
         localStorage.setItem(GATE_KEY, '1')
+
+        // Sync users from server to load anonymous user into store
+        await syncCommentsFromServer()
+
         setUnlocked(true)
       } catch (err) {
         console.error('Failed to create anonymous user:', err)
