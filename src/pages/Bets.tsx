@@ -234,9 +234,9 @@ export const Bets = () => {
               <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</div>
               <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{currentUser ? 'tap to add' : 'remaining'}</div>
             </button>
-            <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+            <button onClick={() => !currentUser && setShowAnonPrompt(true)} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
               <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser ? userStats?.totalBets : (userStats?.totalBets === -1 ? '—' : (userStats?.totalBets ?? 0))}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser ? userStats?.totalBets : '—'}</div>
               <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
             </button>
             <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
@@ -451,6 +451,46 @@ export const Bets = () => {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
         </div>
+      )}
+
+      {showAnonPrompt && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowAnonPrompt(false)} />
+          <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full border border-gray-200 dark:border-slate-800">
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Track Your Bets</h2>
+                  <button onClick={() => setShowAnonPrompt(false)} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <p className="text-gray-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">
+                  Want to keep track of your bets? You can create an account to save your predictions, but it's completely optional. Note: usernames are not verified.
+                </p>
+
+                <div className="space-y-3 flex flex-col">
+                  <button
+                    onClick={() => {
+                      setShowAnonPrompt(false)
+                      navigate('/login')
+                    }}
+                    className="w-full bg-violet-600 hover:bg-violet-500 text-white font-medium py-2.5 rounded-xl transition-colors"
+                  >
+                    Login / Register
+                  </button>
+                  <button
+                    onClick={() => setShowAnonPrompt(false)}
+                    className="w-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 font-medium py-2.5 rounded-xl transition-colors"
+                  >
+                    Continue Browsing
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </Layout>
   )
