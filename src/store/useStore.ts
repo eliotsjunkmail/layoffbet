@@ -723,8 +723,8 @@ export const useStore = create<StoreState>()(
             events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
           }))
 
-          // For logged-in users, also send to server
-          if (!isGuest) {
+          // For both logged-in and anonymous users, send to server
+          if (anonUser || currentUser) {
             api.placeBet({ eventId, userId, side, amount })
               .then((serverBet) => {
                 // Replace the pending bet with the server bet (same data, but with actual ID from server)
@@ -733,11 +733,15 @@ export const useStore = create<StoreState>()(
                     b.id === tempBetId ? { ...b, id: serverBet.id } : b
                   )
                 }))
-                api.updateUser(userId, { coins: newCoins })
-                  .then(() => {
-                    get().syncCommentsFromServer()
-                  })
-                  .catch(err => console.error('Failed to update coins:', err))
+                if (!isGuest) {
+                  api.updateUser(userId, { coins: newCoins })
+                    .then(() => {
+                      get().syncCommentsFromServer()
+                    })
+                    .catch(err => console.error('Failed to update coins:', err))
+                } else {
+                  get().syncCommentsFromServer()
+                }
               })
               .catch(err => console.error('Failed to place bet:', err))
           }
@@ -772,8 +776,8 @@ export const useStore = create<StoreState>()(
           ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
         }))
 
-        // For logged-in users, also send to server
-        if (!isGuest) {
+        // For both logged-in and anonymous users, send to server
+        if (anonUser || currentUser) {
           api.placeBet({ eventId, userId, side, amount })
             .then((serverBet) => {
               // Replace the pending bet with the server bet (same data, but with actual ID from server)
@@ -782,11 +786,15 @@ export const useStore = create<StoreState>()(
                   b.id === newBet.id ? { ...b, id: serverBet.id } : b
                 )
               }))
-              api.updateUser(userId, { coins: newCoins })
-                .then(() => {
-                  get().syncCommentsFromServer()
-                })
-                .catch(err => console.error('Failed to update coins:', err))
+              if (!isGuest) {
+                api.updateUser(userId, { coins: newCoins })
+                  .then(() => {
+                    get().syncCommentsFromServer()
+                  })
+                  .catch(err => console.error('Failed to update coins:', err))
+              } else {
+                get().syncCommentsFromServer()
+              }
             })
             .catch(err => console.error('Failed to place bet:', err))
         }
