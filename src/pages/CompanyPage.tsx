@@ -208,6 +208,13 @@ export const CompanyPage = () => {
     if (company) markCompanyVisited(company.id)
   }, [company?.id])
 
+  useEffect(() => {
+    // Auto-favorite company for logged-in users when they visit
+    if (currentUser && company && !favoriteCompanyIds.includes(company.id)) {
+      toggleFavoriteCompany(company.id)
+    }
+  }, [company?.id, currentUser?.id])
+
   if (!company) return <Navigate to="/" replace />
 
   const isFavorite = favoriteCompanyIds.includes(company.id)
