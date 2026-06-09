@@ -175,6 +175,7 @@ export const Home = () => {
       const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
 
       return {
+        coins: anonUser.coins,
         totalBets: allUserBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
@@ -385,7 +386,7 @@ export const Home = () => {
               }} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
                 <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
-                  {currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}
+                  {userStats?.coins ?? 0}
                   {coinPuff && (
                     <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
                       ✨

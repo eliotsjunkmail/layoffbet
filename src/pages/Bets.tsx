@@ -227,7 +227,7 @@ export const Bets = () => {
           <div className="grid grid-cols-3 gap-3">
             <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
               <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.coins ?? 0}</div>
               <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{currentUser ? 'tap to add' : 'remaining'}</div>
             </button>
             <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
