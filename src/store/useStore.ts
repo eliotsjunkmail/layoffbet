@@ -701,8 +701,6 @@ export const useStore = create<StoreState>()(
         const userId = currentUser?.id ?? anonUser?.id ?? 'user-guest'
         const userCoins = currentUser?.coins ?? guestCoins
 
-        console.log('[placeBet] userId:', userId, 'anonUser:', anonUser, 'currentUser:', currentUser?.id, 'isGuest:', isGuest)
-
         const event = events.find(e => e.id === eventId)
         if (!event) return false
         if (get().getEffectiveStatus(event) !== 'active') return false
@@ -714,36 +712,40 @@ export const useStore = create<StoreState>()(
           if (!isGuest && amount > 100) return false
           if (userCoins < amount) return false
 
-          const newCoins = isGuest ? guestCoins - amount : Math.max(0, currentUser.coins - amount)
+          const newCoins = isGuest && !anonUser ? guestCoins - amount : (currentUser?.coins ?? anonUser?.coins ?? guestCoins) - amount
           const tempBetId = `pending-${uid()}`
 
           // For both logged-in and guest users, create local bet immediately
           const bet: Bet = { id: tempBetId, eventId, userId, side, amount, createdAt: new Date().toISOString() }
-          set(s => ({
-            bets: [...s.bets, bet],
-            ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
-            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-          }))
+          set((s): any => {
+            let stateUpdate: any = {
+              bets: [...s.bets, bet],
+              events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e)
+            }
+            if (currentUser) {
+              stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+              stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+            } else if (anonUser) {
+              stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+            } else {
+              stateUpdate.guestCoins = newCoins
+            }
+            return stateUpdate
+          })
 
-          // For both logged-in and anonymous users, send to server
-          if (anonUser || currentUser) {
+          // Send to server for both logged-in and anonymous users
+          if (currentUser || anonUser) {
             api.placeBet({ eventId, userId, side, amount })
               .then((serverBet) => {
-                // Replace the pending bet with the server bet (same data, but with actual ID from server)
+                // Replace pending bet ID with server bet ID in the store
                 set(s => ({
-                  bets: s.bets.map(b =>
-                    b.id === tempBetId ? { ...b, id: serverBet.id } : b
-                  )
+                  bets: s.bets.map(b => b.id === tempBetId ? { ...serverBet } : b)
                 }))
-                if (!isGuest) {
-                  api.updateUser(userId, { coins: newCoins })
-                    .then(() => {
-                      get().syncCommentsFromServer()
-                    })
-                    .catch(err => console.error('Failed to update coins:', err))
-                } else {
-                  get().syncCommentsFromServer()
-                }
+                api.updateUser(userId, { coins: newCoins })
+                  .then(() => {
+                    get().syncCommentsFromServer()
+                  })
+                  .catch(err => console.error('Failed to update coins:', err))
               })
               .catch(err => console.error('Failed to place bet:', err))
           }
@@ -756,51 +758,63 @@ export const useStore = create<StoreState>()(
           const newAmount = existing.amount + amount
           if (!isGuest && newAmount > 100) return false
           if (userCoins < amount) return false
-          const newCoins = isGuest ? guestCoins - amount : Math.min(currentUser.coins - amount, 999)
-          set(s => ({
-            bets: s.bets.map(b => b.id === existing.id ? { ...b, amount: newAmount } : b),
-            events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-            ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
-          }))
+          const newCoins = isGuest && !anonUser ? guestCoins - amount : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) - amount, 999)
+          set((s): any => {
+            let stateUpdate: any = {
+              bets: s.bets.map(b => b.id === existing.id ? { ...b, amount: newAmount } : b),
+              events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
+            }
+            if (currentUser) {
+              stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+              stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+            } else if (anonUser) {
+              stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+            } else {
+              stateUpdate.guestCoins = newCoins
+            }
+            return stateUpdate
+          })
           return true
         }
 
-        // ── Opposite side: allow hedging with separate position ──────────────────────────
-        // User can have both YES and NO bets active (hedging). Each costs the full amount.
-        if (userCoins < amount) return false
+        // ── Opposite side: net out the positions ──────────────────────────
+        const cancelled = Math.min(amount, existing.amount)
+        const remainder = amount - cancelled
+        const netCost = remainder
+        if (userCoins < netCost) return false
 
-        const newCoins = isGuest ? guestCoins - amount : Math.max(0, currentUser.coins - amount)
-        const newBet: Bet = { id: `pending-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }
+        const newCoins = isGuest && !anonUser ? guestCoins - netCost : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) - netCost, 999)
 
-        set(s => ({
-          bets: [...s.bets, newBet],
-          events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
-          ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
-        }))
-
-        // For both logged-in and anonymous users, send to server
-        if (anonUser || currentUser) {
-          api.placeBet({ eventId, userId, side, amount })
-            .then((serverBet) => {
-              // Replace the pending bet with the server bet (same data, but with actual ID from server)
-              set(s => ({
-                bets: s.bets.map(b =>
-                  b.id === newBet.id ? { ...b, id: serverBet.id } : b
-                )
-              }))
-              if (!isGuest) {
-                api.updateUser(userId, { coins: newCoins })
-                  .then(() => {
-                    get().syncCommentsFromServer()
-                  })
-                  .catch(err => console.error('Failed to update coins:', err))
-              } else {
-                get().syncCommentsFromServer()
-              }
-            })
-            .catch(err => console.error('Failed to place bet:', err))
+        // Rebuild bets array
+        const withoutExisting = bets.filter(b => b.id !== existing.id)
+        let newBets: Bet[]
+        if (existing.amount > cancelled) {
+          newBets = bets.map(b => b.id === existing.id ? { ...b, amount: b.amount - cancelled } : b)
+        } else if (remainder > 0) {
+          newBets = [...withoutExisting, { id: `bet-${uid()}`, eventId, userId, side, amount: remainder, createdAt: new Date().toISOString() }]
+        } else {
+          newBets = withoutExisting
         }
 
+        set((s): any => {
+          let stateUpdate: any = {
+            bets: newBets,
+            events: s.events.map(e => e.id !== eventId ? e : {
+              ...e,
+              yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? cancelled : 0) + (side === 'yes' ? remainder : 0)),
+              noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? cancelled : 0) + (side === 'no'  ? remainder : 0)),
+            }),
+          }
+          if (currentUser) {
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+          } else if (anonUser) {
+            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+          } else {
+            stateUpdate.guestCoins = newCoins
+          }
+          return stateUpdate
+        })
         return true
       },
 
@@ -815,10 +829,10 @@ export const useStore = create<StoreState>()(
         const event = events.find(e => e.id === eventId)
         if (!event || getEffectiveStatus(event) !== 'active') return
 
-        const newCoins = isGuest ? guestCoins + bet.amount : Math.min(currentUser.coins + bet.amount, 999)
+        const newCoins = isGuest && !anonUser ? guestCoins + bet.amount : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) + bet.amount, 999)
 
-        if (!isGuest) {
-          // Remove from server and update coins
+        if (currentUser || anonUser) {
+          // Remove from server and update coins for both logged-in and anonymous users
           api.removeBet(bet.id)
             .then(() => {
               api.updateUser(userId, { coins: newCoins })
@@ -831,15 +845,25 @@ export const useStore = create<StoreState>()(
         }
 
         // Update local state optimistically
-        set(s => ({
-          bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
-          events: s.events.map(e => e.id === eventId ? {
-            ...e,
-            yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
-            noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
-          } : e),
-          ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
-        }))
+        set((s): any => {
+          let stateUpdate: any = {
+            bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
+            events: s.events.map(e => e.id === eventId ? {
+              ...e,
+              yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
+              noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
+            } : e),
+          }
+          if (currentUser) {
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+          } else if (anonUser) {
+            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
+          } else {
+            stateUpdate.guestCoins = newCoins
+          }
+          return stateUpdate
+        })
       },
 
       getUserBet: (eventId) => {
@@ -1085,8 +1109,6 @@ export const useStore = create<StoreState>()(
               }
             }
             // Pending bets are replaced by server bets, so don't include them
-
-            console.log('[syncCommentsFromServer] bet merge - currentBets:', currentBets.length, 'serverBets:', serverBets.length, 'pendingBets:', pendingBets.length, 'mergedBets:', mergedBets.length, 'currentBets:', currentBets)
 
             if (JSON.stringify(newFavs) !== JSON.stringify(currentFavs)) {
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
