@@ -753,34 +753,32 @@ export const useStore = create<StoreState>()(
           return true
         }
 
-        // ── Opposite side: net out the positions ──────────────────────────
-        const cancelled = Math.min(amount, existing.amount)
-        const remainder = amount - cancelled
-        const netCost = remainder
-        if (userCoins < netCost) return false
+        // ── Opposite side: allow hedging with separate position ──────────────────────────
+        // User can have both YES and NO bets active (hedging). Each costs the full amount.
+        if (userCoins < amount) return false
 
-        const newCoins = isGuest ? guestCoins - netCost : Math.min(currentUser.coins - netCost, 999)
-
-        // Rebuild bets array
-        const withoutExisting = bets.filter(b => b.id !== existing.id)
-        let newBets: Bet[]
-        if (existing.amount > cancelled) {
-          newBets = bets.map(b => b.id === existing.id ? { ...b, amount: b.amount - cancelled } : b)
-        } else if (remainder > 0) {
-          newBets = [...withoutExisting, { id: `bet-${uid()}`, eventId, userId, side, amount: remainder, createdAt: new Date().toISOString() }]
-        } else {
-          newBets = withoutExisting
-        }
+        const newCoins = isGuest ? guestCoins - amount : Math.max(0, currentUser.coins - amount)
+        const newBet: Bet = { id: `pending-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }
 
         set(s => ({
-          bets: newBets,
-          events: s.events.map(e => e.id !== eventId ? e : {
-            ...e,
-            yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? cancelled : 0) + (side === 'yes' ? remainder : 0)),
-            noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? cancelled : 0) + (side === 'no'  ? remainder : 0)),
-          }),
+          bets: [...s.bets, newBet],
+          events: s.events.map(e => e.id === eventId ? { ...e, yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool, noPool: side === 'no' ? e.noPool + amount : e.noPool } : e),
           ...(isGuest ? { guestCoins: newCoins } : { currentUser: { ...currentUser, coins: newCoins }, users: s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u) }),
         }))
+
+        // For logged-in users, also send to server
+        if (!isGuest) {
+          api.placeBet({ eventId, userId, side, amount })
+            .then(() => {
+              api.updateUser(userId, { coins: newCoins })
+                .then(() => {
+                  get().syncCommentsFromServer()
+                })
+                .catch(err => console.error('Failed to update coins:', err))
+            })
+            .catch(err => console.error('Failed to place bet:', err))
+        }
+
         return true
       },
 
