@@ -114,7 +114,7 @@ export const Header = () => {
                 <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
                 <span className="font-black text-violet-600 dark:text-violet-400 text-sm tracking-tight">Bet</span>
               </div>
-              <span className="text-xs text-gray-400 dark:text-slate-500 sm:ml-2">v1.22</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500 sm:ml-2">v1.23</span>
             </div>
           </Link>
 
