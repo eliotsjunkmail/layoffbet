@@ -726,7 +726,13 @@ export const useStore = create<StoreState>()(
           // For logged-in users, also send to server
           if (!isGuest) {
             api.placeBet({ eventId, userId, side, amount })
-              .then(() => {
+              .then((serverBet) => {
+                // Replace the pending bet with the server bet (same data, but with actual ID from server)
+                set(s => ({
+                  bets: s.bets.map(b =>
+                    b.id === tempBetId ? { ...b, id: serverBet.id } : b
+                  )
+                }))
                 api.updateUser(userId, { coins: newCoins })
                   .then(() => {
                     get().syncCommentsFromServer()
@@ -769,7 +775,13 @@ export const useStore = create<StoreState>()(
         // For logged-in users, also send to server
         if (!isGuest) {
           api.placeBet({ eventId, userId, side, amount })
-            .then(() => {
+            .then((serverBet) => {
+              // Replace the pending bet with the server bet (same data, but with actual ID from server)
+              set(s => ({
+                bets: s.bets.map(b =>
+                  b.id === newBet.id ? { ...b, id: serverBet.id } : b
+                )
+              }))
               api.updateUser(userId, { coins: newCoins })
                 .then(() => {
                   get().syncCommentsFromServer()

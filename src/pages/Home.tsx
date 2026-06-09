@@ -126,19 +126,26 @@ export const Home = () => {
   const userStats = useMemo(() => {
     // For logged-in users
     if (currentUser) {
-      const userBets = bets.filter(b => b.userId === currentUser.id)
-      const activeBetCount = userBets.filter(b => {
+      // Include all bets (pending and synced) for the user count
+      const allUserBets = bets.filter(b => b.userId === currentUser.id)
+      // For active count, only count synced bets on active events
+      const syncedUserBets = allUserBets.filter(b => !b.id.startsWith('pending-'))
+
+      const activeBetCount = syncedUserBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-      const activeBetAmount = userBets.filter(b => {
+      const totalBetAmount = allUserBets.reduce((sum, b) => sum + b.amount, 0)
+      const activeBetAmount = syncedUserBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).reduce((sum, b) => sum + b.amount, 0)
+
+      console.log('[userStats] currentUser.id:', currentUser.id, 'allUserBets:', allUserBets, 'syncedUserBets:', syncedUserBets, 'totalBetAmount:', totalBetAmount)
+
       return {
         coins: currentUser.coins - activeBetAmount,
-        totalBets: userBets.length,
+        totalBets: allUserBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
       }
