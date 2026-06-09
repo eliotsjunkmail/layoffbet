@@ -774,6 +774,15 @@ export const useStore = create<StoreState>()(
             }
             return stateUpdate
           })
+
+          // Update server with new bet amount
+          if (currentUser || anonUser) {
+            api.updateBet(existing.id, { amount: newAmount })
+              .catch(err => console.error('Failed to update bet:', err))
+            api.updateUser(userId, { coins: newCoins })
+              .catch(err => console.error('Failed to update coins:', err))
+          }
+
           return true
         }
 
@@ -815,6 +824,28 @@ export const useStore = create<StoreState>()(
           }
           return stateUpdate
         })
+
+        // Update server for opposite side bets
+        if (currentUser || anonUser) {
+          if (existing.amount > cancelled) {
+            // Reduce existing bet amount
+            api.updateBet(existing.id, { amount: existing.amount - cancelled })
+              .catch(err => console.error('Failed to update bet:', err))
+          } else {
+            // Remove existing bet
+            api.removeBet(existing.id)
+              .catch(err => console.error('Failed to remove bet:', err))
+          }
+          if (remainder > 0) {
+            // Create new bet for remainder - we'll send it to server right away
+            const newBetData = { eventId, userId, side, amount: remainder }
+            api.placeBet(newBetData)
+              .catch(err => console.error('Failed to place remainder bet:', err))
+          }
+          api.updateUser(userId, { coins: newCoins })
+            .catch(err => console.error('Failed to update coins:', err))
+        }
+
         return true
       },
 

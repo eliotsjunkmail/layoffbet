@@ -267,6 +267,15 @@ app.post('/api/bets', async (req, res) => {
   res.json(bet)
 })
 
+app.put('/api/bets/:id', async (req, res) => {
+  const data = await readData()
+  const bet = data.bets.find(b => b.id === req.params.id)
+  if (!bet) return res.status(404).json({ error: 'Bet not found' })
+  Object.assign(bet, req.body)
+  await writeData(data)
+  res.json(bet)
+})
+
 app.delete('/api/bets/:id', async (req, res) => {
   const data = await readData()
   const idx = data.bets.findIndex(b => b.id === req.params.id)

@@ -135,6 +135,18 @@ export const api = {
     return response.json()
   },
 
+  updateBet: async (betId: string, data: any) => {
+    const response = await fetch(`${API_BASE}/api/bets/${betId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update bet')
+    }
+    return response.json()
+  },
+
   removeBet: async (betId: string) => {
     const response = await fetch(`${API_BASE}/api/bets/${betId}`, {
       method: 'DELETE',
