@@ -163,20 +163,19 @@ export const Home = () => {
 
     // For anonymous users, use server bets if anonymous user exists
     if (anonUser) {
-      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
-      const activeBetCount = userBets.filter(b => {
+      // Include all bets (pending and synced) for the user count
+      const allUserBets = bets.filter(b => b.userId === anonUser.id)
+      // For active count, only count synced bets on active events
+      const syncedUserBets = allUserBets.filter(b => !b.id.startsWith('pending-'))
+
+      const activeBetCount = syncedUserBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-
-      // Debug logging
-      const allAnonBets = bets.filter(b => b.userId === anonUser.id)
-      const pendingBets = allAnonBets.filter(b => b.id.startsWith('pending-'))
-      console.log('[userStats] anonUser.id:', anonUser.id, 'allAnonBets:', allAnonBets.length, 'pendingBets:', pendingBets.length, 'userBets:', userBets.length, 'totalBetAmount:', totalBetAmount)
+      const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
 
       return {
-        totalBets: userBets.length,
+        totalBets: allUserBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
       }

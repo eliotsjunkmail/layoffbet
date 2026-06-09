@@ -92,15 +92,19 @@ export const Bets = () => {
     }
 
     if (anonUser) {
-      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
-      const activeBetCount = userBets.filter(b => {
+      // Include all bets (pending and synced) for the user count
+      const allUserBets = bets.filter(b => b.userId === anonUser.id)
+      // For active count, only count synced bets on active events
+      const syncedUserBets = allUserBets.filter(b => !b.id.startsWith('pending-'))
+
+      const activeBetCount = syncedUserBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
       return {
-        coins: Math.max(0, 50 - anonCoinsSpent),
-        totalBets: userBets.length,
+        coins: anonUser.coins ?? Math.max(0, 50 - anonCoinsSpent),
+        totalBets: allUserBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
       }
@@ -115,29 +119,13 @@ export const Bets = () => {
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, betAmount) : ''
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
-    if (currentUser) {
-      if (placeBet(eventId, side, betAmount)) {
-        setSwipeFlash({ id: eventId, side })
-        setTimeout(() => setSwipeFlash(null), 600)
-        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-        showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
-      } else {
-        showToast('Not enough coins or 100-coin limit reached')
-      }
+    if (placeBet(eventId, side, betAmount)) {
+      setSwipeFlash({ id: eventId, side })
+      setTimeout(() => setSwipeFlash(null), 600)
+      confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+      showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
     } else {
-      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
-        if (placeAnonymousVote(eventId, side)) {
-          setAnonCoinsSpent(prev => prev + betAmount)
-          setSwipeFlash({ id: eventId, side })
-          setTimeout(() => setSwipeFlash(null), 600)
-          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-          showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
-        } else {
-          showToast('Prediction is no longer active')
-        }
-      } else {
-        showToast('Not enough coins')
-      }
+      showToast(currentUser ? 'Not enough coins or 100-coin limit reached' : 'Prediction is no longer active')
     }
   }
 
