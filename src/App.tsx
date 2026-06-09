@@ -307,8 +307,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <button onClick={() => setShowGuidelines(true)} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
             <button onClick={() => setShowPrivacy(true)} className="text-slate-600 hover:text-slate-500 transition-colors">Privacy Policy</button>
-            <span className="text-slate-600">·</span>
-            <button onClick={() => { setAdminOpen(true); setAdminStep('login') }} className="text-slate-800 hover:text-slate-600 transition-colors">·</button>
           </div>
         </div>
       </div>
