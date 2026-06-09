@@ -191,6 +191,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         })
+
+        if (!anonRes.ok) {
+          console.error('Failed to create anonymous user:', anonRes.status, anonRes.statusText)
+          throw new Error(`HTTP ${anonRes.status}`)
+        }
+
         const anonUser = await anonRes.json()
 
         // Store anonymous user ID
@@ -292,7 +298,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         </div>
 
-        <div className="text-center mt-6">
+        <div className="text-center mt-8 space-y-2">
+          <p className="text-xs text-slate-600">v1.26</p>
+          <p className="text-xs text-slate-700">Anonymous prediction markets</p>
+          <p className="text-xs text-slate-700">Usernames are not verified</p>
           <button onClick={() => { setAdminOpen(true); setAdminStep('login') }} className="text-slate-800 hover:text-slate-600 text-xs transition-colors">·</button>
         </div>
       </div>
