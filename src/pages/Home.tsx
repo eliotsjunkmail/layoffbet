@@ -122,6 +122,9 @@ export const Home = () => {
 
   // Get the user ID (for anonymous users, find their server-side ID)
   const anonUser = !currentUser ? companies.length > 0 ? useStore(s => s.users).find(u => u.isAnonymous) : null : null
+  if (!currentUser && companies.length > 0) {
+    console.log('[Home] Looking for anonUser - users:', useStore(s => s.users).map(u => ({ id: u.id, isAnonymous: u.isAnonymous })), 'found anonUser:', anonUser?.id)
+  }
 
   const userStats = useMemo(() => {
     // For logged-in users
@@ -159,6 +162,12 @@ export const Home = () => {
         return event && getEffectiveStatus(event) === 'active'
       }).length
       const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+
+      // Debug logging
+      const allAnonBets = bets.filter(b => b.userId === anonUser.id)
+      const pendingBets = allAnonBets.filter(b => b.id.startsWith('pending-'))
+      console.log('[userStats] anonUser.id:', anonUser.id, 'allAnonBets:', allAnonBets.length, 'pendingBets:', pendingBets.length, 'userBets:', userBets.length, 'totalBetAmount:', totalBetAmount)
+
       return {
         totalBets: userBets.length,
         activeBets: activeBetCount,
