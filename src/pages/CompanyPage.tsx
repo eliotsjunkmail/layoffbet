@@ -28,6 +28,7 @@ export const CompanyPage = () => {
   const navigate = useNavigate()
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
+  const users = useStore(s => s.users)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const currentUser = useStore(s => s.currentUser)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
@@ -123,30 +124,49 @@ export const CompanyPage = () => {
     }
   }
 
+  const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
+
   const userStats = useMemo(() => {
-    if (!currentUser) return null
-    const userBets = bets.filter(b => b.userId === currentUser.id)
-    const activeBetCount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).length
-    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-    const activeBetAmount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).reduce((sum, b) => sum + b.amount, 0)
-    return {
-      coins: currentUser.coins - activeBetAmount,
-      totalBets: userBets.length,
-      activeBets: activeBetCount,
-      totalBetAmount,
+    if (currentUser) {
+      const userBets = bets.filter(b => b.userId === currentUser.id)
+      const activeBetCount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      const activeBetAmount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).reduce((sum, b) => sum + b.amount, 0)
+      return {
+        coins: currentUser.coins - activeBetAmount,
+        totalBets: userBets.length,
+        activeBets: activeBetCount,
+        totalBetAmount,
+      }
     }
-  }, [currentUser, bets, events, getEffectiveStatus])
+
+    if (anonUser) {
+      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
+      const activeBetCount = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'active'
+      }).length
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      return {
+        totalBets: -1,  // -1 indicates "not tracked for anonymous users, show dash"
+        activeBets: activeBetCount,
+        totalBetAmount,
+      }
+    }
+
+    return null
+  }, [currentUser, anonUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
-    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
-    const betAmount = 10
+    const betAmount = currentUser ? 20 : 10  // 20 coins for logged-in users, 10 for anonymous
+    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, betAmount) : ''
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
     if (currentUser) {
@@ -268,14 +288,14 @@ export const CompanyPage = () => {
               <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</div>
               <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
             </button>
-            {currentUser && userStats && (
+            {userStats && (
               <>
-                <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                   <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets === -1 ? '—' : userStats.totalBets}</div>
                   <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
                 </button>
-                <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                <button onClick={() => currentUser && navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                   <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
                   <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
                   <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
