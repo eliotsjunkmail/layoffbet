@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import type { ReactNode } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001'
+const API_BASE = ''
 const GATE_KEY = 'lb-gate-v2'
 const GATE_CODES = ['pershing', 'hello']
 const LAUNCH_DATE_KEY = 'lb-launch-date'
