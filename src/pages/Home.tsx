@@ -43,6 +43,10 @@ export const Home = () => {
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const navigate = useNavigate()
   const location = useLocation()
+  const users = useStore(s => s.users)
+
+  // Get the user ID (for anonymous users, find their server-side ID)
+  const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
@@ -67,9 +71,6 @@ export const Home = () => {
   })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
-  const lastBetTimeRef = useRef(0)  // Track last bet time to prevent duplicates
-  const [showAnonBetPrompt, setShowAnonBetPrompt] = useState(false)
-  const anonPromptDismissedRef = useRef(() => localStorage.getItem('lb-anon-bet-prompt-dismissed') === '1')
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -123,39 +124,22 @@ export const Home = () => {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
 
-  // Get the user ID (for anonymous users, find their server-side ID)
-  const anonUser = !currentUser ? (() => {
-    const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
-    const users = useStore(s => s.users)
-    if (anonUserId) {
-      return users.find(u => u.id === anonUserId)
-    }
-    return companies.length > 0 ? users.find(u => u.isAnonymous) : null
-  })() : null
-
   const userStats = useMemo(() => {
     // For logged-in users
     if (currentUser) {
-      // Include all bets (pending and synced) for the user count
-      const allUserBets = bets.filter(b => b.userId === currentUser.id)
-      // For active count, only count synced bets on active events
-      const syncedUserBets = allUserBets.filter(b => !b.id.startsWith('pending-'))
-
-      const activeBetCount = syncedUserBets.filter(b => {
+      const userBets = bets.filter(b => b.userId === currentUser.id)
+      const activeBetCount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
-      const activeBetAmount = syncedUserBets.filter(b => {
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      const activeBetAmount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).reduce((sum, b) => sum + b.amount, 0)
-
-      console.log('[userStats] currentUser.id:', currentUser.id, 'allUserBets:', allUserBets, 'syncedUserBets:', syncedUserBets, 'totalBetAmount:', totalBetAmount)
-
       return {
-        coins: currentUser.coins,
-        totalBets: allUserBets.length,
+        coins: currentUser.coins - activeBetAmount,
+        totalBets: userBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
       }
@@ -163,20 +147,14 @@ export const Home = () => {
 
     // For anonymous users, use server bets if anonymous user exists
     if (anonUser) {
-      // Include all bets (pending and synced) for the user count
-      const allUserBets = bets.filter(b => b.userId === anonUser.id)
-      // For active count, only count synced bets on active events
-      const syncedUserBets = allUserBets.filter(b => !b.id.startsWith('pending-'))
-
-      const activeBetCount = syncedUserBets.filter(b => {
+      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
+      const activeBetCount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
-
+      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
       return {
-        coins: anonUser.coins,
-        totalBets: allUserBets.length,
+        totalBets: userBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
       }
@@ -279,16 +257,8 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    // Prevent duplicate bets within 500ms
-    const now = Date.now()
-    if (now - lastBetTimeRef.current < 500) {
-      console.log('[Home] Duplicate bet prevented within 500ms')
-      return
-    }
-    lastBetTimeRef.current = now
-
     const event = events.find(e => e.id === eventId)
-    const betAmount = 10  // 10 coins for all users
+    const betAmount = 10
     const confettiColor = '#d1206a'
 
     // Get the card element and calculate confetti origin
@@ -305,11 +275,6 @@ export const Home = () => {
     if (placeBet(eventId, side, betAmount)) {
       setHasPlacedFirstBet(true)
       confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-
-      // Show prompt for anonymous users to create account (only once)
-      if (!currentUser && !anonPromptDismissedRef.current()) {
-        setTimeout(() => setShowAnonBetPrompt(true), 500)
-      }
     } else {
       if (!currentUser) {
         // For anonymous users, show if not enough coins
@@ -385,8 +350,8 @@ export const Home = () => {
                 }
               }} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
                 <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 relative inline-block flex-1 flex items-center justify-center">
-                  {userStats?.coins ?? 0}
+                <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 relative inline-block flex-1 flex items-center justify-center">
+                  {currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}
                   {coinPuff && (
                     <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
                       ✨
@@ -395,16 +360,34 @@ export const Home = () => {
                 </div>
                 <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{currentUser ? 'tap to add' : 'remaining'}</div>
               </button>
-              <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
-              </button>
-              <button onClick={() => navigate(currentUser ? '/bets' : '/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-              </button>
+              {currentUser && userStats && (
+                <>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+                  </button>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                  </button>
+                </>
+              )}
+              {!currentUser && (
+                <>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
+                  </button>
+                  <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
+                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : null}
@@ -430,7 +413,7 @@ export const Home = () => {
               onChange={e => { setQuery(e.target.value); setShowDropdown(true) }}
               onFocus={() => query && setShowDropdown(true)}
               placeholder="Search for a company..."
-              className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl pl-12 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm text-sm"
+              className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl pl-12 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all shadow-sm text-sm"
             />
             {query && (
               <button onClick={() => { setQuery(''); setShowDropdown(false) }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
@@ -472,8 +455,8 @@ export const Home = () => {
             <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-6'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
-                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
                 </Link>
                 <div className="flex items-center gap-2">
                   <button
@@ -489,7 +472,7 @@ export const Home = () => {
                   {activeEvents.map((e, eIdx) => {
                     const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const userBet = currentUser
-                      ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id && !b.id.startsWith('pending-'))
+                      ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id)
                       : anonUser ? bets.find(b => b.eventId === e.id && b.userId === anonUser.id && !b.id.startsWith('pending-'))
                       : undefined
                     const eventComments = comments.filter(c => c.eventId === e.id)
@@ -504,12 +487,12 @@ export const Home = () => {
                           disabled={false}
                           onClick={() => navigate(`/event/${e.id}`)}
                           demoActive={!hasPlacedFirstBet && cIdx === 0 && eIdx === 0}
-                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-blue-200 dark:border-blue-800`}
+                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-violet-200 dark:border-violet-800`}
                         >
                           {userBet && (
                             <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
                               <button
-                                onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, !currentUser) }}
+                                onClick={(ev) => { ev.stopPropagation(); handleCancelBet(e.id, false) }}
                                 className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-75 ${userBet.side === 'yes' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
                               >
                                 {userBet.side === 'yes' ? 'YES' : 'NO'} - {userBet.amount} coins
@@ -531,7 +514,7 @@ export const Home = () => {
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
                             {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                              <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                              <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                             )}
                           </div>
                           <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
@@ -561,7 +544,7 @@ export const Home = () => {
                                 <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed flex-1">{cmt.content}</p>
                                 <button
                                   onClick={() => upvoteComment(cmt.id)}
-                                  className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
+                                  className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-violet-600 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-500'}`}
                                 >
                                   <ThumbsUp className="w-3 h-3" />
                                   {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
@@ -577,14 +560,13 @@ export const Home = () => {
                               onFocus={() => setFocusedInput(e.id)}
                               onBlur={() => setTimeout(() => setFocusedInput(f => f === e.id ? null : f), 150)}
                               placeholder="Add a comment..."
-                              className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500"
+                              className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500"
                             />
-                            {(focusedInput === e.id || commentInputs[e.id]) && (
+                            {focusedInput === e.id && (
                               <button
                                 onMouseDown={ev => ev.preventDefault()}
                                 onClick={() => handleAddComment(e.id)}
-                                disabled={!commentInputs[e.id]?.trim()}
-                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
                               >
                                 <Send className="w-3.5 h-3.5" />
                               </button>
@@ -604,14 +586,14 @@ export const Home = () => {
                 {currentUser ? (
                   <button
                     onClick={() => navigate('/create', { state: { companyId: c.id } })}
-                    className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
                   >
                     + New bet
                   </button>
                 ) : (
                   <button
                     onClick={() => navigate('/login')}
-                    className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
                   >
                     + New bet
                   </button>
@@ -630,21 +612,21 @@ export const Home = () => {
 
         {/* Industry filter + Browse — hidden once user has favorites */}
 
-        {/* Active bets pills — shown when no favorites */}
-        {!hasFavorites && (() => {
+        {/* Active bets pills for guests */}
+        {!currentUser && (() => {
           const companiesWithActiveBets = companies
             .filter(c => (activeEventsByCompany[c.id] ?? 0) > 0)
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => (activeEventsByCompany[b.id] ?? 0) - (activeEventsByCompany[a.id] ?? 0))
 
           return companiesWithActiveBets.length > 0 ? (
             <div className="mb-4">
-              <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Companies with active bets</p>
+              <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
               <div className="flex flex-wrap gap-2">
                 {companiesWithActiveBets.map(c => (
                   <button
                     key={c.id}
                     onClick={() => navigate(`/${c.slug}`)}
-                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+                    className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium text-sm rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
                   >
                     {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
                   </button>
@@ -658,38 +640,6 @@ export const Home = () => {
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
-        </div>
-      )}
-
-      {/* Anonymous user betting prompt */}
-      {showAnonBetPrompt && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-end">
-          <div className="w-full bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Track Your Bets</h2>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
-              Create an account to save your betting history and track all your predictions in one place.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  localStorage.setItem('lb-anon-bet-prompt-dismissed', '1')
-                  setShowAnonBetPrompt(false)
-                }}
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
-              >
-                Not Now
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.setItem('lb-anon-bet-prompt-dismissed', '1')
-                  navigate('/login')
-                }}
-                className="flex-1 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
-              >
-                Sign In / Register
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </Layout>
@@ -723,14 +673,14 @@ const SearchResultsList = ({
             <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</div>
             <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
               <span>{c.industry}</span>
-              {activeBets > 0 && <span className="text-blue-600 dark:text-blue-400">{activeBets} active</span>}
+              {activeBets > 0 && <span className="text-violet-600 dark:text-violet-400">{activeBets} active</span>}
             </div>
           </div>
         </div>
       )
     })}
     <div
-      className="px-4 py-3 text-xs text-center text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors font-medium"
+      className="px-4 py-3 text-xs text-center text-violet-600 dark:text-violet-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors font-medium"
       onClick={onSeeAll}
     >
       See all results →
@@ -754,14 +704,14 @@ const CompanyRow = ({
     <div className="flex items-center gap-2">
       <Link
         to={`/${company.slug}`}
-        className="flex-1 flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all group"
+        className="flex-1 flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
       >
         <CompanyLogo name={company.name} id={company.id} industry={company.industry} color={company.color} sentiment={sentiment} size="md" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{company.name}</span>
             {activeBets > 0 && (
-              <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 flex-shrink-0">
+              <span className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
                 {activeBets} active
               </span>
             )}

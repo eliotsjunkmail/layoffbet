@@ -19,7 +19,6 @@ const barProps = (yesPool: number, noPool: number) => {
 export const Bets = () => {
   const currentUser = useStore(s => s.currentUser)
   const bets = useStore(s => s.bets)
-  const users = useStore(s => s.users)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const events = useStore(s => s.events)
   const companies = useStore(s => s.companies)
@@ -33,7 +32,6 @@ export const Bets = () => {
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
-  const [showAnonPrompt, setShowAnonPrompt] = useState(false)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 50
@@ -67,65 +65,54 @@ export const Bets = () => {
     }
   }
 
-  const anonUser = !currentUser ? (() => {
-    const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
-    if (anonUserId) {
-      return users.find(u => u.id === anonUserId)
-    }
-    return companies.length > 0 ? users.find(u => u.isAnonymous) : null
-  })() : null
-
   const userStats = useMemo(() => {
-    if (currentUser) {
-      const userBets = bets.filter(b => b.userId === currentUser.id && !b.id.startsWith('pending-'))
-      const activeBetCount = userBets.filter(b => {
+    if (!currentUser) return null
+    const userBets = bets.filter(b => b.userId === currentUser.id)
+    const activeBetCount = userBets.filter(b => {
+      const event = events.find(e => e.id === b.eventId)
+      return event && getEffectiveStatus(event) === 'active'
+    }).length
+    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+    return {
+      coins: currentUser.coins - userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
-      }).length
-      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-      return {
-        coins: currentUser.coins,
-        totalBets: userBets.length,
-        activeBets: activeBetCount,
-        totalBetAmount,
-      }
+      }).reduce((sum, b) => sum + b.amount, 0),
+      totalBets: userBets.length,
+      activeBets: activeBetCount,
+      totalBetAmount,
     }
-
-    if (anonUser) {
-      // Include all bets (pending and synced) for the user count
-      const allUserBets = bets.filter(b => b.userId === anonUser.id)
-      // For active count, only count synced bets on active events
-      const syncedUserBets = allUserBets.filter(b => !b.id.startsWith('pending-'))
-
-      const activeBetCount = syncedUserBets.filter(b => {
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'active'
-      }).length
-      const totalBetAmount = syncedUserBets.reduce((sum, b) => sum + b.amount, 0)
-      return {
-        coins: anonUser.coins ?? Math.max(0, 50 - anonCoinsSpent),
-        totalBets: allUserBets.length,
-        activeBets: activeBetCount,
-        totalBetAmount,
-      }
-    }
-
-    return null
-  }, [currentUser, anonUser, bets, events, getEffectiveStatus])
+  }, [currentUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
-    const betAmount = 10  // 10 coins for all users
-    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, betAmount) : ''
+    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
+    const betAmount = 10
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
-    if (placeBet(eventId, side, betAmount)) {
-      setSwipeFlash({ id: eventId, side })
-      setTimeout(() => setSwipeFlash(null), 600)
-      confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-      showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+    if (currentUser) {
+      if (placeBet(eventId, side, betAmount)) {
+        setSwipeFlash({ id: eventId, side })
+        setTimeout(() => setSwipeFlash(null), 600)
+        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+        showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+      } else {
+        showToast('Not enough coins or 100-coin limit reached')
+      }
     } else {
-      showToast(currentUser ? 'Not enough coins or 100-coin limit reached' : 'Prediction is no longer active')
+      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
+        if (placeAnonymousVote(eventId, side)) {
+          setAnonCoinsSpent(prev => prev + betAmount)
+          setSwipeFlash({ id: eventId, side })
+          setTimeout(() => setSwipeFlash(null), 600)
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+          showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+        } else {
+          showToast('Prediction is no longer active')
+        }
+      } else {
+        showToast('Not enough coins')
+      }
     }
   }
 
@@ -225,21 +212,39 @@ export const Bets = () => {
       {(currentUser && userStats) || !currentUser ? (
         <div className="mb-5 -mx-4 px-4 pb-4">
           <div className="grid grid-cols-3 gap-3">
-            <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
-              <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.coins ?? 0}</div>
-              <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{currentUser ? 'tap to add' : 'remaining'}</div>
-            </button>
             <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
-              <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
-              <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
+              <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</div>
+              <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">remaining</div>
             </div>
-            <button className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-              <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
-              <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-            </button>
+            {currentUser && userStats && (
+              <>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                </div>
+              </>
+            )}
+            {!currentUser && (
+              <>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
+                </div>
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
+                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{anonCoinsSpent}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}
@@ -256,7 +261,7 @@ export const Bets = () => {
           >
             {t.label}
             {t.count > 0 && (
-              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>{t.count}</span>
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>{t.count}</span>
             )}
           </button>
         ))}
@@ -269,7 +274,7 @@ export const Bets = () => {
             {tab === 'active' ? 'No active bets or pinned predictions.' : 'No completed bets yet.'}
           </p>
           {tab === 'active' && (
-            <button onClick={() => navigate('/')} className="text-blue-600 dark:text-blue-400 text-sm hover:underline">Browse predictions →</button>
+            <button onClick={() => navigate('/')} className="text-violet-600 dark:text-violet-400 text-sm hover:underline">Browse predictions →</button>
           )}
         </div>
       ) : (
@@ -281,8 +286,8 @@ export const Bets = () => {
                 to={`/${slug}`}
                 className="flex items-center gap-1 mb-2.5 group w-fit"
               >
-                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{companyName}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
+                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{companyName}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors" />
               </Link>
 
               <div className="space-y-2.5">
@@ -314,7 +319,7 @@ export const Bets = () => {
                       <div key={event.id}>
                         <div
                           onClick={() => navigate(`/event/${event.id}`)}
-                          className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all cursor-pointer"
+                          className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className={bet.side === 'no' ? 'flex justify-end flex-1' : ''}>
@@ -358,7 +363,7 @@ export const Bets = () => {
                         cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            'border-blue-200 dark:border-blue-800'}`}
+                            'border-violet-200 dark:border-violet-800'}`}
                       >
                         <div className={`mb-2 ${bet.side === 'no' ? 'flex justify-end' : ''}`}>
                           {BetTag}
@@ -397,8 +402,8 @@ export const Bets = () => {
                   to={`/${slug}`}
                   className="flex items-center gap-1 mb-2.5 group w-fit"
                 >
-                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{companyName}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{companyName}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors" />
                 </Link>
 
                 <div className="space-y-2.5">
@@ -416,7 +421,7 @@ export const Bets = () => {
                           cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                             ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                               flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                              'border-blue-200 dark:border-blue-800'}`}
+                              'border-violet-200 dark:border-violet-800'}`}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{event.title}</p>
@@ -447,46 +452,6 @@ export const Bets = () => {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
         </div>
-      )}
-
-      {showAnonPrompt && (
-        <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowAnonPrompt(false)} />
-          <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-sm w-full border border-gray-200 dark:border-slate-800">
-              <div className="p-6 sm:p-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Track Your Bets</h2>
-                  <button onClick={() => setShowAnonPrompt(false)} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <p className="text-gray-600 dark:text-slate-400 mb-6 text-sm leading-relaxed">
-                  Want to keep track of your bets? You can create an account to save your predictions, but it's completely optional. Note: usernames are not verified.
-                </p>
-
-                <div className="space-y-3 flex flex-col">
-                  <button
-                    onClick={() => {
-                      setShowAnonPrompt(false)
-                      navigate('/login')
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition-colors"
-                  >
-                    Login / Register
-                  </button>
-                  <button
-                    onClick={() => setShowAnonPrompt(false)}
-                    className="w-full bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 font-medium py-2.5 rounded-xl transition-colors"
-                  >
-                    Continue Browsing
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
       )}
     </Layout>
   )
