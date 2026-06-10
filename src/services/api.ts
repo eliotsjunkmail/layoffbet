@@ -102,6 +102,18 @@ export const api = {
   },
 
   // Favorites endpoints
+  getFavorites: async (userId: string): Promise<string[]> => {
+    const response = await fetch(`${API_BASE}/api/favorites/${userId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to get favorites')
+    }
+    const data = await response.json()
+    return data.favorites || []
+  },
+
   addFavorite: async (userId: string, companyId: string): Promise<void> => {
     const response = await fetch(`${API_BASE}/api/favorites/${userId}/${companyId}`, {
       method: 'POST',

@@ -551,6 +551,13 @@ export const useStore = create<StoreState>()(
         if (typeof window !== 'undefined') {
           localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
         }
+        // Load user's favorites from server
+        api.getFavorites(user.id)
+          .then(favorites => {
+            console.log('[login] Loaded favorites from server:', favorites)
+            set({ favoriteCompanyIds: favorites })
+          })
+          .catch(err => console.error('[login] Failed to load favorites:', err))
         get().checkDailyCoins()
         get().migrateGuestBets()
         return true
@@ -1159,6 +1166,14 @@ export const useStore = create<StoreState>()(
             if (!users.find(u => u.id === user.id)) {
               localStorage.removeItem('layoff-bets-currentUser')
               set({ currentUser: null })
+            } else {
+              // Load user's favorites from server
+              api.getFavorites(user.id)
+                .then(favorites => {
+                  console.log('[restoreSession] Loaded favorites from server:', favorites)
+                  set({ favoriteCompanyIds: favorites })
+                })
+                .catch(err => console.error('[restoreSession] Failed to load favorites:', err))
             }
           }
         } catch (e) {
