@@ -948,7 +948,7 @@ export const useStore = create<StoreState>()(
         const creatorId = currentUser?.id || 'anon'
         const creatorName = currentUser?.username || 'Guest'
 
-        const costCoins = 50
+        const costCoins = 10
         const userCoins = currentUser?.coins ?? guestCoins
         if (userCoins < costCoins) return false
 

@@ -31,7 +31,7 @@ export const CreateEvent = () => {
     const company = companies.find(c => c.id === companyId)
     if (!company) return
     const success = createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
-    if (!success) return setError('Not enough coins to create prediction. (Costs 50 coins)')
+    if (!success) return setError('Not enough coins to create prediction. (Costs 10 coins)')
     navigate('/')
   }
 
@@ -92,7 +92,7 @@ export const CreateEvent = () => {
                   : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-green-500 dark:hover:border-green-500'
               }`}
             >
-              YES - 50 coins
+              YES - 10 coins
             </button>
             <button
               type="button"
@@ -103,10 +103,10 @@ export const CreateEvent = () => {
                   : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500'
               }`}
             >
-              NO - 50 coins
+              NO - 10 coins
             </button>
           </div>
-          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Creating a prediction costs 50 coins and places that bet</div>
+          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Creating a prediction costs 10 coins and places that bet</div>
         </div>
 
         {error && (
