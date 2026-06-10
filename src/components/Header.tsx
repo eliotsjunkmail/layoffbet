@@ -113,11 +113,9 @@ export const Header = () => {
               <Dices className="w-4 h-4 text-white" />
             </div>
             <div className="flex items-baseline gap-0.5">
-              <div className="hidden sm:flex items-baseline gap-0.5">
-                <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
-                <span className="font-black text-violet-600 dark:text-violet-400 text-sm tracking-tight">Bet</span>
-              </div>
-              <span className="text-xs text-gray-400 dark:text-slate-500 sm:ml-2">v1.44</span>
+              <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
+              <span className="font-black text-violet-600 dark:text-violet-400 text-sm tracking-tight">Bet</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">v1.44</span>
             </div>
           </Link>
 
