@@ -193,9 +193,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         // Register user with anonUsername and password "guest"
         const user = await api.register(anonUsername, 'guest')
 
-        // Log user in by setting as current user
-        useStore.setState({ currentUser: user })
-
         // Store in localStorage
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
 
@@ -204,9 +201,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         }
         localStorage.setItem(GATE_KEY, '1')
 
-        // Sync users from server
+        // Sync data from server BEFORE setting currentUser so Home has data ready
         await syncCommentsFromServer()
 
+        // Now set currentUser and unlock gate
+        useStore.setState({ currentUser: user })
         setUnlocked(true)
       } catch (err) {
         console.error('Failed to register user:', err)
