@@ -634,7 +634,7 @@ export const Home = () => {
         {!hasFavorites && (() => {
           const companiesWithActiveBets = companies
             .filter(c => (activeEventsByCompany[c.id] ?? 0) > 0)
-            .sort((a, b) => (activeEventsByCompany[b.id] ?? 0) - (activeEventsByCompany[a.id] ?? 0))
+            .sort((a, b) => a.name.localeCompare(b.name))
 
           return companiesWithActiveBets.length > 0 ? (
             <div className="mb-4">
