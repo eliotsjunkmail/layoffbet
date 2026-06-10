@@ -293,7 +293,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               </p>
             )}
             <button type="submit" disabled={loadingAnonId} className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-              {loadingAnonId ? 'Loading...' : `Enter as ${anonUsername}`}
+              {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
           </form>
         </div>
