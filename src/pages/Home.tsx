@@ -413,7 +413,7 @@ export const Home = () => {
               onChange={e => { setQuery(e.target.value); setShowDropdown(true) }}
               onFocus={() => query && setShowDropdown(true)}
               placeholder="Search for a company..."
-              className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl pl-12 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all shadow-sm text-sm"
+              className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl pl-12 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm text-sm"
             />
             {query && (
               <button onClick={() => { setQuery(''); setShowDropdown(false) }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
@@ -455,8 +455,8 @@ export const Home = () => {
             <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-6'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
-                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{c.name}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+                  <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                 </Link>
                 <div className="flex items-center gap-2">
                   <button
@@ -487,7 +487,7 @@ export const Home = () => {
                           disabled={false}
                           onClick={() => navigate(`/event/${e.id}`)}
                           demoActive={!hasPlacedFirstBet && cIdx === 0 && eIdx === 0}
-                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-violet-200 dark:border-violet-800`}
+                          cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-blue-200 dark:border-blue-800`}
                         >
                           {userBet && (
                             <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
@@ -514,7 +514,7 @@ export const Home = () => {
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
                             {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                              <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                              <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                             )}
                           </div>
                           <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
@@ -544,7 +544,7 @@ export const Home = () => {
                                 <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed flex-1">{cmt.content}</p>
                                 <button
                                   onClick={() => upvoteComment(cmt.id)}
-                                  className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-violet-600 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-500'}`}
+                                  className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
                                 >
                                   <ThumbsUp className="w-3 h-3" />
                                   {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
@@ -560,13 +560,13 @@ export const Home = () => {
                               onFocus={() => setFocusedInput(e.id)}
                               onBlur={() => setTimeout(() => setFocusedInput(f => f === e.id ? null : f), 150)}
                               placeholder="Add a comment..."
-                              className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500"
+                              className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500"
                             />
                             {focusedInput === e.id && (
                               <button
                                 onMouseDown={ev => ev.preventDefault()}
                                 onClick={() => handleAddComment(e.id)}
-                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
+                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors"
                               >
                                 <Send className="w-3.5 h-3.5" />
                               </button>
@@ -586,14 +586,14 @@ export const Home = () => {
                 {currentUser ? (
                   <button
                     onClick={() => navigate('/create', { state: { companyId: c.id } })}
-                    className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                   >
                     + New bet
                   </button>
                 ) : (
                   <button
                     onClick={() => navigate('/login')}
-                    className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                   >
                     + New bet
                   </button>
@@ -673,14 +673,14 @@ const SearchResultsList = ({
             <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</div>
             <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
               <span>{c.industry}</span>
-              {activeBets > 0 && <span className="text-violet-600 dark:text-violet-400">{activeBets} active</span>}
+              {activeBets > 0 && <span className="text-blue-600 dark:text-blue-400">{activeBets} active</span>}
             </div>
           </div>
         </div>
       )
     })}
     <div
-      className="px-4 py-3 text-xs text-center text-violet-600 dark:text-violet-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors font-medium"
+      className="px-4 py-3 text-xs text-center text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors font-medium"
       onClick={onSeeAll}
     >
       See all results →
@@ -704,14 +704,14 @@ const CompanyRow = ({
     <div className="flex items-center gap-2">
       <Link
         to={`/${company.slug}`}
-        className="flex-1 flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all group"
+        className="flex-1 flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all group"
       >
         <CompanyLogo name={company.name} id={company.id} industry={company.industry} color={company.color} sentiment={sentiment} size="md" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{company.name}</span>
             {activeBets > 0 && (
-              <span className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded-full border border-violet-200 dark:border-violet-800 flex-shrink-0">
+              <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 flex-shrink-0">
                 {activeBets} active
               </span>
             )}
