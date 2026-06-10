@@ -1,10 +1,13 @@
 import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
+import { api } from './services/api'
+import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+const API_BASE = ''
 const GATE_KEY = 'lb-gate-v2'
-const GATE_ANS = 'pershing'
+const GATE_CODES = ['pershing', 'hello']
 const LAUNCH_DATE_KEY = 'lb-launch-date'
 const DEFAULT_LAUNCH = '2026-09-01'
 const GATE_ADMIN_USER = 'admin'
@@ -112,7 +115,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
           onClick={() => handlePillClick(c.id)}
           className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
             selectedCompanyId === c.id
-              ? 'bg-violet-600 border-violet-500 text-white'
+              ? 'bg-blue-600 border-blue-500 text-white'
               : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
           }`}
         >
@@ -125,12 +128,17 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
+  const [anonUsername, setAnonUsername] = useState<string>('')
+  const [loadingAnonId, setLoadingAnonId] = useState(true)
+  const [showPolicies, setShowPolicies] = useState(false)
+  const [policiesTab, setPoliciesTab] = useState<'guidelines' | 'privacy'>('guidelines')
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -145,23 +153,65 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
-  // If user logs in, bypass the gate. Don't clear gate for anonymous users.
+  // Fetch next anonymous username on mount
+  useEffect(() => {
+    const fetchAnonId = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/next-anon-id`)
+        const data = await res.json()
+        setAnonUsername(data.username)
+      } catch (err) {
+        console.error('Failed to fetch anonymous ID:', err)
+        setAnonUsername('Anon0000001') // Fallback
+      } finally {
+        setLoadingAnonId(false)
+      }
+    }
+    if (!unlocked) {
+      fetchAnonId()
+    } else {
+      setLoadingAnonId(false)
+    }
+  }, [unlocked])
+
+  // If user logs in, bypass the gate. Reset gate when user logs out.
   useEffect(() => {
     if (currentUser) {
       setUnlocked(true)
+    } else if (unlocked && localStorage.getItem(GATE_KEY) === '1') {
+      // User logged out but gate was unlocked - keep it unlocked for anonymous access
+      // This preserves the gate unlock state
     }
-  }, [currentUser])
+  }, [currentUser, unlocked])
 
   if (unlocked) return <>{children}</>
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim().toLowerCase() === GATE_ANS) {
-      if (selectedCompanyId) {
-        localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+    if (GATE_CODES.includes(input.trim().toLowerCase())) {
+      try {
+        // Register user with anonUsername and password "guest"
+        const user = await api.register(anonUsername, 'guest')
+
+        // Store in localStorage
+        localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
+
+        if (selectedCompanyId) {
+          localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+        }
+        localStorage.setItem(GATE_KEY, '1')
+
+        // Sync data from server BEFORE setting currentUser so Home has data ready
+        await syncCommentsFromServer()
+
+        // Now set currentUser and unlock gate
+        useStore.setState({ currentUser: user })
+        setUnlocked(true)
+      } catch (err) {
+        console.error('Failed to register user:', err)
+        setError(true); setShake(true); setInput('')
+        setTimeout(() => setShake(false), 500)
       }
-      localStorage.setItem(GATE_KEY, '1')
-      setUnlocked(true)
     } else {
       setError(true); setShake(true); setInput('')
       setTimeout(() => setShake(false), 500)
@@ -203,13 +253,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-xl shadow-violet-900/50">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-900/50">
               <DiceIcon />
             </div>
             <div className="text-center">
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-2xl font-semibold text-slate-300 tracking-tight">Layoff</span>
-                <span className="text-2xl font-black text-violet-400 tracking-tight">Bet</span>
+                <span className="text-2xl font-black text-blue-400 tracking-tight">Bet</span>
               </div>
               <div className="text-xs text-slate-500 mt-0.5 tracking-wide uppercase">Anonymous prediction markets</div>
             </div>
@@ -233,7 +283,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 onChange={e => { setInput(e.target.value); setError(false) }}
                 placeholder="Enter invite code"
                 autoComplete="off"
-                className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
+                className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
               />
             </div>
             {error && (
@@ -242,14 +292,19 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 That's not right — try again
               </p>
             )}
-            <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
-              Enter anonymously
+            <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
           </form>
         </div>
 
-        <div className="text-center mt-6">
-          <button onClick={() => { setAdminOpen(true); setAdminStep('login') }} className="text-slate-800 hover:text-slate-600 text-xs transition-colors">·</button>
+        <div className="text-center mt-8 space-y-2">
+          <p className="text-xs text-slate-600">v1.45</p>
+          <div className="flex items-center justify-center gap-2 text-xs">
+            <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
+            <span className="text-slate-600">·</span>
+            <button onClick={() => { setShowPolicies(true); setPoliciesTab('privacy') }} className="text-slate-600 hover:text-slate-500 transition-colors">Privacy Policy</button>
+          </div>
         </div>
       </div>
 
@@ -261,10 +316,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               <>
                 <p className="text-sm font-semibold text-white mb-4">Admin access</p>
                 <form onSubmit={adminLogin} className="space-y-3">
-                  <input value={adminUser} onChange={e => { setAdminUser(e.target.value); setAdminErr(false) }} placeholder="Username" autoFocus className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors" />
-                  <input type="password" value={adminPass} onChange={e => { setAdminPass(e.target.value); setAdminErr(false) }} placeholder="Password" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors" />
+                  <input value={adminUser} onChange={e => { setAdminUser(e.target.value); setAdminErr(false) }} placeholder="Username" autoFocus className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors" />
+                  <input type="password" value={adminPass} onChange={e => { setAdminPass(e.target.value); setAdminErr(false) }} placeholder="Password" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors" />
                   {adminErr && <p className="text-xs text-rose-400">Incorrect credentials</p>}
-                  <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">Sign in</button>
+                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">Sign in</button>
                 </form>
               </>
             ) : (
@@ -272,8 +327,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 <p className="text-sm font-semibold text-white mb-1">Launch date</p>
                 <p className="text-xs text-slate-500 mb-4">Set the public launch date shown on the gate</p>
                 <form onSubmit={saveDate} className="space-y-3">
-                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors" />
-                  <button type="submit" className={`w-full text-sm font-semibold py-2.5 rounded-xl transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-violet-600 hover:bg-violet-500 text-white'}`}>
+                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" />
+                  <button type="submit" className={`w-full text-sm font-semibold py-2.5 rounded-xl transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}>
                     {saved ? '✓ Saved' : 'Save date'}
                   </button>
                 </form>
@@ -281,6 +336,88 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Policies Bottom Sheet with Tabs */}
+      {showPolicies && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowPolicies(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 max-h-[80vh] overflow-y-auto flex flex-col">
+            <div className="sticky top-0 bg-white dark:bg-slate-900 flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800">
+              <div className="flex gap-4">
+                <button onClick={() => setPoliciesTab('guidelines')} className={`font-medium transition-colors ${policiesTab === 'guidelines' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-500'}`}>
+                  Content Guidelines
+                </button>
+                <button onClick={() => setPoliciesTab('privacy')} className={`font-medium transition-colors ${policiesTab === 'privacy' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-500'}`}>
+                  Privacy Policy
+                </button>
+              </div>
+              <button onClick={() => setShowPolicies(false)} className="p-1 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4 space-y-4 text-sm text-gray-700 dark:text-slate-300">
+              {policiesTab === 'guidelines' ? (
+                <>
+                  <p className="text-gray-600 dark:text-slate-400">
+                    Layoff Bets is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+                  </p>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
+                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                      <li>• Illegal content of any kind</li>
+                      <li>• Harassment, threats, or targeted bullying</li>
+                      <li>• Personal identifying information or confidential data</li>
+                      <li>• Impersonating users, companies, or public figures</li>
+                      <li>• Sexually explicit or NSFW content</li>
+                      <li>• Spam, coordinated manipulation, or bot activity</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Event Quality Standards</h3>
+                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                      <li>• Events must be specific and verifiable</li>
+                      <li>• Events tied to real companies only</li>
+                      <li>• No events designed to manipulate or spread misinformation</li>
+                      <li>• No duplicate events for the same prediction</li>
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-gray-500 dark:text-slate-500 text-xs mb-2">Last updated: May 2026</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
+                    <p className="text-gray-600 dark:text-slate-400">
+                      Layoff Bets is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Collect</h3>
+                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                      <li>• IP address (fraud prevention)</li>
+                      <li>• Browser cookies (session management)</li>
+                      <li>• Usage data (events, bets, comments)</li>
+                      <li>• Account data (username, password, coins)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Do Not Collect</h3>
+                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                      <li>• Real names or personal identifiers</li>
+                      <li>• Email addresses</li>
+                      <li>• Employer or employment status</li>
+                      <li>• Location data beyond region</li>
+                      <li>• Financial or payment information</li>
+                    </ul>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       <style>{`
@@ -342,7 +479,14 @@ import { useLocation } from 'react-router-dom'
 
 const ScrollToTop = () => {
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  useEffect(() => {
+    // Scroll to top on next frame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    })
+  }, [pathname])
   return null
 }
 
