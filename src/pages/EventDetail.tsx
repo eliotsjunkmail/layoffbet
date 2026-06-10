@@ -176,7 +176,7 @@ export const EventDetail = () => {
   const statusColors = {
     active: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
     expired: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-    resolved: 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800',
+    resolved: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
     archived: 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-600',
   }
 
@@ -188,7 +188,7 @@ export const EventDetail = () => {
 
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between mb-3">
-          <Link to={`/${companies.find(c => c.id === event.companyId)?.slug ?? event.companyId}`} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+          <Link to={`/${companies.find(c => c.id === event.companyId)?.slug ?? event.companyId}`} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             <Building2 className="w-3.5 h-3.5" />
             {event.companyName}
           </Link>
@@ -196,7 +196,7 @@ export const EventDetail = () => {
             <button
               onClick={handleShare}
               title="Share this prediction"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-xs font-medium"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
             >
               {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
               <span>Share</span>
@@ -265,7 +265,7 @@ export const EventDetail = () => {
                     key={amt}
                     onClick={() => setBetAmount(amt)}
                     disabled={!currentUser && amt > remainingGuestCoins}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${betAmount === amt ? 'bg-violet-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${betAmount === amt ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'} disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
                     {amt}
                   </button>
@@ -296,7 +296,7 @@ export const EventDetail = () => {
               </div>
               {currentUser === null && remainingGuestCoins < betAmount && (
                 <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-2">
-                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-violet-600 dark:text-violet-400 hover:underline">Login</button> to get 100 coins daily.
+                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline">Login</button> to get 100 coins daily.
                 </p>
               )}
             </>
@@ -306,8 +306,8 @@ export const EventDetail = () => {
 
       {/* Admin / Creator resolve */}
       {(isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
-        <div className="bg-violet-50 dark:bg-slate-800 border border-violet-200 dark:border-violet-800/50 rounded-2xl p-5 mb-4">
-          <div className="text-sm font-medium text-violet-700 dark:text-violet-300 mb-3">
+        <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5 mb-4">
+          <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-3">
             {isAdmin ? 'Admin: Resolve Event' : 'Resolve Your Event'}
           </div>
           <div className="flex gap-3">
@@ -335,7 +335,7 @@ export const EventDetail = () => {
                 <span className="text-xs text-gray-400 dark:text-slate-600">{new Date(c.createdAt).toLocaleString()}{c.editedAt && ' (edited)'}</span>
                 {currentUser && (c.userId === currentUser.id || isAdmin) && (
                   <div className="flex gap-1">
-                    <button onClick={() => handleEditComment(c)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-violet-500 transition-all">
+                    <button onClick={() => handleEditComment(c)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-all">
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => deleteComment(c.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 transition-all">
@@ -365,14 +365,14 @@ export const EventDetail = () => {
             placeholder={currentUser ? (editingCommentId ? "Edit comment..." : "Add a comment...") : "Sign in to comment..."}
             maxLength={500}
             rows={3}
-            className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors resize-none overflow-hidden"
+            className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none overflow-hidden"
             style={{ minHeight: editingCommentId ? '120px' : '60px' }}
           />
           {commentError && (
             <p className="text-xs text-rose-500">{commentError}</p>
           )}
           <div className="flex gap-2">
-            <button type="submit" disabled={!commentText.trim()} className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-2 transition-colors flex items-center justify-center gap-2 text-white text-sm font-medium">
+            <button type="submit" disabled={!commentText.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-2 transition-colors flex items-center justify-center gap-2 text-white text-sm font-medium">
               <Send className="w-4 h-4" />
               {editingCommentId ? 'Update' : 'Comment'}
             </button>

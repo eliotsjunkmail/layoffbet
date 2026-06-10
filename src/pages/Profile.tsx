@@ -29,14 +29,14 @@ export const Profile = () => {
     <Layout>
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-5 shadow-sm dark:shadow-none">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-violet-100 dark:bg-violet-700 rounded-2xl flex items-center justify-center text-2xl font-bold text-violet-700 dark:text-white">
+          <div className="w-14 h-14 bg-blue-100 dark:bg-blue-700 rounded-2xl flex items-center justify-center text-2xl font-bold text-blue-700 dark:text-white">
             {currentUser.username.charAt(0).toUpperCase()}
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{currentUser.username}</h1>
             <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-              <Coins className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-              <span className="font-semibold text-violet-600 dark:text-violet-300">{currentUser.coins.toLocaleString()}</span>
+              <Coins className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold text-blue-600 dark:text-blue-300">{currentUser.coins.toLocaleString()}</span>
               <span>Coins</span>
             </div>
           </div>
@@ -46,7 +46,7 @@ export const Profile = () => {
       <div className="grid grid-cols-2 gap-3 mb-5">
         {[
           { label: 'Total Bets', value: userBets.length, icon: <TrendingUp className="w-4 h-4" />, color: 'text-gray-600 dark:text-slate-300' },
-          { label: 'Total Wagered', value: `${totalWagered}`, icon: <Coins className="w-4 h-4" />, color: 'text-violet-600 dark:text-violet-300' },
+          { label: 'Total Wagered', value: `${totalWagered}`, icon: <Coins className="w-4 h-4" />, color: 'text-blue-600 dark:text-blue-300' },
           { label: 'Wins', value: wins, icon: <CheckCircle className="w-4 h-4" />, color: 'text-emerald-600 dark:text-emerald-400' },
           { label: 'Losses', value: losses, icon: <XCircle className="w-4 h-4" />, color: 'text-rose-600 dark:text-rose-400' },
         ].map(({ label, value, icon, color }) => (
@@ -57,10 +57,10 @@ export const Profile = () => {
         ))}
       </div>
 
-      <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/50 rounded-xl p-4 mb-5 flex items-center gap-3">
-        <Coins className="w-5 h-5 text-violet-600 dark:text-violet-400 flex-shrink-0" />
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 mb-5 flex items-center gap-3">
+        <Coins className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
         <div>
-          <div className="text-sm font-medium text-violet-800 dark:text-violet-200">100 Coins every day</div>
+          <div className="text-sm font-medium text-blue-800 dark:text-blue-200">100 Coins every day</div>
           <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Your balance is topped up daily.</div>
         </div>
       </div>
@@ -108,7 +108,7 @@ export const Profile = () => {
           </div>
           <div className="space-y-2">
             {pending.map(({ bet, event }) => (
-              <Link key={bet.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+              <Link key={bet.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${bet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
@@ -129,7 +129,7 @@ export const Profile = () => {
             {resolved.map(({ bet, event }) => {
               const won = bet.side === event.outcome
               return (
-                <Link key={bet.id} to={`/event/${event.id}`} className="block bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 transition-all">
+                <Link key={bet.id} to={`/event/${event.id}`} className="block bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl p-3.5 hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-400 dark:text-slate-500">{formatDate(event.expiresAt)}</span>
                     <span className={`text-xs font-bold flex items-center gap-1 ${won ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
@@ -148,7 +148,7 @@ export const Profile = () => {
       {userBets.length === 0 && (
         <div className="text-center py-10">
           <p className="text-gray-400 dark:text-slate-500 text-sm mb-3">You haven't made any bets yet.</p>
-          <Link to="/" className="text-violet-600 dark:text-violet-400 hover:underline text-sm">Browse companies →</Link>
+          <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">Browse companies →</Link>
         </div>
       )}
     </Layout>

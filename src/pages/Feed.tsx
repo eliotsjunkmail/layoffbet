@@ -48,7 +48,7 @@ export const Feed = () => {
                 setShowFavoritesOnly(false)
                 if (val) setOnboardingCompany(val)
               }}
-              className="appearance-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full pl-3 pr-7 py-1.5 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 cursor-pointer shadow-sm"
+              className="appearance-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full pl-3 pr-7 py-1.5 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 cursor-pointer shadow-sm"
             >
               <option value="">All Companies</option>
               {[...companies].sort((a, b) => a.name.localeCompare(b.name)).map(c => (
@@ -67,7 +67,7 @@ export const Feed = () => {
             </button>
           )}
         </div>
-        <Link to="/create" className="flex items-center gap-1 text-xs bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-full font-medium transition-colors">
+        <Link to="/create" className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full font-medium transition-colors">
           <PlusCircle className="w-3.5 h-3.5" /> New
         </Link>
       </div>
@@ -75,7 +75,7 @@ export const Feed = () => {
       {selectedCompany && !showFavoritesOnly && (
         <div className="text-xs text-gray-400 dark:text-slate-500 mb-3">
           Showing predictions for <span className="font-medium text-gray-700 dark:text-slate-300">{selectedCompany.name}</span>
-          <button onClick={() => setSelectedCompanyId(null)} className="ml-1.5 text-violet-600 dark:text-violet-400 hover:underline">clear</button>
+          <button onClick={() => setSelectedCompanyId(null)} className="ml-1.5 text-blue-600 dark:text-blue-400 hover:underline">clear</button>
         </div>
       )}
 
@@ -98,7 +98,7 @@ export const Feed = () => {
           <p className="text-gray-400 dark:text-slate-400 text-sm mb-6">
             {showFavoritesOnly ? 'No active predictions for your favorite companies.' : 'No active predictions for this company yet.'}
           </p>
-          <Link to="/create" className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors text-sm">
+          <Link to="/create" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors text-sm">
             <PlusCircle className="w-4 h-4" /> Create a Prediction
           </Link>
         </div>
@@ -108,7 +108,7 @@ export const Feed = () => {
             const prob = getProbability(event.yesPool, event.noPool)
             const userBet = bets.find(b => b.eventId === event.id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
             return (
-              <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+              <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
                   {userBet ? (

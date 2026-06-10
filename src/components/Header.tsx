@@ -28,8 +28,8 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
             <div>
               <div className="font-semibold text-gray-900 dark:text-white">{currentUser?.username}</div>
               <div className="flex items-center gap-1 mt-0.5">
-                <Coins className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-                <span className="text-sm font-medium text-violet-600 dark:text-violet-300">{currentUser?.coins.toLocaleString()}</span>
+                <Coins className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-300">{currentUser?.coins.toLocaleString()}</span>
                 <span className="text-sm text-gray-400 dark:text-slate-500">Coins</span>
               </div>
             </div>
@@ -50,11 +50,11 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
             {currentUser?.isAdmin && (
               <>
                 <button onClick={() => go('/feedback-admin')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
-                  <MessageSquare className="w-5 h-5 text-violet-500 dark:text-violet-400" />
+                  <MessageSquare className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Feedback</span>
                 </button>
                 <button onClick={() => go('/admin')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
-                  <Shield className="w-5 h-5 text-violet-500 dark:text-violet-400" />
+                  <Shield className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Panel</span>
                 </button>
               </>
@@ -101,7 +101,7 @@ export const Header = () => {
 
   const isActive = (path: string) =>
     location.pathname === path
-      ? 'text-violet-600 dark:text-violet-400'
+      ? 'text-blue-600 dark:text-blue-400'
       : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
 
   return (
@@ -109,12 +109,12 @@ export const Header = () => {
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-md sm:max-w-5xl mx-auto w-full px-4 sm:px-8 flex items-center justify-between h-14">
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-700 rounded-xl flex items-center justify-center shadow-md shadow-violet-500/30">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-700 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/30">
               <Dices className="w-4 h-4 text-white" />
             </div>
             <div className="flex items-baseline gap-0.5">
               <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
-              <span className="font-black text-violet-600 dark:text-violet-400 text-sm tracking-tight">Bet</span>
+              <span className="font-black text-blue-600 dark:text-blue-400 text-sm tracking-tight">Bet</span>
               <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">v1.44</span>
             </div>
           </Link>
@@ -129,7 +129,7 @@ export const Header = () => {
                   onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
                   className={`px-3 py-1.5 rounded-full font-medium text-sm border-2 transition-colors ${
                     isActive('/create').includes('violet')
-                      ? 'border-violet-600 dark:border-violet-400 text-violet-600 dark:text-violet-400'
+                      ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                       : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500'
                   }`}
                 >
@@ -152,7 +152,7 @@ export const Header = () => {
                   onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
                   className={`px-3 py-1.5 rounded-full font-medium text-sm border-2 transition-colors ${
                     isActive('/create').includes('violet')
-                      ? 'border-violet-600 dark:border-violet-400 text-violet-600 dark:text-violet-400'
+                      ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
                       : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500'
                   }`}
                 >
@@ -160,7 +160,7 @@ export const Header = () => {
                 </button>
                 <Link
                   to="/login"
-                  className="ml-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors"
+                  className="ml-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors"
                 >
                   Sign In
                 </Link>

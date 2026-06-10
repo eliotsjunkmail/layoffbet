@@ -82,7 +82,7 @@ export const Admin = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-violet-600 dark:bg-violet-500 text-white shadow-lg shadow-violet-600/30'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-lg shadow-blue-600/30'
                   : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
               }`}
             >

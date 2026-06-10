@@ -256,7 +256,7 @@ export const Bets = () => {
           >
             {t.label}
             {t.count > 0 && (
-              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>{t.count}</span>
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>{t.count}</span>
             )}
           </button>
         ))}
@@ -269,7 +269,7 @@ export const Bets = () => {
             {tab === 'active' ? 'No active bets or pinned predictions.' : 'No completed bets yet.'}
           </p>
           {tab === 'active' && (
-            <button onClick={() => navigate('/')} className="text-violet-600 dark:text-violet-400 text-sm hover:underline">Browse predictions →</button>
+            <button onClick={() => navigate('/')} className="text-blue-600 dark:text-blue-400 text-sm hover:underline">Browse predictions →</button>
           )}
         </div>
       ) : (
@@ -281,8 +281,8 @@ export const Bets = () => {
                 to={`/${slug}`}
                 className="flex items-center gap-1 mb-2.5 group w-fit"
               >
-                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{companyName}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors" />
+                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{companyName}</span>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
               </Link>
 
               <div className="space-y-2.5">
@@ -314,7 +314,7 @@ export const Bets = () => {
                       <div key={event.id}>
                         <div
                           onClick={() => navigate(`/event/${event.id}`)}
-                          className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all cursor-pointer"
+                          className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all cursor-pointer"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className={bet.side === 'no' ? 'flex justify-end flex-1' : ''}>
@@ -358,7 +358,7 @@ export const Bets = () => {
                         cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            'border-violet-200 dark:border-violet-800'}`}
+                            'border-blue-200 dark:border-blue-800'}`}
                       >
                         <div className={`mb-2 ${bet.side === 'no' ? 'flex justify-end' : ''}`}>
                           {BetTag}
@@ -397,8 +397,8 @@ export const Bets = () => {
                   to={`/${slug}`}
                   className="flex items-center gap-1 mb-2.5 group w-fit"
                 >
-                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{companyName}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-violet-500 transition-colors" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{companyName}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors" />
                 </Link>
 
                 <div className="space-y-2.5">
@@ -416,7 +416,7 @@ export const Bets = () => {
                           cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                             ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                               flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                              'border-violet-200 dark:border-violet-800'}`}
+                              'border-blue-200 dark:border-blue-800'}`}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{event.title}</p>
@@ -472,7 +472,7 @@ export const Bets = () => {
                       setShowAnonPrompt(false)
                       navigate('/login')
                     }}
-                    className="w-full bg-violet-600 hover:bg-violet-500 text-white font-medium py-2.5 rounded-xl transition-colors"
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition-colors"
                   >
                     Login / Register
                   </button>

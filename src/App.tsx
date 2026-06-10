@@ -115,7 +115,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
           onClick={() => handlePillClick(c.id)}
           className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
             selectedCompanyId === c.id
-              ? 'bg-violet-600 border-violet-500 text-white'
+              ? 'bg-blue-600 border-blue-500 text-white'
               : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
           }`}
         >
@@ -253,13 +253,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-xl shadow-violet-900/50">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-900/50">
               <DiceIcon />
             </div>
             <div className="text-center">
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-2xl font-semibold text-slate-300 tracking-tight">Layoff</span>
-                <span className="text-2xl font-black text-violet-400 tracking-tight">Bet</span>
+                <span className="text-2xl font-black text-blue-400 tracking-tight">Bet</span>
               </div>
               <div className="text-xs text-slate-500 mt-0.5 tracking-wide uppercase">Anonymous prediction markets</div>
             </div>
@@ -283,7 +283,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 onChange={e => { setInput(e.target.value); setError(false) }}
                 placeholder="Enter invite code"
                 autoComplete="off"
-                className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-violet-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-colors text-sm`}
+                className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
               />
             </div>
             {error && (
@@ -292,7 +292,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 That's not right — try again
               </p>
             )}
-            <button type="submit" disabled={loadingAnonId} className="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
           </form>
@@ -316,10 +316,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               <>
                 <p className="text-sm font-semibold text-white mb-4">Admin access</p>
                 <form onSubmit={adminLogin} className="space-y-3">
-                  <input value={adminUser} onChange={e => { setAdminUser(e.target.value); setAdminErr(false) }} placeholder="Username" autoFocus className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors" />
-                  <input type="password" value={adminPass} onChange={e => { setAdminPass(e.target.value); setAdminErr(false) }} placeholder="Password" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 transition-colors" />
+                  <input value={adminUser} onChange={e => { setAdminUser(e.target.value); setAdminErr(false) }} placeholder="Username" autoFocus className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors" />
+                  <input type="password" value={adminPass} onChange={e => { setAdminPass(e.target.value); setAdminErr(false) }} placeholder="Password" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors" />
                   {adminErr && <p className="text-xs text-rose-400">Incorrect credentials</p>}
-                  <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">Sign in</button>
+                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">Sign in</button>
                 </form>
               </>
             ) : (
@@ -327,8 +327,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 <p className="text-sm font-semibold text-white mb-1">Launch date</p>
                 <p className="text-xs text-slate-500 mb-4">Set the public launch date shown on the gate</p>
                 <form onSubmit={saveDate} className="space-y-3">
-                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors" />
-                  <button type="submit" className={`w-full text-sm font-semibold py-2.5 rounded-xl transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-violet-600 hover:bg-violet-500 text-white'}`}>
+                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" />
+                  <button type="submit" className={`w-full text-sm font-semibold py-2.5 rounded-xl transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}>
                     {saved ? '✓ Saved' : 'Save date'}
                   </button>
                 </form>

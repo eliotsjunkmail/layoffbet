@@ -39,11 +39,11 @@ export const Settings = () => {
             </div>
             <button
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className={`relative w-14 h-7 rounded-full transition-colors ${theme === 'dark' ? 'bg-violet-600' : 'bg-gray-200 dark:bg-slate-600'}`}
+              className={`relative w-14 h-7 rounded-full transition-colors ${theme === 'dark' ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-600'}`}
             >
               <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center ${theme === 'dark' ? 'translate-x-8' : 'translate-x-1'}`}>
                 {theme === 'dark'
-                  ? <Moon className="w-3 h-3 text-violet-600" />
+                  ? <Moon className="w-3 h-3 text-blue-600" />
                   : <Sun className="w-3 h-3 text-amber-500" />
                 }
               </span>
@@ -59,7 +59,7 @@ export const Settings = () => {
               </button>
               <button
                 onClick={() => setTheme('dark')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${theme === 'dark' ? 'bg-violet-900/30 border-violet-600 text-violet-300' : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${theme === 'dark' ? 'bg-blue-900/30 border-blue-600 text-blue-300' : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300'}`}
               >
                 <Moon className="w-4 h-4" /> Dark
               </button>
@@ -82,9 +82,9 @@ export const Settings = () => {
             </div>
             <button
               onClick={() => setShowComments(!showComments)}
-              className={`relative w-14 h-7 rounded-full transition-colors ${showComments ? 'bg-violet-600' : 'bg-gray-200 dark:bg-slate-600'}`}
+              className={`relative w-14 h-7 rounded-full transition-colors ${showComments ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-600'}`}
             >
-              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center text-xs font-bold ${showComments ? 'translate-x-8 text-violet-600' : 'translate-x-1 text-gray-400'}`}>
+              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center text-xs font-bold ${showComments ? 'translate-x-8 text-blue-600' : 'translate-x-1 text-gray-400'}`}>
                 {showComments ? '✓' : '✕'}
               </span>
             </button>
@@ -103,21 +103,21 @@ export const Settings = () => {
             </div>
             <div className="flex items-center justify-between px-5 py-4">
               <div className="text-sm text-gray-500 dark:text-slate-400">Daily Coins</div>
-              <div className="flex items-center gap-1 text-sm font-medium text-violet-600 dark:text-violet-400">
+              <div className="flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400">
                 <Coins className="w-4 h-4" /> 100 / day
               </div>
             </div>
             <div className="flex items-center justify-between px-5 py-4">
               <div className="text-sm text-gray-500 dark:text-slate-400">Current Balance</div>
               <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 dark:text-white">
-                <Coins className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                <Coins className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 {currentUser.coins.toLocaleString()}
               </div>
             </div>
             {currentUser.isAdmin && (
               <div className="flex items-center justify-between px-5 py-4">
                 <div className="text-sm text-gray-500 dark:text-slate-400">Role</div>
-                <div className="flex items-center gap-1.5 text-sm font-medium text-violet-600 dark:text-violet-400">
+                <div className="flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400">
                   <Shield className="w-4 h-4" /> Administrator
                 </div>
               </div>

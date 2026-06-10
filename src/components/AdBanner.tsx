@@ -45,13 +45,13 @@ const colorMap: Record<string, { border: string; bg: string; logo: string; label
     dismiss: 'text-teal-400 dark:text-teal-700 hover:text-teal-600 dark:hover:text-teal-500',
   },
   violet: {
-    border: 'border-violet-200 dark:border-violet-900/60',
-    bg: 'from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/30',
-    logo: 'from-violet-400 to-purple-500',
-    label: 'border-violet-300/50 dark:border-violet-800 text-violet-500/60 dark:text-violet-600',
-    brand: 'text-violet-700 dark:text-violet-400',
-    cta: 'text-violet-600 dark:text-violet-400 hover:text-violet-500',
-    dismiss: 'text-violet-400 dark:text-violet-700 hover:text-violet-600 dark:hover:text-violet-500',
+    border: 'border-blue-200 dark:border-blue-900/60',
+    bg: 'from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/30',
+    logo: 'from-blue-400 to-purple-500',
+    label: 'border-blue-300/50 dark:border-blue-800 text-blue-500/60 dark:text-blue-600',
+    brand: 'text-blue-700 dark:text-blue-400',
+    cta: 'text-blue-600 dark:text-blue-400 hover:text-blue-500',
+    dismiss: 'text-blue-400 dark:text-blue-700 hover:text-blue-600 dark:hover:text-blue-500',
   },
 }
 

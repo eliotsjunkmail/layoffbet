@@ -58,7 +58,7 @@ export const Search = () => {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search companies or events..."
-          className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all shadow-sm"
+          className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm"
           autoFocus
         />
       </div>
@@ -69,14 +69,14 @@ export const Search = () => {
           {matchedCompanies.slice(0, 8).map(c => {
             const companyEvents = events.filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             return (
-              <Link key={c.id} to={`/${c.slug}`} className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+              <Link key={c.id} to={`/${c.slug}`} className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
                 <CompanyLogo name={c.name} id={c.id} industry={c.industry} color={c.color} sentiment={sentimentByCompany[c.id]} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
                   <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                     <span>{c.industry}</span>
                     <span className="flex items-center gap-0.5"><Eye className="w-3 h-3" />{fmtViews(c.viewCount)}</span>
-                    {companyEvents.length > 0 && <span className="text-violet-600 dark:text-violet-400">{companyEvents.length} active</span>}
+                    {companyEvents.length > 0 && <span className="text-blue-600 dark:text-blue-400">{companyEvents.length} active</span>}
                   </div>
                 </div>
               </Link>
@@ -95,7 +95,7 @@ export const Search = () => {
             const prob = getProbability(event.yesPool, event.noPool)
             const status = getEffectiveStatus(event)
             return (
-              <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all">
+              <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${status === 'active' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-700'}`}>

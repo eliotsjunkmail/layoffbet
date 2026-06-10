@@ -35,7 +35,7 @@ export const CreateEvent = () => {
     navigate('/')
   }
 
-  const inputCls = "w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 transition-all"
+  const inputCls = "w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
 
   return (
     <Layout>
@@ -124,7 +124,7 @@ export const CreateEvent = () => {
           </ul>
         </div>
 
-        <button type="submit" className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-violet-200 dark:shadow-violet-900/30">
+        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-blue-200 dark:shadow-blue-900/30">
           Create Prediction
         </button>
       </form>
