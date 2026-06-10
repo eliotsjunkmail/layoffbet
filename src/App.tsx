@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
+import { api } from './services/api'
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -189,34 +190,26 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     e.preventDefault()
     if (GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
-        // Create anonymous user account
-        const anonRes = await fetch(`${API_BASE}/api/users/anonymous`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        })
+        // Register user with anonUsername and password "guest"
+        const user = await api.register(anonUsername, 'guest')
 
-        if (!anonRes.ok) {
-          console.error('Failed to create anonymous user:', anonRes.status, anonRes.statusText)
-          throw new Error(`HTTP ${anonRes.status}`)
-        }
+        // Log user in by setting as current user
+        useStore.setState({ currentUser: user })
 
-        const anonUser = await anonRes.json()
-
-        // Store anonymous user ID
-        localStorage.setItem('lb-anon-user-id', anonUser.id)
+        // Store in localStorage
+        localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
 
         if (selectedCompanyId) {
           localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
         }
         localStorage.setItem(GATE_KEY, '1')
 
-        // Sync users from server to load anonymous user into store
+        // Sync users from server
         await syncCommentsFromServer()
 
         setUnlocked(true)
       } catch (err) {
-        console.error('Failed to create anonymous user:', err)
+        console.error('Failed to register user:', err)
         setError(true); setShake(true); setInput('')
         setTimeout(() => setShake(false), 500)
       }
