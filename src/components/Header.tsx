@@ -85,6 +85,9 @@ export const Header = () => {
   const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
 
+  // Check if user has default password (created from gate with "guest" password)
+  const hasDefaultPassword = currentUser?.username?.match(/^Anon\d+$/) ?? false
+
   const pathSlug = location.pathname.replace(/^\//, '').split('/')[0]
   const currentCompany = companies.find(c => c.slug === pathSlug)
 
@@ -119,7 +122,7 @@ export const Header = () => {
           </Link>
 
           <nav className="flex items-center gap-1">
-            {currentUser ? (
+            {currentUser && !hasDefaultPassword ? (
               <>
                 <Link to="/search" className={`p-2 rounded-lg transition-colors ${isActive('/search')}`}>
                   <Search className="w-5 h-5" />

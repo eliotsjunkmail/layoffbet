@@ -86,6 +86,11 @@ export const Login = () => {
         setError('Invalid username or password.')
       }
     } else {
+      // Validate password is not "guest"
+      if (password.toLowerCase() === 'guest') {
+        setError('Password cannot be "guest". Please choose a different password.')
+        return
+      }
       const result = register(username, password)
       if (result.ok) {
         if (remember) {
