@@ -629,21 +629,21 @@ export const Home = () => {
 
         {/* Industry filter + Browse — hidden once user has favorites */}
 
-        {/* Active bets pills for guests */}
-        {!currentUser && (() => {
+        {/* Active bets pills — shown when no favorites */}
+        {!hasFavorites && (() => {
           const companiesWithActiveBets = companies
             .filter(c => (activeEventsByCompany[c.id] ?? 0) > 0)
             .sort((a, b) => (activeEventsByCompany[b.id] ?? 0) - (activeEventsByCompany[a.id] ?? 0))
 
           return companiesWithActiveBets.length > 0 ? (
             <div className="mb-4">
-              <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+              <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Companies with active bets</p>
               <div className="flex flex-wrap gap-2">
                 {companiesWithActiveBets.map(c => (
                   <button
                     key={c.id}
                     onClick={() => navigate(`/${c.slug}`)}
-                    className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium text-sm rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
+                    className="px-3 py-1.5 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium text-sm rounded-full hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors cursor-pointer"
                   >
                     {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
                   </button>
