@@ -74,10 +74,7 @@ export const Bets = () => {
     }).length
     const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
     return {
-      coins: currentUser.coins - userBets.filter(b => {
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'active'
-      }).reduce((sum, b) => sum + b.amount, 0),
+      coins: currentUser.coins,
       totalBets: userBets.length,
       activeBets: activeBetCount,
       totalBetAmount,
