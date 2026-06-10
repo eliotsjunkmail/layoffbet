@@ -633,16 +633,57 @@ export const useStore = create<StoreState>()(
         api.register(username, password)
           .then((serverUser) => {
             console.log('[Store] Registration successful on server:', serverUser)
-            // Add the server-returned user to local store
+
+            // Migrate anonymous user data to new account
+            const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+            const { users, bets, favoriteCompanyIds } = get()
+            const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : null
+
+            let updatedUser = { ...serverUser }
+            let migratedBets = [...bets]
+            let migratedFavorites = [...favoriteCompanyIds]
+
+            if (anonUser) {
+              console.log('[Store] Migrating data from anonymous user:', anonUserId)
+
+              // Migrate bets: reassign all anon user bets to new user
+              migratedBets = bets.map(b =>
+                b.userId === anonUser.id
+                  ? { ...b, userId: serverUser.id }
+                  : b
+              )
+
+              // Add 100 coin bonus + any remaining anon coins
+              const bonusCoins = 100 + (anonUser.coins || 0)
+              updatedUser = {
+                ...serverUser,
+                coins: Math.min(serverUser.coins + bonusCoins, 999)
+              }
+
+              // Favorites are already owned by user, no migration needed
+              // (they're stored separately from user account)
+            } else {
+              // No anonymous user to migrate, just add 100 coin bonus
+              updatedUser = {
+                ...serverUser,
+                coins: Math.min(serverUser.coins + 100, 999)
+              }
+            }
+
+            // Update store with migrated data
             set(s => ({
-              users: [...s.users, serverUser],
-              currentUser: serverUser
+              users: [...s.users.filter(u => u.id !== serverUser.id), updatedUser],
+              currentUser: updatedUser,
+              bets: migratedBets,
+              favoriteCompanyIds: migratedFavorites
             }))
+
             // Persist to localStorage
             if (typeof window !== 'undefined') {
-              localStorage.setItem('layoff-bets-currentUser', JSON.stringify(serverUser))
+              localStorage.setItem('layoff-bets-currentUser', JSON.stringify(updatedUser))
             }
-            // Migrate guest bets after registration
+
+            // Migrate old guest bets if they exist
             get().migrateGuestBets()
           })
           .catch(err => {
