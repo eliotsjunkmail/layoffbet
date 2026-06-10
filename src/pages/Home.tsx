@@ -612,8 +612,8 @@ export const Home = () => {
 
         {/* Industry filter + Browse — hidden once user has favorites */}
 
-        {/* Active bets pills for guests */}
-        {!currentUser && (() => {
+        {/* Active bets pills for all users without favorites */}
+        {!hasFavorites && (() => {
           const companiesWithActiveBets = companies
             .filter(c => (activeEventsByCompany[c.id] ?? 0) > 0)
             .sort((a, b) => (activeEventsByCompany[b.id] ?? 0) - (activeEventsByCompany[a.id] ?? 0))
