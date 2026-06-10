@@ -75,20 +75,19 @@ export const Admin = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-3 mb-8 flex-wrap">
+        <div className="flex gap-2 mb-8 overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-violet-600 dark:bg-violet-500 text-white shadow-lg shadow-violet-600/30'
                   : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
               }`}
             >
-              {tab.icon}
               <span>{tab.label}</span>
-              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+              <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
                 activeTab === tab.id
                   ? 'bg-white/30'
                   : 'bg-gray-300 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
