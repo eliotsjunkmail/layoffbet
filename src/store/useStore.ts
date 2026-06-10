@@ -1067,7 +1067,25 @@ export const useStore = create<StoreState>()(
           content: trimmed,
           createdAt: new Date().toISOString(),
         }
+
+        // Add comment to local store immediately
         set(s => ({ comments: [...s.comments, comment] }))
+
+        // Save to server asynchronously
+        api.addComment(comment)
+          .then(serverComment => {
+            // Update with server ID if different
+            if (serverComment.id !== comment.id) {
+              set(s => ({
+                comments: s.comments.map(c => c.id === comment.id ? serverComment : c)
+              }))
+            }
+          })
+          .catch(err => {
+            console.error('[Store] Failed to save comment to server:', err)
+            // Comment stays in local store even if server save fails
+          })
+
         return { ok: true }
       },
 

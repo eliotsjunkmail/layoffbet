@@ -579,11 +579,12 @@ export const Home = () => {
                               placeholder="Add a comment..."
                               className="flex-1 text-xs bg-gray-100 dark:bg-slate-700/60 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500"
                             />
-                            {focusedInput === e.id && (
+                            {(focusedInput === e.id || commentInputs[e.id]) && (
                               <button
                                 onMouseDown={ev => ev.preventDefault()}
                                 onClick={() => handleAddComment(e.id)}
-                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
+                                disabled={!commentInputs[e.id]?.trim()}
+                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <Send className="w-3.5 h-3.5" />
                               </button>
