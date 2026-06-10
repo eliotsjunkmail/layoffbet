@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Users, TrendingUp, MessageSquare, Building2 } from 'lucide-react'
 
 type Tab = 'users' | 'bets' | 'comments' | 'companies'
 
@@ -53,11 +53,11 @@ export const Admin = () => {
   const getUsername = (userId?: string) => !userId ? '-' : users.find(u => u.id === userId)?.username || userId
   const getCompanyName = (companyId?: string) => !companyId ? '-' : companies.find(c => c.id === companyId)?.name || companyId
 
-  const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: 'users', label: 'Users', count: nonAdminUsers.length },
-    { id: 'bets', label: 'Bets', count: bets.length },
-    { id: 'comments', label: 'Comments', count: comments.length },
-    { id: 'companies', label: 'Companies', count: companies.length },
+  const tabs: { id: Tab; label: string; count: number; icon: React.ReactNode }[] = [
+    { id: 'users', label: 'Users', count: nonAdminUsers.length, icon: <Users className="w-4 h-4" /> },
+    { id: 'bets', label: 'Bets', count: bets.length, icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'comments', label: 'Comments', count: comments.length, icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'companies', label: 'Companies', count: companies.length, icon: <Building2 className="w-4 h-4" /> },
   ]
 
   return (
@@ -75,18 +75,26 @@ export const Admin = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-slate-700">
+        <div className="flex gap-3 mb-8 flex-wrap">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'border-violet-600 dark:border-violet-400 text-violet-600 dark:text-violet-400'
-                  : 'border-transparent text-gray-600 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
+                  ? 'bg-violet-600 dark:bg-violet-500 text-white shadow-lg shadow-violet-600/30'
+                  : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
               }`}
             >
-              {tab.label} ({tab.count})
+              {tab.icon}
+              <span>{tab.label}</span>
+              <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                activeTab === tab.id
+                  ? 'bg-white/30'
+                  : 'bg-gray-300 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
+              }`}>
+                {tab.count}
+              </span>
             </button>
           ))}
         </div>
