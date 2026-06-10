@@ -234,9 +234,9 @@ export const CompanyPage = () => {
           const prob = getProbability(event.yesPool, event.noPool)
           const s = getEffectiveStatus(event)
           return (
-            <Link key={event.id} to={`/event/${event.id}`} className="block bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 transition-all">
+            <Link key={event.id} to={`/event/${event.id}`} className="block bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all">
               <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s === 'resolved' ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s === 'resolved' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
                   {s === 'resolved' && event.outcome ? `Resolved ${event.outcome.toUpperCase()}` : 'Expired'}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-slate-500">{formatDate(event.expiresAt)}</span>
@@ -314,7 +314,7 @@ export const CompanyPage = () => {
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button
                       onClick={handleShare}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-xs font-medium"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
                       title="Share this company"
                     >
                       {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
@@ -375,7 +375,7 @@ export const CompanyPage = () => {
                         cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
                           ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
                             flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            'border-violet-200 dark:border-violet-800'}`}
+                            'border-blue-200 dark:border-blue-800'}`}
                       >
                         {userBet && (
                           <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
@@ -402,7 +402,7 @@ export const CompanyPage = () => {
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
                           {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
-                            <span className="flex-shrink-0 text-[10px] font-bold bg-violet-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                            <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                           )}
                         </div>
                         <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
@@ -444,7 +444,7 @@ export const CompanyPage = () => {
                               <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
                                 <button
                                   onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                                  className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-violet-600 dark:text-violet-400' : 'text-gray-300 dark:text-slate-600 hover:text-violet-500'}`}
+                                  className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
                                 >
                                   <ThumbsUp className="w-3 h-3" />
                                   {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
@@ -453,7 +453,7 @@ export const CompanyPage = () => {
                                   <>
                                     <button
                                       onClick={ev => { ev.stopPropagation(); handleEditComment(cmt, event.id) }}
-                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-violet-500 transition-all"
+                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-blue-500 transition-all"
                                     >
                                       <Edit2 className="w-3 h-3" />
                                     </button>
@@ -483,14 +483,14 @@ export const CompanyPage = () => {
                             onClick={ev => ev.stopPropagation()}
                             placeholder={editingCommentId ? "Edit comment..." : "Add a comment..."}
                             maxLength={500}
-                            className="flex-1 text-sm bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400 dark:focus:ring-violet-500 shadow-sm"
+                            className="flex-1 text-sm bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500 shadow-sm"
                           />
                           {focusedInput === event.id && (
                             <>
                               <button
                                 onMouseDown={ev => ev.preventDefault()}
                                 onClick={ev => { ev.stopPropagation(); handleAddComment(event.id) }}
-                                className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white rounded-xl transition-colors"
+                                className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors"
                                 title={editingCommentId ? "Update" : "Comment"}
                               >
                                 <Send className="w-4 h-4" />
@@ -519,14 +519,14 @@ export const CompanyPage = () => {
                   {currentUser ? (
                     <button
                       onClick={() => navigate('/create', { state: { companyId: company.id } })}
-                      className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                     >
                       + New bet
                     </button>
                   ) : (
                     <button
                       onClick={() => navigate('/login')}
-                      className="px-3 py-1.5 rounded-lg border border-violet-600 text-violet-600 dark:text-violet-400 dark:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 text-sm font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                     >
                       Sign in to favorite
                     </button>
@@ -544,7 +544,7 @@ export const CompanyPage = () => {
           {companyEvents.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-400 dark:text-slate-500 text-sm mb-4">No predictions yet for this company.</p>
-              <Link to="/create" className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
+              <Link to="/create" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
                 <PlusCircle className="w-4 h-4" /> Create a Prediction
               </Link>
             </div>
