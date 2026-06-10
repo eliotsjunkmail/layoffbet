@@ -860,8 +860,6 @@ export const useStore = create<StoreState>()(
 
         if (!bet || !userId) return
 
-        // Get updated user and coins
-        anonUser = !currentUser ? users.find(u => u.id === userId) : undefined
         const newCoins = Math.min((currentUser?.coins ?? anonUser?.coins ?? 0) + bet.amount, 999)
 
         // Send to server
