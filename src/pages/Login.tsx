@@ -195,6 +195,14 @@ export const Login = () => {
             >
               {synced ? (mode === 'login' ? 'Sign In' : 'Create Account') : 'Loading...'}
             </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="w-full font-semibold py-3 rounded-xl transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300"
+            >
+              Back
+            </button>
           </form>
 
           <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-5">
