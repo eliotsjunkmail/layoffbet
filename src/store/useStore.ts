@@ -1200,11 +1200,16 @@ export const useStore = create<StoreState>()(
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
             }
 
+            // Merge seed comments with server comments (server comments can add to/replace seed ones)
+            const mergedComments = serverData.comments.length > 0
+              ? [...SEED_COMMENTS, ...serverData.comments.filter((c: Comment) => !SEED_COMMENTS.find(sc => sc.id === c.id))]
+              : SEED_COMMENTS
+
             set({
               users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
               events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
               bets: mergedBets,
-              comments: serverData.comments.length > 0 ? serverData.comments : SEED_COMMENTS,
+              comments: mergedComments,
               companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
               favoriteCompanyIds: newFavs,
               pinnedEventIds: newPinned,
