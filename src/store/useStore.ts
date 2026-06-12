@@ -1110,9 +1110,15 @@ export const useStore = create<StoreState>()(
         if (!trimmed) return { ok: false, error: 'Comment cannot be empty' }
         if (!validateNoPersonalNames(trimmed)) return { ok: false, error: 'Please avoid using personal names in comments' }
 
+        const editedAt = new Date().toISOString()
         set(s => ({
-          comments: s.comments.map(c => c.id === id ? { ...c, content: trimmed, editedAt: new Date().toISOString() } : c)
+          comments: s.comments.map(c => c.id === id ? { ...c, content: trimmed, editedAt } : c)
         }))
+
+        // Save to server asynchronously
+        api.editComment(id, trimmed, editedAt)
+          .catch(err => console.error('[Store] Failed to save comment edit to server:', err))
+
         return { ok: true }
       },
 
@@ -1125,6 +1131,11 @@ export const useStore = create<StoreState>()(
         if (comment.userId !== currentUser.id && !currentUser.isAdmin) return false
 
         set(s => ({ comments: s.comments.filter(c => c.id !== id) }))
+
+        // Send to server asynchronously
+        api.deleteComment(id)
+          .catch(err => console.error('[Store] Failed to delete comment on server:', err))
+
         return true
       },
 
