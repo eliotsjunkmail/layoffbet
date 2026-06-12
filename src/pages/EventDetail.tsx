@@ -324,7 +324,7 @@ export const EventDetail = () => {
       {/* Comments */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm dark:shadow-none">
         <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">Discussion ({eventComments.length})</div>
-        <div className="space-y-3 mb-4 max-h-72 overflow-y-auto">
+        <div className="space-y-3 mb-4">
           {eventComments.length === 0 && (
             <p className="text-gray-400 dark:text-slate-500 text-sm text-center py-4">No comments yet. Be the first.</p>
           )}
