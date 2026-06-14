@@ -19,6 +19,7 @@ export const Admin = () => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)
+  const [showOnlyActive, setShowOnlyActive] = useState(true)
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -229,22 +230,49 @@ export const Admin = () => {
         )}
 
         {/* Companies Tab */}
-        {activeTab === 'companies' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Slug</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
-                  </tr>
+        {activeTab === 'companies' && (() => {
+          const companiesWithActivity = companies.filter(c => {
+            const companyBets = bets.filter(b => {
+              const event = events.find(e => e.id === b.eventId)
+              return event?.companyId === c.id
+            }).length
+            const companyComments = comments.filter(c2 => c2.companyId === c.id).length
+            return companyBets > 0 || companyComments > 0
+          })
+
+          const displayedCompanies = showOnlyActive ? companiesWithActivity : companies
+
+          return (
+            <>
+              <div className="flex items-center gap-3 mb-4 px-4">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showOnlyActive}
+                    onChange={(e) => setShowOnlyActive(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`relative w-11 h-6 rounded-full transition-colors ${showOnlyActive ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${showOnlyActive ? 'translate-x-5' : ''}`} />
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300">Show only companies with activity</span>
+                </label>
+              </div>
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden mx-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Slug</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                      </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {companies.map(company => {
+                  {displayedCompanies.map(company => {
                     const isHidden = hiddenCompanyIds.includes(company.id)
                     const isToggling = togglingCompanyId === company.id
                     const handleToggle = async () => {
@@ -291,12 +319,14 @@ export const Admin = () => {
                       </tr>
                     )
                   })}
-                </tbody>
-              </table>
-            </div>
-            {companies.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No companies</div>}
-          </div>
-        )}
+                    </tbody>
+                  </table>
+                </div>
+                {displayedCompanies.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">{showOnlyActive ? 'No companies with activity' : 'No companies'}</div>}
+              </div>
+            </>
+          )
+        })()}
       </div>
     </Layout>
   )
