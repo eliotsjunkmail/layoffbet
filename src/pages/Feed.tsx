@@ -10,6 +10,7 @@ export const Feed = () => {
   const events = useStore(s => s.events)
   const bets = useStore(s => s.bets)
   const companies = useStore(s => s.companies)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const onboardingCompanyId = useStore(s => s.onboardingCompanyId)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
@@ -19,7 +20,7 @@ export const Feed = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(onboardingCompanyId)
 
-  const activeEvents = events.filter(e => getEffectiveStatus(e) === 'active')
+  const activeEvents = events.filter(e => getEffectiveStatus(e) === 'active' && !hiddenCompanyIds.includes(e.companyId))
 
   const filtered = activeEvents.filter(e => {
     if (showFavoritesOnly && favoriteCompanyIds.length > 0) {
@@ -51,7 +52,7 @@ export const Feed = () => {
               className="appearance-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full pl-3 pr-7 py-1.5 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 cursor-pointer shadow-sm"
             >
               <option value="">All Companies</option>
-              {[...companies].sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+              {[...companies].filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name)).map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
