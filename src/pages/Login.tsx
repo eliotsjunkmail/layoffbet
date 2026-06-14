@@ -28,7 +28,7 @@ export const Login = () => {
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const navigate = useNavigate()
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 10000) }
 
   useEffect(() => {
     const saved = localStorage.getItem(REMEMBER_KEY)
