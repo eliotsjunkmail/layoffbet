@@ -109,7 +109,7 @@ export const Header = () => {
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur border-b border-gray-200 dark:border-slate-800">
         <div className="max-w-md sm:max-w-5xl mx-auto w-full px-4 sm:px-8 flex items-center justify-between h-14">
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="text-xs text-gray-400 dark:text-slate-500">v1.45</div>
+            <div className="text-xs text-gray-400 dark:text-slate-500">v1.46</div>
           </Link>
 
           <nav className="flex items-center gap-1">
