@@ -18,6 +18,7 @@ export const Admin = () => {
   const [activeTab, setActiveTab] = useState<Tab>('users')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
+  const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -245,15 +246,15 @@ export const Admin = () => {
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {companies.map(company => {
                     const isHidden = hiddenCompanyIds.includes(company.id)
-                    const [toggling, setToggling] = useState(false)
+                    const isToggling = togglingCompanyId === company.id
                     const handleToggle = async () => {
-                      setToggling(true)
+                      setTogglingCompanyId(company.id)
                       try {
                         await toggleHiddenCompany(company.id)
                       } catch (err) {
                         console.error('Failed to toggle:', err)
                       } finally {
-                        setToggling(false)
+                        setTogglingCompanyId(null)
                       }
                     }
                     return (
@@ -264,7 +265,7 @@ export const Admin = () => {
                               type="checkbox"
                               checked={!isHidden}
                               onChange={handleToggle}
-                              disabled={toggling}
+                              disabled={isToggling}
                               className="sr-only"
                             />
                             <div className={`relative w-11 h-6 rounded-full transition-colors ${!isHidden ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
