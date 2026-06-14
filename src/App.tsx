@@ -288,7 +288,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <span className="text-slate-600">·</span>
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('privacy') }} className="text-slate-600 hover:text-slate-500 transition-colors">Privacy Policy</button>
           </div>
-          <p className="text-xs text-slate-500 font-semibold tracking-wide">THIS SITE IS FOR ENTERTAINMENT PURPOSES ONLY</p>
+          <p className="text-xs text-slate-500">This site is for entertainment purposes only</p>
         </div>
       </div>
 
