@@ -15,7 +15,7 @@ export const Admin = () => {
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const toggleHiddenCompany = useStore(s => s.toggleHiddenCompany)
 
-  const [activeTab, setActiveTab] = useState<Tab>('users')
+  const [activeTab, setActiveTab] = useState<Tab>('companies')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)

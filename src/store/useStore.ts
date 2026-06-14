@@ -1258,6 +1258,7 @@ export const useStore = create<StoreState>()(
               pinnedEventIds: newPinned,
               feedback: serverData.feedback || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
+              hiddenCompanyIds: serverData.hiddenCompanyIds || [],
             })
           }
         } catch (error) {
@@ -1282,6 +1283,7 @@ export const useStore = create<StoreState>()(
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
         upvotedCommentIds: s.upvotedCommentIds,
+        hiddenCompanyIds: s.hiddenCompanyIds,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
