@@ -282,13 +282,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         <div className="text-center mt-8 space-y-3">
-          <p className="text-xs text-slate-600">v1.65</p>
+          <p className="text-xs text-slate-600">v1.66</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('privacy') }} className="text-slate-600 hover:text-slate-500 transition-colors">Privacy Policy</button>
           </div>
-          <p className="text-xs text-slate-500">This site is for entertainment purposes only</p>
         </div>
       </div>
 
