@@ -373,7 +373,7 @@ interface StoreState {
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
-  toggleHiddenCompany: (companyId: string) => void
+  toggleHiddenCompany: (companyId: string) => Promise<void>
   togglePinnedEvent: (eventId: string) => void
   addFeedback: (text: string, type: string) => void
   markFeedback: (id: string, status: 'completed' | 'ignored') => void
@@ -483,11 +483,19 @@ export const useStore = create<StoreState>()(
         }
       },
 
-      toggleHiddenCompany: (companyId) => set(s => ({
-        hiddenCompanyIds: s.hiddenCompanyIds.includes(companyId)
-          ? s.hiddenCompanyIds.filter(id => id !== companyId)
-          : [...s.hiddenCompanyIds, companyId],
-      })),
+      toggleHiddenCompany: async (companyId) => {
+        try {
+          await api.toggleHiddenCompany(companyId)
+          set(s => ({
+            hiddenCompanyIds: s.hiddenCompanyIds.includes(companyId)
+              ? s.hiddenCompanyIds.filter(id => id !== companyId)
+              : [...s.hiddenCompanyIds, companyId],
+          }))
+        } catch (err) {
+          console.error('Failed to toggle hidden company:', err)
+          throw err
+        }
+      },
 
       togglePinnedEvent: (eventId) => set(s => ({
         pinnedEventIds: s.pinnedEventIds.includes(eventId)

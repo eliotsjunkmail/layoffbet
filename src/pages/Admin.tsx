@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { Trash2, Users, TrendingUp, MessageSquare, Building2, Eye, EyeOff } from 'lucide-react'
+import { Trash2, Users, TrendingUp, MessageSquare, Building2 } from 'lucide-react'
 
 type Tab = 'users' | 'bets' | 'comments' | 'companies'
 
@@ -234,10 +234,10 @@ export const Admin = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Slug</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
                   </tr>
@@ -245,41 +245,47 @@ export const Admin = () => {
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {companies.map(company => {
                     const isHidden = hiddenCompanyIds.includes(company.id)
+                    const [toggling, setToggling] = useState(false)
+                    const handleToggle = async () => {
+                      setToggling(true)
+                      try {
+                        await toggleHiddenCompany(company.id)
+                      } catch (err) {
+                        console.error('Failed to toggle:', err)
+                      } finally {
+                        setToggling(false)
+                      }
+                    }
                     return (
                       <tr key={company.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 ${isHidden ? 'opacity-50' : ''}`}>
+                        <td className="px-6 py-4">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!isHidden}
+                              onChange={handleToggle}
+                              disabled={toggling}
+                              className="sr-only"
+                            />
+                            <div className={`relative w-11 h-6 rounded-full transition-colors ${!isHidden ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${!isHidden ? 'translate-x-5' : ''}`} />
+                            </div>
+                          </label>
+                        </td>
                         <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.slug}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.industry}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            isHidden
-                              ? 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300'
-                              : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                          }`}>
-                            {isHidden ? 'Hidden' : 'Visible'}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
                           {new Date(company.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => toggleHiddenCompany(company.id)}
-                              title={isHidden ? 'Show company' : 'Hide company'}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                            >
-                              {isHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                              {isHidden ? 'Show' : 'Hide'}
-                            </button>
-                            <button
-                              onClick={() => deleteItem('companies', company.id)}
-                              disabled={loading}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => deleteItem('companies', company.id)}
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete
+                          </button>
                         </td>
                       </tr>
                     )

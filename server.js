@@ -38,6 +38,7 @@ const DEFAULT_DATA = {
   pinnedEvents: {},
   feedback: [],
   anonVotedEvents: {},
+  hiddenCompanyIds: [],
 }
 
 // Initialize data file if it doesn't exist
@@ -71,7 +72,7 @@ app.post('/api/init', async (req, res) => {
   const data = await readData()
   // Only init if empty
   if (data.users.length === 0) {
-    const { users, events, bets, comments, companies, favorites, pinnedEvents, feedback, anonVotedEvents } = req.body
+    const { users, events, bets, comments, companies, favorites, pinnedEvents, feedback, anonVotedEvents, hiddenCompanyIds } = req.body
     const newData = {
       users: users || [],
       events: events || [],
@@ -82,6 +83,7 @@ app.post('/api/init', async (req, res) => {
       pinnedEvents: pinnedEvents || {},
       feedback: feedback || [],
       anonVotedEvents: anonVotedEvents || {},
+      hiddenCompanyIds: hiddenCompanyIds || [],
     }
     await writeData(newData)
     return res.json({ ok: true, initialized: true })
@@ -91,7 +93,7 @@ app.post('/api/init', async (req, res) => {
 
 // ===== RESET =====
 app.post('/api/reset', async (req, res) => {
-  const { users, events, bets, comments, companies, favorites, pinnedEvents, feedback, anonVotedEvents } = req.body
+  const { users, events, bets, comments, companies, favorites, pinnedEvents, feedback, anonVotedEvents, hiddenCompanyIds } = req.body
   // Reset to seed data - remove all non-admin users and their data
   const adminIds = users.filter(u => u.isAdmin).map(u => u.id)
   const seedUsers = users.filter(u => u.isAdmin)
@@ -107,6 +109,7 @@ app.post('/api/reset', async (req, res) => {
     pinnedEvents: {},
     feedback: [],
     anonVotedEvents: {},
+    hiddenCompanyIds: [],
   }
   await writeData(newData)
   res.json({ ok: true, reset: true })
@@ -419,6 +422,19 @@ app.delete('/api/companies/:id', async (req, res) => {
   res.json({ ok: true })
 })
 
+app.post('/api/companies/:id/toggle-hidden', async (req, res) => {
+  const data = await readData()
+  if (!data.hiddenCompanyIds) data.hiddenCompanyIds = []
+  const isHidden = data.hiddenCompanyIds.includes(req.params.id)
+  if (isHidden) {
+    data.hiddenCompanyIds = data.hiddenCompanyIds.filter(id => id !== req.params.id)
+  } else {
+    data.hiddenCompanyIds.push(req.params.id)
+  }
+  await writeData(data)
+  res.json({ ok: true, hidden: !isHidden })
+})
+
 // ===== STATE SYNC =====
 app.get('/api/sync', async (req, res) => {
   const data = await readData()
@@ -432,6 +448,7 @@ app.get('/api/sync', async (req, res) => {
     pinnedEvents: data.pinnedEvents || {},
     feedback: data.feedback || [],
     anonVotedEvents: data.anonVotedEvents || {},
+    hiddenCompanyIds: data.hiddenCompanyIds || [],
   })
 })
 

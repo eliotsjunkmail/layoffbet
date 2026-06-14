@@ -203,4 +203,16 @@ export const api = {
     }
     return response.json()
   },
+
+  // Companies endpoints
+  toggleHiddenCompany: async (companyId: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/toggle-hidden`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to toggle company visibility')
+    }
+    return response.json()
+  },
 }
