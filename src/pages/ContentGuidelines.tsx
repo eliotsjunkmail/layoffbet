@@ -34,6 +34,12 @@ export const ContentGuidelines = () => {
         Layoff Bets is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
       </p>
 
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+        <p className="text-sm text-amber-800 dark:text-amber-300">
+          <span className="font-semibold">Entertainment Disclaimer:</span> This platform is for entertainment and discussion purposes only. All predictions are speculative and should not be used for investment, trading, or employment decisions. The accuracy of predictions is not guaranteed.
+        </p>
+      </div>
+
       {section('Prohibited Content', [
         'Illegal content of any kind',
         'Harassment, threats, or targeted bullying of individuals',
