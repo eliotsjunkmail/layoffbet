@@ -22,6 +22,7 @@ export const Bets = () => {
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const events = useStore(s => s.events)
   const companies = useStore(s => s.companies)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
@@ -130,7 +131,7 @@ export const Bets = () => {
   const allItems = combinedBets
     .map(bet => {
       const event = events.find(e => e.id === bet.eventId)
-      if (!event) return null
+      if (!event || hiddenCompanyIds.includes(event.companyId)) return null
       const status = getEffectiveStatus(event)
       return { event, status, bet }
     })
@@ -181,7 +182,7 @@ export const Bets = () => {
       const status = getEffectiveStatus(e)
       const hasUserBet = combinedBets.some(b => b.eventId === e.id)
       const inSuggestedCompany = suggestedCompanyIds.has(e.companyId)
-      return status === 'active' && !hasUserBet && inSuggestedCompany
+      return status === 'active' && !hasUserBet && inSuggestedCompany && !hiddenCompanyIds.includes(e.companyId)
     })
     .sort((a, b) => (b.yesPool + b.noPool) - (a.yesPool + a.noPool))
     .slice(0, 10)

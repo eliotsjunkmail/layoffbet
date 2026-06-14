@@ -32,7 +32,7 @@ const SEED_COMPANIES: Company[] = [
   { id: 'comp-20', name: 'Bed Bath & Beyond', color: '#003478',           slug: 'bed-bath-beyond',    description: 'Retail chain selling domestic merchandise, home furnishings, and health and beauty products',                      industry: 'Retail',                 viewCount: 61234,  createdAt: pastDate(60) },
   { id: 'comp-21', name: 'Belk', color: '#C1121F',                        slug: 'belk',               description: 'Privately held department store chain operating in the Southeastern United States',                                industry: 'Retail',                 viewCount: 11234,  createdAt: pastDate(26) },
   { id: 'comp-22', name: 'BNSF', color: '#E47911',                        slug: 'bnsf',               description: 'One of the largest freight railroad networks in North America, operating across 28 U.S. states and Canada',      industry: 'Transportation',         viewCount: 17234,  createdAt: pastDate(24) },
-  { id: 'comp-23', name: 'NYB', color: '#003DA5',                         slug: 'bny',                description: 'New York Bank — global investments company providing custody, clearing, and asset servicing to institutions worldwide', industry: 'Financial Services', viewCount: 89445, createdAt: pastDate(60) },
+  { id: 'comp-23', name: 'BNY', color: '#003DA5',                         slug: 'bny',                description: 'Bank of New York Mellon — global investments company providing custody, clearing, and asset servicing to institutions worldwide', industry: 'Financial Services', viewCount: 89445, createdAt: pastDate(60) },
   { id: 'comp-24', name: 'Boeing', color: '#0C3D7A',                      slug: 'boeing',             description: 'Multinational aerospace and defense corporation and one of the world\'s largest manufacturers of commercial jets',industry: 'Aerospace & Defense',    viewCount: 212102, createdAt: pastDate(60) },
   { id: 'comp-25', name: 'Bose', color: '#1E50BC',                        slug: 'bose',               description: 'American consumer electronics company best known for its audio equipment, noise-cancelling headphones, and speakers',industry: 'Consumer Electronics', viewCount: 34890,  createdAt: pastDate(20) },
   { id: 'comp-26', name: 'BP PLC', color: '#FFB81C',                      slug: 'bp',                 description: 'British multinational oil and gas company engaged in exploration, production, refining, and marketing',             industry: 'Oil & Gas',              viewCount: 78445,  createdAt: pastDate(60) },
@@ -147,25 +147,25 @@ const SEED_EVENTS: Event[] = [
     yesPool: 220, noPool: 280, outcome: null, createdAt: pastDate(45), viewCount: 2334, shareCount: 0,
   },
 
-  // NYB predictions
+  // BNY predictions
   {
-    id: 'evt-b1', companyId: 'comp-23', companyName: 'NYB',
-    title: 'NYB will announce workforce reduction impacting 3,000+ roles by end of summer',
-    description: 'NYB Mellon has been heavily investing in automation and AI across custody, clearing, and wealth management divisions. Internal attrition is already above historical averages as employees anticipate changes. Multiple business units have frozen hiring and restricted travel, signaling a major restructuring wave is imminent',
+    id: 'evt-b1', companyId: 'comp-23', companyName: 'BNY',
+    title: 'BNY will announce workforce reduction impacting 3,000+ roles by end of summer',
+    description: 'BNY Mellon has been heavily investing in automation and AI across custody, clearing, and wealth management divisions. Internal attrition is already above historical averages as employees anticipate changes. Multiple business units have frozen hiring and restricted travel, signaling a major restructuring wave is imminent',
     expiresAt: futureDate(85), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
     yesPool: 580, noPool: 170, outcome: null, createdAt: pastDate(7), viewCount: 8102, shareCount: 0,
   },
   {
-    id: 'evt-b2', companyId: 'comp-23', companyName: 'NYB',
-    title: 'NYB Pershing will consolidate back-office operations and cut 15%+ of division headcount',
+    id: 'evt-b2', companyId: 'comp-23', companyName: 'BNY',
+    title: 'BNY Pershing will consolidate back-office operations and cut 15%+ of division headcount',
     description: 'Pershing has been under significant pressure from low margin commission-free trading and digital adoption by rivals. The technology and operations teams have been told to prepare efficiency plans. Consolidation of multiple legacy systems is underway with offshore centers in India already scaling up to absorb current Pershing workflows',
     expiresAt: futureDate(70), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
     yesPool: 420, noPool: 210, outcome: null, createdAt: pastDate(6), viewCount: 6212, shareCount: 0,
   },
   {
-    id: 'evt-b3', companyId: 'comp-23', companyName: 'NYB',
-    title: 'NYB will shift more U.S. technology and operations work to India and Southeast Asia',
-    description: 'NYB has substantially expanded engineering centers in Bangalore and Vietnam. New tech hires are predominantly offshore-based while U.S. hiring has slowed dramatically. Internal tools training and knowledge transfer initiatives are creating a clear predecessor-replacement pipeline. Senior technologists report being asked to mentor offshore peers',
+    id: 'evt-b3', companyId: 'comp-23', companyName: 'BNY',
+    title: 'BNY will shift more U.S. technology and operations work to India and Southeast Asia',
+    description: 'BNY has substantially expanded engineering centers in Bangalore and Vietnam. New tech hires are predominantly offshore-based while U.S. hiring has slowed dramatically. Internal tools training and knowledge transfer initiatives are creating a clear predecessor-replacement pipeline. Senior technologists report being asked to mentor offshore peers',
     expiresAt: futureDate(80), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
     yesPool: 510, noPool: 150, outcome: null, createdAt: pastDate(5), viewCount: 7015, shareCount: 0,
   },
@@ -312,7 +312,7 @@ const SEED_COMMENTS: Comment[] = [
   { id: 'cmt-6', eventId: 'evt-4', userId: 'sys-user', content: 'Splunk had a totally different culture. The integration is going to be brutal', createdAt: pastDate(1) },
   { id: 'cmt-7', eventId: 'evt-5', userId: 'sys-user', content: 'The CVS near me already closed. This is already happening', createdAt: pastDate(4) },
   { id: 'cmt-8', eventId: 'evt-5', userId: 'sys-user', content: 'Walgreens is doing the same thing. Standalone pharmacy is dying', createdAt: pastDate(2) },
-  // NYB comments
+  // BNY comments
   { id: 'cmt-b1', eventId: 'evt-b1', userId: 'sys-user', content: 'The hiring freeze started quietly 3 weeks ago. They told us "resource optimization" but everyone knows what\'s coming', createdAt: pastDate(7) },
   { id: 'cmt-b2', eventId: 'evt-b1', userId: 'sys-user', content: 'My group already lost 4 people to "organizational restructuring" this quarter. This is just the prelude', createdAt: pastDate(5) },
   { id: 'cmt-b3', eventId: 'evt-b2', userId: 'sys-user', content: 'Pershing losing clients left and right. They\'re consolidating everything into two centers. Settlement ops is getting hollowed out', createdAt: pastDate(6) },
@@ -355,6 +355,7 @@ interface StoreState {
   theme: Theme
   onboardingCompanyId: string | null
   favoriteCompanyIds: string[]
+  hiddenCompanyIds: string[]
   pinnedEventIds: string[]
   feedback: FeedbackItem[]
   anonVotedEvents: Record<string, { lastSide: 'yes' | 'no'; count: number }>
@@ -372,6 +373,7 @@ interface StoreState {
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
+  toggleHiddenCompany: (companyId: string) => void
   togglePinnedEvent: (eventId: string) => void
   addFeedback: (text: string, type: string) => void
   markFeedback: (id: string, status: 'completed' | 'ignored') => void
@@ -419,6 +421,7 @@ export const useStore = create<StoreState>()(
       theme: 'light',
       onboardingCompanyId: null,
       favoriteCompanyIds: [],
+      hiddenCompanyIds: [],
       pinnedEventIds: [],
       feedback: [],
       anonVotedEvents: {},
@@ -479,6 +482,12 @@ export const useStore = create<StoreState>()(
           console.log('[toggleFavoriteCompany] persisted to localStorage and cookie')
         }
       },
+
+      toggleHiddenCompany: (companyId) => set(s => ({
+        hiddenCompanyIds: s.hiddenCompanyIds.includes(companyId)
+          ? s.hiddenCompanyIds.filter(id => id !== companyId)
+          : [...s.hiddenCompanyIds, companyId],
+      })),
 
       togglePinnedEvent: (eventId) => set(s => ({
         pinnedEventIds: s.pinnedEventIds.includes(eventId)

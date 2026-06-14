@@ -31,6 +31,7 @@ export const Home = () => {
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const currentUser = useStore(s => s.currentUser)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
@@ -163,7 +164,7 @@ export const Home = () => {
     return null
   }, [currentUser, anonUser, bets, events, getEffectiveStatus])
 
-  const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id)).sort((a, b) => {
+  const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id) && !hiddenCompanyIds.includes(c.id)).sort((a, b) => {
     const aIdx = favoriteCompanyIds.indexOf(a.id)
     const bIdx = favoriteCompanyIds.indexOf(b.id)
     return bIdx - aIdx
@@ -208,17 +209,19 @@ export const Home = () => {
     const q = query.toLowerCase()
     return companies
       .filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        c.industry.toLowerCase().includes(q) ||
-        c.aliases?.some(alias => alias.toLowerCase().includes(q))
+        !hiddenCompanyIds.includes(c.id) && (
+          c.name.toLowerCase().includes(q) ||
+          c.industry.toLowerCase().includes(q) ||
+          c.aliases?.some(alias => alias.toLowerCase().includes(q))
+        )
       )
       .sort((a, b) => b.viewCount - a.viewCount)
       .slice(0, 6)
-  }, [companies, query])
+  }, [companies, query, hiddenCompanyIds])
 
   const filtered = useMemo(() => {
     const filtered = companies
-      .filter(c => industry === 'All' || c.industry === industry)
+      .filter(c => !hiddenCompanyIds.includes(c.id) && (industry === 'All' || c.industry === industry))
 
     const meta = filtered.find(c => c.slug === 'meta')
     const bny = filtered.find(c => c.slug === 'bny')
@@ -231,7 +234,7 @@ export const Home = () => {
     result.push(...rest)
 
     return result
-  }, [companies, industry])
+  }, [companies, industry, hiddenCompanyIds])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

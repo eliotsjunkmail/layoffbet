@@ -15,6 +15,7 @@ const fmtViews = (n: number) => {
 export const Search = () => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const [query, setQuery] = useState('')
 
@@ -37,15 +38,17 @@ export const Search = () => {
 
   const matchedCompanies = q
     ? companies.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        c.industry.toLowerCase().includes(q) ||
-        c.aliases?.some(alias => alias.toLowerCase().includes(q))
+        !hiddenCompanyIds.includes(c.id) && (
+          c.name.toLowerCase().includes(q) ||
+          c.industry.toLowerCase().includes(q) ||
+          c.aliases?.some(alias => alias.toLowerCase().includes(q))
+        )
       )
-    : [...companies].sort((a, b) => b.viewCount - a.viewCount)
+    : companies.filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => b.viewCount - a.viewCount)
 
   const matchedEvents = q
-    ? events.filter(e => e.title.toLowerCase().includes(q) || e.companyName.toLowerCase().includes(q))
-    : events.filter(e => getEffectiveStatus(e) === 'active')
+    ? events.filter(e => !hiddenCompanyIds.includes(e.companyId) && (e.title.toLowerCase().includes(q) || e.companyName.toLowerCase().includes(q)))
+    : events.filter(e => !hiddenCompanyIds.includes(e.companyId) && getEffectiveStatus(e) === 'active')
 
   return (
     <Layout>
