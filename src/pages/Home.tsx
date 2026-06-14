@@ -618,7 +618,7 @@ export const Home = () => {
         {/* Active bets pills for all users without favorites */}
         {!hasFavorites && (() => {
           const companiesWithActiveBets = companies
-            .filter(c => (activeEventsByCompany[c.id] ?? 0) > 0)
+            .filter(c => !hiddenCompanyIds.includes(c.id) && (activeEventsByCompany[c.id] ?? 0) > 0)
             .sort((a, b) => a.name.localeCompare(b.name))
 
           return companiesWithActiveBets.length > 0 ? (
