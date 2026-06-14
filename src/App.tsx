@@ -235,34 +235,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     setTimeout(() => { setSaved(false); setAdminOpen(false); setAdminStep('login'); setAdminUser(''); setAdminPass('') }, 1200)
   }
 
-  const DiceIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" className="w-9 h-9 text-white" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="4" fill="currentColor" opacity="0.15" />
-      <rect x="2" y="2" width="20" height="20" rx="4" />
-      <circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="8" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="8" cy="16" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="16" cy="16" r="1.4" fill="currentColor" stroke="none" />
-    </svg>
-  )
-
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        {/* Logo */}
+        {/* Tagline */}
         <div className="flex justify-center mb-6">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-900/50">
-              <DiceIcon />
-            </div>
-            <div className="text-center">
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-2xl font-semibold text-slate-300 tracking-tight">Layoff</span>
-                <span className="text-2xl font-black text-blue-400 tracking-tight">Bet</span>
-              </div>
-              <div className="text-xs text-slate-500 mt-0.5 tracking-wide uppercase">Anonymous prediction markets</div>
-            </div>
+          <div className="text-center">
+            <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
           </div>
         </div>
 
@@ -299,7 +278,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         <div className="text-center mt-8 space-y-2">
-          <p className="text-xs text-slate-600">v1.53</p>
+          <p className="text-xs text-slate-600">v1.54</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>

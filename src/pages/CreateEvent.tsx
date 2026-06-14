@@ -21,6 +21,9 @@ export const CreateEvent = () => {
   const [error, setError] = useState('')
   const dateInputRef = useRef<HTMLInputElement>(null)
 
+  const selectedCompany = companies.find(c => c.id === companyId)
+  const titlePlaceholder = selectedCompany ? `e.g. ${selectedCompany.name} will announce layoffs this quarter` : "e.g. Company will announce layoffs this quarter"
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -56,7 +59,7 @@ export const CreateEvent = () => {
 
         <div>
           <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Prediction Title</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. ACME Inc will announce layoffs this quarter" maxLength={120} className={inputCls} />
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={titlePlaceholder} maxLength={120} className={inputCls} />
           <div className="text-right text-xs text-gray-400 dark:text-slate-600 mt-1">{title.length}/120</div>
         </div>
 
