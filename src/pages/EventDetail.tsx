@@ -70,7 +70,7 @@ export const EventDetail = () => {
   const isCreator = event.creatorId === currentUser?.id
   const isAdmin = currentUser?.isAdmin
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 10000) }
 
   const anonVote = anonVotedEvents[id!]
   const remainingGuestCoins = Math.max(0, anonCoins - anonCoinsSpent)

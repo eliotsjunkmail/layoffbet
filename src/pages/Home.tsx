@@ -122,7 +122,7 @@ export const Home = () => {
     setFocusedInput(null)
   }
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 7000) }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 10000) }
 
   const userStats = useMemo(() => {
     // For logged-in users
