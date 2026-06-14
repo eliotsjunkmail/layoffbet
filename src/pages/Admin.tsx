@@ -65,8 +65,8 @@ export const Admin = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Admin Panel</h1>
+      <div className="max-w-6xl mx-auto px-4 py-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Admin Panel</h1>
 
         {message && (
           <div className={`rounded-xl p-4 mb-6 border ${message.type === 'error'
@@ -78,7 +78,7 @@ export const Admin = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto">
+        <div className="flex gap-2 mb-3 overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
