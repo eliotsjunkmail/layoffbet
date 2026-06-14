@@ -340,7 +340,7 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* Entertainment Disclaimer */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4 text-sm text-blue-800 dark:text-blue-300">
-          <span className="font-semibold">Disclaimer:</span> This site is for entertainment purposes only. All predictions are speculative and should not be used for investment or employment decisions.
+          This site is for entertainment purposes only
         </div>
 
         {/* User Stats (logged in) or Coins for anonymous */}
