@@ -65,11 +65,11 @@ export const Admin = () => {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Admin Panel</h1>
+      <div className="max-w-6xl mx-auto px-0 py-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3 px-4">Admin Panel</h1>
 
         {message && (
-          <div className={`rounded-xl p-4 mb-6 border ${message.type === 'error'
+          <div className={`rounded-xl p-4 mb-6 border mx-4 ${message.type === 'error'
             ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-600 dark:text-red-300'
             : 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 text-green-600 dark:text-green-300'
           }`}>
@@ -78,7 +78,7 @@ export const Admin = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-3 overflow-x-auto">
+        <div className="flex gap-2 mb-3 overflow-x-auto px-4">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -103,7 +103,7 @@ export const Admin = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden mx-4">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
