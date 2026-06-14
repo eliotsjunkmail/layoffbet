@@ -112,7 +112,7 @@ export const Header = () => {
             <div className="flex items-baseline gap-0.5">
               <span className="font-semibold text-gray-600 dark:text-slate-300 text-xs sm:text-sm tracking-tight">Layoff</span>
               <span className="font-black text-blue-600 dark:text-blue-400 text-xs sm:text-sm tracking-tight">Bet</span>
-              <span className="text-xs text-gray-400 dark:text-slate-500 ml-1 hidden sm:inline">v1.56</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500 ml-1 hidden sm:inline">v1.57</span>
             </div>
           </Link>
 
