@@ -241,6 +241,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Tagline */}
         <div className="flex justify-center mb-6">
           <div className="text-center">
+            <div className="flex items-baseline justify-center gap-1 mb-2">
+              <span className="text-2xl font-semibold text-slate-300 tracking-tight">Layoff</span>
+              <span className="text-2xl font-black text-blue-400 tracking-tight">Bet</span>
+            </div>
             <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
           </div>
         </div>
@@ -278,7 +282,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         <div className="text-center mt-8 space-y-2">
-          <p className="text-xs text-slate-600">v1.55</p>
+          <p className="text-xs text-slate-600">v1.56</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
