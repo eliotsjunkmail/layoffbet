@@ -7,10 +7,11 @@ import { Layout } from '../components/Layout'
 export const CreateEvent = () => {
   const companies = useStore(s => s.companies)
   const createEvent = useStore(s => s.createEvent)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const navigate = useNavigate()
 
   const { state } = useLocation() as { state: { companyId?: string } | null }
-  const sorted = [...companies].sort((a, b) => a.name.localeCompare(b.name))
+  const sorted = [...companies].filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name))
   const minDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]
   const maxDate = new Date(Date.now() + 730 * 86400000).toISOString().split('T')[0]
   const [companyId, setCompanyId] = useState(state?.companyId ?? sorted[0]?.id ?? '')

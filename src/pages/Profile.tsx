@@ -10,6 +10,7 @@ export const Profile = () => {
   const events = useStore(s => s.events)
   const companies = useStore(s => s.companies)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
 
   if (!currentUser || !currentUser.username) return null
@@ -72,7 +73,7 @@ export const Profile = () => {
             <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">My Favorites ({favoriteCompanyIds.length})</h2>
           </div>
           <div className="grid grid-cols-1 gap-2">
-            {favoriteCompanyIds.map(companyId => {
+            {favoriteCompanyIds.filter(cid => !hiddenCompanyIds.includes(cid)).map(companyId => {
               const company = companies.find(c => c.id === companyId)
               if (!company) return null
               return (

@@ -25,6 +25,7 @@ export const EventDetail = () => {
   const deleteComment = useStore(s => s.deleteComment)
   const resolveEvent = useStore(s => s.resolveEvent)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
 
   const [commentText, setCommentText] = useState('')
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
@@ -60,7 +61,7 @@ export const EventDetail = () => {
     return () => { document.title = 'Layoff Bet' }
   }, [event])
 
-  if (!event) return <Navigate to="/" replace />
+  if (!event || hiddenCompanyIds.includes(event.companyId)) return <Navigate to="/" replace />
 
   const status = getEffectiveStatus(event)
   const prob = getProbability(event.yesPool, event.noPool)
