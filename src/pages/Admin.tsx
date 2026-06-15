@@ -280,7 +280,9 @@ export const Admin = () => {
                     const isToggling = togglingCompanyId === company.id
 
                     // Calculate bets and comments for this company
-                    const activeEventsForCompany = events.filter(e => e.companyId === company.id && getEffectiveStatus(e) === 'active')
+                    const eventsForCompany = events.filter(e => e.companyId === company.id)
+                    const allBetsCount = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId)).length
+                    const activeEventsForCompany = eventsForCompany.filter(e => getEffectiveStatus(e) === 'active')
                     const activeBetsCount = bets.filter(b => activeEventsForCompany.some(e => e.id === b.eventId)).length
                     const commentsCount = comments.filter(c => c.companyId === company.id).length
 
