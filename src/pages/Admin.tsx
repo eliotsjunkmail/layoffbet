@@ -14,6 +14,7 @@ export const Admin = () => {
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const toggleHiddenCompany = useStore(s => s.toggleHiddenCompany)
+  const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
 
   const [activeTab, setActiveTab] = useState<Tab>('companies')
   const [loading, setLoading] = useState(false)
