@@ -486,9 +486,30 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' })
 })
 
+// Migrate comments to include companyId
+const migrateComments = async () => {
+  const data = await readData()
+  let updated = 0
+  data.comments = data.comments.map(comment => {
+    if (!comment.companyId && comment.eventId) {
+      const event = data.events.find(e => e.id === comment.eventId)
+      if (event && event.companyId) {
+        comment.companyId = event.companyId
+        updated++
+      }
+    }
+    return comment
+  })
+  if (updated > 0) {
+    await writeData(data)
+    console.log(`Migrated ${updated} comments to include companyId`)
+  }
+}
+
 // Start server
 const PORT = process.env.PORT || 3000
 initData().then(() => {
+  migrateComments().catch(err => console.error('Migration failed:', err))
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
   })
