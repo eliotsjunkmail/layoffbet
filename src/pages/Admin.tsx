@@ -275,7 +275,7 @@ export const Admin = () => {
                       <tr>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
-                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Bets</th>
+                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Events</th>
                         <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comments</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
                         <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
@@ -286,9 +286,9 @@ export const Admin = () => {
                     const isHidden = hiddenCompanyIds.includes(company.id)
                     const isToggling = togglingCompanyId === company.id
 
-                    // Calculate bets and comments for this company
+                    // Calculate active events and comments for this company
                     const eventsForCompany = events.filter(e => e.companyId === company.id)
-                    const betsCount = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId)).length
+                    const activeEventsCount = eventsForCompany.filter(e => getEffectiveStatus(e) === 'active').length
                     const commentsCount = comments.filter(c => c.companyId === company.id).length
 
                     const handleToggle = async () => {
@@ -318,7 +318,7 @@ export const Admin = () => {
                           </label>
                         </td>
                         <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
-                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{betsCount}</td>
+                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{activeEventsCount}</td>
                         <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
                         <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                           {new Date(company.createdAt).toLocaleDateString()}
