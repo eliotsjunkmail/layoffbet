@@ -232,12 +232,12 @@ export const Admin = () => {
         {/* Companies Tab */}
         {activeTab === 'companies' && (() => {
           const companiesWithActivity = companies.filter(c => {
-            const companyBets = bets.filter(b => {
-              const event = events.find(e => e.id === b.eventId)
-              return event?.companyId === c.id
-            }).length
-            const companyComments = comments.filter(c2 => c2.companyId === c.id).length
-            return companyBets > 0 || companyComments > 0
+            // Check if company has bets on any of its events
+            const eventsForCompany = events.filter(e => e.companyId === c.id)
+            const betsOnCompanyEvents = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId))
+            const companyComments = comments.filter(c2 => c2.companyId === c.id)
+
+            return betsOnCompanyEvents.length > 0 || companyComments.length > 0
           })
 
           const displayedCompanies = showOnlyActive ? companiesWithActivity : companies
@@ -255,7 +255,7 @@ export const Admin = () => {
                   <div className={`relative w-11 h-6 rounded-full transition-colors ${showOnlyActive ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
                     <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${showOnlyActive ? 'translate-x-5' : ''}`} />
                   </div>
-                  <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300">Show only companies with activity</span>
+                  <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300">Only companies with activity</span>
                 </label>
               </div>
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden mx-4">
