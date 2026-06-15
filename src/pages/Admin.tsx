@@ -279,8 +279,8 @@ export const Admin = () => {
                     const isToggling = togglingCompanyId === company.id
 
                     // Calculate bets and comments for this company
-                    const eventsForCompany = events.filter(e => e.companyId === company.id)
-                    const betsCount = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId)).length
+                    const activeEventsForCompany = events.filter(e => e.companyId === company.id && getEffectiveStatus(e) === 'active')
+                    const activeBetsCount = bets.filter(b => activeEventsForCompany.some(e => e.id === b.eventId)).length
                     const commentsCount = comments.filter(c => c.companyId === company.id).length
 
                     const handleToggle = async () => {
@@ -312,7 +312,7 @@ export const Admin = () => {
                         <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.slug}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.industry}</td>
-                        <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{betsCount}</td>
+                        <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{activeBetsCount}</td>
                         <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
                           {new Date(company.createdAt).toLocaleDateString()}
