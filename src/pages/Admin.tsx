@@ -19,7 +19,7 @@ export const Admin = () => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)
-  const [showOnlyActive, setShowOnlyActive] = useState(true)
+  const [showOnlyActive, setShowOnlyActive] = useState(false)
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
