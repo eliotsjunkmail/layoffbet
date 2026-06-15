@@ -1077,16 +1077,18 @@ export const useStore = create<StoreState>()(
       },
 
       addComment: (eventId, content) => {
-        const { currentUser } = get()
+        const { currentUser, events } = get()
         if (!currentUser) return { ok: false, error: 'Must be logged in to comment' }
 
         const trimmed = content.trim()
         if (!trimmed) return { ok: false, error: 'Comment cannot be empty' }
         if (!validateNoPersonalNames(trimmed)) return { ok: false, error: 'Please avoid using personal names in comments' }
 
+        const event = events.find(e => e.id === eventId)
         const comment: Comment = {
           id: `cmt-${uid()}`,
           eventId,
+          companyId: event?.companyId,
           userId: currentUser.id,
           content: trimmed,
           createdAt: new Date().toISOString(),
