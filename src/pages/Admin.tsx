@@ -105,28 +105,28 @@ export const Admin = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden mx-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Username</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Password</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Coins</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Username</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Password</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Coins</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {nonAdminUsers.map(user => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{user.username}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400 font-mono text-xs">{user.password || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{user.coins}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
+                      <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{user.username}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 font-mono text-xs">{user.password || '-'}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{user.coins}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-2 py-4 text-right">
                         <button
                           onClick={() => deleteItem('users', user.id)}
                           disabled={loading}
@@ -146,30 +146,30 @@ export const Admin = () => {
 
         {/* Bets Tab */}
         {activeTab === 'bets' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Side</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Side</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Amount</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {bets.map(bet => (
                     <tr key={bet.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{getUsername(bet.userId)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(bet.eventId)}</td>
-                      <td className="px-6 py-4 text-sm"><span className={`px-2 py-1 rounded text-xs font-medium ${bet.side === 'yes' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>{bet.side.toUpperCase()}</span></td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{bet.amount}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
+                      <td className="px-2 py-4 text-sm text-gray-900 dark:text-white">{getUsername(bet.userId)}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(bet.eventId)}</td>
+                      <td className="px-2 py-4 text-sm"><span className={`px-2 py-1 rounded text-xs font-medium ${bet.side === 'yes' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>{bet.side.toUpperCase()}</span></td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{bet.amount}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                         {new Date(bet.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-2 py-4 text-right">
                         <button
                           onClick={() => deleteItem('bets', bet.id)}
                           disabled={loading}
@@ -189,30 +189,30 @@ export const Admin = () => {
 
         {/* Comments Tab */}
         {activeTab === 'comments' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comment</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Upvotes</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comment</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Upvotes</th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {comments.map(comment => (
                     <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{getUsername(comment.userId)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(comment.eventId)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{comment.upvotes || 0}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
+                      <td className="px-2 py-4 text-sm text-gray-900 dark:text-white">{getUsername(comment.userId)}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(comment.eventId)}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{comment.upvotes || 0}</td>
+                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-2 py-4 text-right">
                         <button
                           onClick={() => deleteItem('comments', comment.id)}
                           disabled={loading}
@@ -245,7 +245,7 @@ export const Admin = () => {
 
           return (
             <>
-              <div className="flex items-center gap-3 mb-4 px-4">
+              <div className="flex items-center gap-3 mb-4 px-0">
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -259,19 +259,17 @@ export const Admin = () => {
                   <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300">Only companies with activity</span>
                 </label>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden mx-4">
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Slug</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Bets</th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comments</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
+                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Bets</th>
+                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comments</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
                       </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -298,7 +296,7 @@ export const Admin = () => {
                     }
                     return (
                       <tr key={company.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 ${isHidden ? 'opacity-50' : ''}`}>
-                        <td className="px-6 py-4">
+                        <td className="px-2 py-4">
                           <label className="flex items-center cursor-pointer">
                             <input
                               type="checkbox"
@@ -312,15 +310,13 @@ export const Admin = () => {
                             </div>
                           </label>
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.slug}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.industry}</td>
-                        <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{activeBetsCount}</td>
-                        <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
+                        <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
+                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{activeBetsCount}</td>
+                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                           {new Date(company.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-2 py-4 text-right">
                           <button
                             onClick={() => deleteItem('companies', company.id)}
                             disabled={loading}
