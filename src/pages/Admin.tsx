@@ -233,12 +233,13 @@ export const Admin = () => {
         {/* Companies Tab */}
         {activeTab === 'companies' && (() => {
           const companiesWithActivity = companies.filter(c => {
-            // Check if company has bets on any of its events
+            // Check if company has active events, bets, or comments
             const eventsForCompany = events.filter(e => e.companyId === c.id)
+            const activeEventsForCompany = eventsForCompany.filter(e => getEffectiveStatus(e) === 'active')
             const betsOnCompanyEvents = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId))
             const companyComments = comments.filter(c2 => c2.companyId === c.id)
 
-            return betsOnCompanyEvents.length > 0 || companyComments.length > 0
+            return activeEventsForCompany.length > 0 || betsOnCompanyEvents.length > 0 || companyComments.length > 0
           })
 
           // Sort companies: BNY first, then by name
