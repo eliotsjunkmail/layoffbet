@@ -241,7 +241,16 @@ export const Admin = () => {
             return betsOnCompanyEvents.length > 0 || companyComments.length > 0
           })
 
-          const displayedCompanies = showOnlyActive ? companiesWithActivity : companies
+          // Sort companies: BNY first, then by name
+          const sortedCompanies = (list: typeof companies) => {
+            return [...list].sort((a, b) => {
+              if (a.name === 'BNY') return -1
+              if (b.name === 'BNY') return 1
+              return a.name.localeCompare(b.name)
+            })
+          }
+
+          const displayedCompanies = showOnlyActive ? sortedCompanies(companiesWithActivity) : sortedCompanies(companies)
 
           return (
             <>
@@ -279,9 +288,7 @@ export const Admin = () => {
 
                     // Calculate bets and comments for this company
                     const eventsForCompany = events.filter(e => e.companyId === company.id)
-                    const allBetsCount = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId)).length
-                    const activeEventsForCompany = eventsForCompany.filter(e => getEffectiveStatus(e) === 'active')
-                    const activeBetsCount = bets.filter(b => activeEventsForCompany.some(e => e.id === b.eventId)).length
+                    const betsCount = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId)).length
                     const commentsCount = comments.filter(c => c.companyId === company.id).length
 
                     const handleToggle = async () => {
@@ -311,7 +318,7 @@ export const Admin = () => {
                           </label>
                         </td>
                         <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
-                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{activeBetsCount}</td>
+                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{betsCount}</td>
                         <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
                         <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                           {new Date(company.createdAt).toLocaleDateString()}
