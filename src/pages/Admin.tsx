@@ -267,6 +267,8 @@ export const Admin = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Slug</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Bets</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comments</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
                       </tr>
@@ -275,6 +277,12 @@ export const Admin = () => {
                   {displayedCompanies.map(company => {
                     const isHidden = hiddenCompanyIds.includes(company.id)
                     const isToggling = togglingCompanyId === company.id
+
+                    // Calculate bets and comments for this company
+                    const eventsForCompany = events.filter(e => e.companyId === company.id)
+                    const betsCount = bets.filter(b => eventsForCompany.some(e => e.id === b.eventId)).length
+                    const commentsCount = comments.filter(c => c.companyId === company.id).length
+
                     const handleToggle = async () => {
                       setTogglingCompanyId(company.id)
                       try {
@@ -304,6 +312,8 @@ export const Admin = () => {
                         <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.slug}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{company.industry}</td>
+                        <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{betsCount}</td>
+                        <td className="px-6 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">
                           {new Date(company.createdAt).toLocaleDateString()}
                         </td>
