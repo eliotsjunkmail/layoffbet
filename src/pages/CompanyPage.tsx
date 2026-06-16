@@ -6,6 +6,7 @@ import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { SwipeCard } from '../components/SwipeCard'
+import { LiveChat } from '../components/LiveChat'
 import { getProbability, timeUntil, formatDate, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 
@@ -565,6 +566,9 @@ export const CompanyPage = () => {
           {toast}
         </div>
       )}
+
+      {/* Live Chat */}
+      {company && <LiveChat companyName={company.name} />}
     </Layout>
   )
 }
