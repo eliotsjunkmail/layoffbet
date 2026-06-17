@@ -30,6 +30,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [isAutoUpdating, setIsAutoUpdating] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -89,7 +90,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const handleSend = async () => {
     if (!input.trim()) return
 
-    const userId = currentUser?.id || `anon-${Date.now()}`
+    const userId = myUserIdRef.current
     const displayName = currentUser?.displayName || currentUser?.username || 'Guest'
 
     const messageData = {
@@ -187,8 +188,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       {/* Header */}
       <div className="bg-blue-600 text-white px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between border-b border-blue-700">
         <div>
-          <h2 className="font-semibold text-lg">{companyName} Discussion</h2>
-          <p className="text-xs text-blue-100">Community chat about this company</p>
+          <h2 className="font-semibold text-lg">{companyName} Chat</h2>
+          <p className="text-xs text-blue-100">Live blog meetings</p>
         </div>
         <div className="flex items-center gap-2">
           {isAutoUpdating ? (
@@ -233,7 +234,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           </div>
         ) : (
           messages.map(msg => {
-            const isOwnMessage = currentUser && msg.userId === currentUser.id
+            const isOwnMessage = msg.userId === myUserIdRef.current
             return (
               <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group mb-2`}>
                 <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
