@@ -87,11 +87,14 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   }
 
   const handleSend = async () => {
-    if (!input.trim() || !currentUser) return
+    if (!input.trim()) return
+
+    const userId = currentUser?.id || `anon-${Date.now()}`
+    const displayName = currentUser?.displayName || currentUser?.username || 'Guest'
 
     const messageData = {
-      userId: currentUser.id,
-      displayName: currentUser.displayName || currentUser.username,
+      userId,
+      displayName,
       content: input.trim(),
       reactions: [],
     }
@@ -188,27 +191,27 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           <p className="text-xs text-blue-100">Community chat about this company</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/50 rounded text-xs">
-            {isAutoUpdating ? (
-              <>
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Live</span>
-              </>
-            ) : (
-              <>
+          {isAutoUpdating ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
+              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+              <span className="text-green-100">Connected</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
                 <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                <span>Offline</span>
-              </>
-            )}
-          </div>
-          <button
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className="p-2 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
-            title="Refresh chat"
-          >
-            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
+                <span className="text-yellow-100">Offline</span>
+              </div>
+              <button
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="p-2 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh chat"
+              >
+                <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </>
+          )}
           <button
             onClick={onClose}
             className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
@@ -299,30 +302,24 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
-        {currentUser ? (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyPress={e => {
-                if (e.key === 'Enter') handleSend()
-              }}
-              placeholder="Share your thoughts..."
-              className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleSend}
-              className="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:p-2.5 rounded-lg transition-colors"
-            >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-500 dark:text-slate-400">Sign in to participate in the discussion</p>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyPress={e => {
+              if (e.key === 'Enter') handleSend()
+            }}
+            placeholder="Share your thoughts..."
+            className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleSend}
+            className="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:p-2.5 rounded-lg transition-colors"
+          >
+            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        </div>
       </div>
     </div>
   )
