@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { Header } from './Header'
 import { Footer } from './Footer'
-import { FeedbackButton } from './FeedbackButton'
 
 interface LayoutProps {
   children: ReactNode
@@ -16,6 +15,5 @@ export const Layout = ({ children, hideHeader, fullWidth }: LayoutProps) => (
       {children}
     </main>
     <Footer />
-    <FeedbackButton />
   </div>
 )
