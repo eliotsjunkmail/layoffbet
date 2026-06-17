@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2 } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, MessageCircle } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { SwipeCard } from '../components/SwipeCard'
-import { LiveChat } from '../components/LiveChat'
+import { CompanyChat } from '../components/CompanyChat'
 import { getProbability, timeUntil, formatDate, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 
@@ -62,6 +62,7 @@ export const CompanyPage = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentErrors, setCommentErrors] = useState<Record<string, string>>({})
+  const [chatOpen, setChatOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -313,6 +314,14 @@ export const CompanyPage = () => {
                 <div className="flex items-center justify-between gap-2">
                   <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => setChatOpen(true)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
+                      title="Community discussion"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Chat</span>
+                    </button>
                     <button
                       onClick={handleShare}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
@@ -567,8 +576,8 @@ export const CompanyPage = () => {
         </div>
       )}
 
-      {/* Live Chat */}
-      {company && <LiveChat companyName={company.name} />}
+      {/* Community Chat */}
+      {company && <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />}
     </Layout>
   )
 }
