@@ -265,6 +265,7 @@ export const CompanyPage = () => {
   ) : null
 
   return (
+    <>
     <Layout>
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
@@ -577,13 +578,15 @@ export const CompanyPage = () => {
         </div>
       )}
 
-      {/* Community Chat */}
-      {company && (
-        <>
-          <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} />
-          <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-        </>
-      )}
     </Layout>
+
+    {/* Community Chat - positioned outside Layout for correct fixed positioning */}
+    {company && (
+      <>
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} />
+        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      </>
+    )}
+    </>
   )
 }
