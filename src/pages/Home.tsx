@@ -382,22 +382,6 @@ export const Home = () => {
           </div>
         ) : null}
       </div>
-      <div className="max-w-2xl mx-auto px-4">
-                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats?.activeBets ?? 0} active</div>
-                  </button>
-                  <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        ) : null}
 
         {/* Hero */}
         <div className={`${(currentUser || hasFavorites) ? 'pt-2 pb-2' : 'pt-6 pb-4'} text-center`}>
@@ -647,7 +631,6 @@ export const Home = () => {
             </div>
           ) : null
         })()}
-      </div>
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
