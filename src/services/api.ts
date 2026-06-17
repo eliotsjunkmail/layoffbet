@@ -236,6 +236,18 @@ export const api = {
     return response.json()
   },
 
+  // Chat user names endpoints
+  getOrAssignChatName: async (companyId: string, userId: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat-names/${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to get or assign chat name')
+    }
+    return response.json()
+  },
+
   // Companies endpoints
   toggleHiddenCompany: async (companyId: string) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/toggle-hidden`, {

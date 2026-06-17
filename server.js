@@ -36,6 +36,7 @@ const DEFAULT_DATA = {
   chatMessages: [],
   companies: [],
   favorites: {},
+  userChatNames: {},
   pinnedEvents: {},
   feedback: [],
   anonVotedEvents: {},
@@ -466,6 +467,40 @@ app.post('/api/companies/:id/toggle-hidden', async (req, res) => {
   }
   await writeData(data)
   res.json({ ok: true, hidden: !isHidden })
+})
+
+// Generate next available chat name (A, B, ..., Z, A1, B1, ..., Z1, A2, etc.)
+const generateNextChatName = (count) => {
+  if (count < 26) {
+    return String.fromCharCode(65 + count) // A-Z
+  }
+  const remainder = (count - 26) % 26
+  const cycle = Math.floor((count - 26) / 26) + 1
+  return String.fromCharCode(65 + remainder) + cycle
+}
+
+// Get or assign chat name for a user in a company
+app.post('/api/companies/:companyId/chat-names/:userId', async (req, res) => {
+  const data = await readData()
+  if (!data.userChatNames) data.userChatNames = {}
+  if (!data.userChatNames[req.params.companyId]) {
+    data.userChatNames[req.params.companyId] = {}
+  }
+
+  const companyNames = data.userChatNames[req.params.companyId]
+
+  // Check if user already has a name
+  if (companyNames[req.params.userId]) {
+    return res.json({ chatName: companyNames[req.params.userId] })
+  }
+
+  // Assign new name based on count of users who have chatted
+  const nextCount = Object.keys(companyNames).length
+  const chatName = generateNextChatName(nextCount)
+  companyNames[req.params.userId] = chatName
+
+  await writeData(data)
+  res.json({ chatName })
 })
 
 // ===== STATE SYNC =====

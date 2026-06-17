@@ -91,16 +91,19 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     if (!input.trim()) return
 
     const userId = myUserIdRef.current
-    const displayName = currentUser?.displayName || currentUser?.username || 'Guest'
-
-    const messageData = {
-      userId,
-      displayName,
-      content: input.trim(),
-      reactions: [],
-    }
 
     try {
+      // Get or assign anonymous chat name
+      const nameResponse = await api.getOrAssignChatName(companyId, userId)
+      const chatName = nameResponse.chatName
+
+      const messageData = {
+        userId,
+        displayName: chatName,
+        content: input.trim(),
+        reactions: [],
+      }
+
       const savedMessage = await api.addChatMessage(companyId, messageData)
       const newMessage: ChatMessage = {
         ...savedMessage,
