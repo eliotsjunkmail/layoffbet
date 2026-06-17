@@ -1,4 +1,4 @@
-import { Sun, Moon, ChevronLeft, Shield, Coins, MessageSquare } from 'lucide-react'
+import { Sun, Moon, ChevronLeft, Shield, Coins, MessageSquare, Check, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -9,14 +9,54 @@ export const Settings = () => {
   const theme = useStore(s => s.theme)
   const setTheme = useStore(s => s.setTheme)
   const currentUser = useStore(s => s.currentUser)
+  const updateDisplayName = useStore(s => s.updateDisplayName)
   const [showComments, setShowComments] = useState(() => {
     const stored = localStorage.getItem('showComments')
     return stored ? JSON.parse(stored) : true
   })
+  const [displayNameInput, setDisplayNameInput] = useState(currentUser?.displayName || '')
+  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false)
+  const [isLoadingDisplayName, setIsLoadingDisplayName] = useState(false)
+  const [displayNameError, setDisplayNameError] = useState('')
+  const [displayNameSuccess, setDisplayNameSuccess] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('showComments', JSON.stringify(showComments))
   }, [showComments])
+
+  useEffect(() => {
+    if (currentUser?.displayName) {
+      setDisplayNameInput(currentUser.displayName)
+    }
+  }, [currentUser?.displayName])
+
+  const handleUpdateDisplayName = async () => {
+    if (!displayNameInput.trim()) {
+      setDisplayNameError('Display name cannot be empty')
+      return
+    }
+
+    if (displayNameInput === currentUser?.displayName) {
+      setIsEditingDisplayName(false)
+      return
+    }
+
+    setIsLoadingDisplayName(true)
+    setDisplayNameError('')
+    setDisplayNameSuccess(false)
+
+    try {
+      await updateDisplayName(displayNameInput.trim())
+      setDisplayNameSuccess(true)
+      setIsEditingDisplayName(false)
+      setTimeout(() => setDisplayNameSuccess(false), 3000)
+    } catch (error) {
+      setDisplayNameError('Failed to update display name')
+      console.error(error)
+    } finally {
+      setIsLoadingDisplayName(false)
+    }
+  }
 
   return (
     <Layout>
@@ -101,6 +141,66 @@ export const Settings = () => {
               <div className="text-sm text-gray-500 dark:text-slate-400">Username</div>
               <div className="text-sm font-medium text-gray-900 dark:text-white">{currentUser.username}</div>
             </div>
+            <div className="px-5 py-4">
+              <div className="mb-2">
+                <label className="text-sm text-gray-500 dark:text-slate-400 block mb-2">Display Name</label>
+                {isEditingDisplayName ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={displayNameInput}
+                      onChange={e => setDisplayNameInput(e.target.value)}
+                      placeholder="Enter your display name"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {displayNameError && (
+                      <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                        <AlertCircle className="w-3 h-3" />
+                        {displayNameError}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleUpdateDisplayName}
+                        disabled={isLoadingDisplayName}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        <Check className="w-4 h-4" />
+                        {isLoadingDisplayName ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingDisplayName(false)
+                          setDisplayNameInput(currentUser.displayName || '')
+                          setDisplayNameError('')
+                        }}
+                        className="flex-1 px-3 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {currentUser.displayName || currentUser.username}
+                    </div>
+                    <button
+                      onClick={() => setIsEditingDisplayName(true)}
+                      className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+                {displayNameSuccess && (
+                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 mt-2">
+                    <Check className="w-3 h-3" />
+                    Display name updated
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="flex items-center justify-between px-5 py-4">
               <div className="text-sm text-gray-500 dark:text-slate-400">Daily Coins</div>
               <div className="flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400">
@@ -132,7 +232,7 @@ export const Settings = () => {
         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl divide-y divide-gray-100 dark:divide-slate-700">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="text-sm text-gray-500 dark:text-slate-400">Version</div>
-            <div className="text-sm text-gray-900 dark:text-white">1.0.0</div>
+            <div className="text-sm text-gray-900 dark:text-white">0.97</div>
           </div>
           <div className="flex items-center justify-between px-5 py-4">
             <div className="text-sm text-gray-500 dark:text-slate-400">Data stored</div>

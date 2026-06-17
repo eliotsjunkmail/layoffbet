@@ -379,6 +379,7 @@ interface StoreState {
 
   login: (username: string, password: string) => boolean
   logout: () => void
+  updateDisplayName: (displayName: string) => Promise<void>
   initializeAnonymousUser: () => Promise<void>
   migrateGuestBets: () => void
   register: (username: string, password: string) => { ok: boolean; error?: string }
@@ -600,6 +601,24 @@ export const useStore = create<StoreState>()(
         localStorage.removeItem('anonCoinsSpent')
         localStorage.removeItem('layoff-bets-currentUser')
         set({ currentUser: null, guestCoins: 50, favoriteCompanyIds: [] })
+      },
+
+      updateDisplayName: async (displayName: string) => {
+        const { currentUser } = get()
+        if (!currentUser) return
+
+        try {
+          const updatedUser = await api.updateUser(currentUser.id, { displayName })
+          set(s => ({
+            currentUser: { ...s.currentUser!, displayName: updatedUser.displayName },
+            users: s.users.map(u => u.id === updatedUser.id ? updatedUser : u),
+            comments: s.comments.map(c => c.userId === currentUser.id ? { ...c, displayName: updatedUser.displayName } : c),
+          }))
+          localStorage.setItem('layoff-bets-currentUser', JSON.stringify({ ...currentUser, displayName }))
+        } catch (error) {
+          console.error('Failed to update display name:', error)
+          throw error
+        }
       },
 
       initializeAnonymousUser: async () => {
@@ -1105,6 +1124,7 @@ export const useStore = create<StoreState>()(
           eventId,
           companyId: event?.companyId,
           userId: currentUser.id,
+          displayName: currentUser.displayName || currentUser.username,
           content: trimmed,
           createdAt: new Date().toISOString(),
         }
