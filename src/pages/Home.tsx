@@ -353,44 +353,36 @@ export const Home = () => {
       `}</style>
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
-        {/* User Stats (logged in) or Coins for anonymous */}
+        {/* User Stats (logged in) or Coins for anonymous - Compact Badge Row */}
         {(currentUser && userStats) || !currentUser ? (
-          <div className="pt-3 pb-0 -mx-4 px-4 mb-0">
-            <div className="grid grid-cols-3 gap-3">
-              <button onClick={async () => {
-                if (currentUser) {
-                  await addCoin()
-                } else if (userStats) {
-                  navigate('/bets')
-                }
-              }} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
-                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 relative inline-block flex-1 flex items-center justify-center">
-                  {currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}
-                  {coinPuff && (
-                    <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
-                      ✨
-                    </div>
-                  )}
-                </div>
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{currentUser ? 'tap to add' : 'remaining'}</div>
-              </button>
-              {currentUser && userStats && (
-                <>
-                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{userStats.activeBets} active</div>
-                  </button>
-                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
-                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">coins</div>
-                  </button>
-                </>
-              )}
-              {!currentUser && (
-                <>
+          <div className="mb-4 flex flex-wrap gap-2 items-center">
+            <button onClick={async () => {
+              if (currentUser) {
+                await addCoin()
+              } else if (userStats) {
+                navigate('/bets')
+              }
+            }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer">
+              <span className="text-lg">💰</span>
+              <span>{currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}</span>
+            </button>
+            {currentUser && userStats && (
+              <>
+                <button onClick={() => navigate('/bets')} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors cursor-pointer">
+                  <span className="text-lg">📊</span>
+                  <span>{userStats.totalBets} bets</span>
+                  {userStats.activeBets > 0 && <span className="text-green-600 dark:text-green-400 font-bold">({userStats.activeBets} active)</span>}
+                </button>
+                <button onClick={() => navigate('/bets')} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer">
+                  <span className="text-lg">💸</span>
+                  <span>{userStats.totalBetAmount} wagered</span>
+                </button>
+              </>
+            )}
+          </div>
+        ) : null}
+      </div>
+      <div className="max-w-2xl mx-auto px-4">
                   <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                     <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
                     <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
