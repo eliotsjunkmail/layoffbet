@@ -65,6 +65,9 @@ export const CompanyPage = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentErrors, setCommentErrors] = useState<Record<string, string>>({})
   const [chatOpen, setChatOpen] = useState(false)
+  const [hasNewMessages, setHasNewMessages] = useState(false)
+  const prevMessageCountRef = useRef(0)
+  const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -73,6 +76,30 @@ export const CompanyPage = () => {
   useEffect(() => {
     localStorage.setItem('anonCoinsSpent', anonCoinsSpent.toString())
   }, [anonCoinsSpent])
+
+  // Detect new messages while chat is minimized
+  useEffect(() => {
+    const companyMessages = chatMessages.filter(m => m.companyId === slug)
+    const newMessageCount = companyMessages.length
+
+    if (!chatOpen && newMessageCount > prevMessageCountRef.current) {
+      // Check if the new message is from someone else
+      const newMessages = companyMessages.slice(prevMessageCountRef.current)
+      const hasMessageFromOther = newMessages.some(m => m.userId !== myUserIdRef.current)
+      if (hasMessageFromOther) {
+        setHasNewMessages(true)
+      }
+    }
+
+    prevMessageCountRef.current = newMessageCount
+  }, [chatMessages, chatOpen, slug])
+
+  // Clear notification when chat opens
+  useEffect(() => {
+    if (chatOpen) {
+      setHasNewMessages(false)
+    }
+  }, [chatOpen])
 
   const handleAddComment = (eventId: string) => {
     if (!currentUser) return
@@ -583,7 +610,7 @@ export const CompanyPage = () => {
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
     {company && (
       <>
-        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} />
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} hasNewMessages={hasNewMessages} />
         <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </>
     )}
