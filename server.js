@@ -33,6 +33,7 @@ const DEFAULT_DATA = {
   events: [],
   bets: [],
   comments: [],
+  chatMessages: [],
   companies: [],
   favorites: {},
   pinnedEvents: {},
@@ -72,12 +73,13 @@ app.post('/api/init', async (req, res) => {
   const data = await readData()
   // Only init if empty
   if (data.users.length === 0) {
-    const { users, events, bets, comments, companies, favorites, pinnedEvents, feedback, anonVotedEvents, hiddenCompanyIds } = req.body
+    const { users, events, bets, comments, chatMessages, companies, favorites, pinnedEvents, feedback, anonVotedEvents, hiddenCompanyIds } = req.body
     const newData = {
       users: users || [],
       events: events || [],
       bets: bets || [],
       comments: comments || [],
+      chatMessages: chatMessages || [],
       companies: companies || [],
       favorites: favorites || {},
       pinnedEvents: pinnedEvents || {},
@@ -93,7 +95,7 @@ app.post('/api/init', async (req, res) => {
 
 // ===== RESET =====
 app.post('/api/reset', async (req, res) => {
-  const { users, events, bets, comments, companies, favorites, pinnedEvents, feedback, anonVotedEvents, hiddenCompanyIds } = req.body
+  const { users, events, bets, comments, chatMessages, companies, favorites, pinnedEvents, feedback, anonVotedEvents, hiddenCompanyIds } = req.body
   // Reset to seed data - remove all non-admin users and their data
   const adminIds = users.filter(u => u.isAdmin).map(u => u.id)
   const seedUsers = users.filter(u => u.isAdmin)
@@ -104,6 +106,7 @@ app.post('/api/reset', async (req, res) => {
     events: seedEvents,
     bets: [],
     comments: comments.filter(c => adminIds.includes(c.userId)),
+    chatMessages: [],
     companies: companies,
     favorites: {},
     pinnedEvents: {},
@@ -390,6 +393,36 @@ app.post('/api/comments/:id/upvote', async (req, res) => {
   res.json(comment)
 })
 
+// ===== CHAT MESSAGES =====
+app.get('/api/companies/:companyId/chat', async (req, res) => {
+  const data = await readData()
+  const messages = data.chatMessages.filter(m => m.companyId === req.params.companyId)
+  res.json(messages)
+})
+
+app.post('/api/companies/:companyId/chat', async (req, res) => {
+  const data = await readData()
+  const message = {
+    id: 'msg-' + crypto.randomBytes(8).toString('hex'),
+    companyId: req.params.companyId,
+    ...req.body,
+    createdAt: new Date().toISOString(),
+  }
+  if (!data.chatMessages) data.chatMessages = []
+  data.chatMessages.push(message)
+  await writeData(data)
+  res.json(message)
+})
+
+app.delete('/api/companies/:companyId/chat/:messageId', async (req, res) => {
+  const data = await readData()
+  const idx = data.chatMessages.findIndex(m => m.id === req.params.messageId && m.companyId === req.params.companyId)
+  if (idx === -1) return res.status(404).json({ error: 'Message not found' })
+  data.chatMessages.splice(idx, 1)
+  await writeData(data)
+  res.json({ ok: true })
+})
+
 // ===== COMPANIES =====
 app.get('/api/companies', async (req, res) => {
   const data = await readData()
@@ -443,6 +476,7 @@ app.get('/api/sync', async (req, res) => {
     events: data.events,
     bets: data.bets,
     comments: data.comments,
+    chatMessages: data.chatMessages || [],
     companies: data.companies,
     favorites: data.favorites || {},
     pinnedEvents: data.pinnedEvents || {},

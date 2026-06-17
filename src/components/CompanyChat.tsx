@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
+import { api } from '../services/api'
 
 type ReactionType = 'thumbsup' | 'thumbsdown' | 'laugh' | 'cry'
 
@@ -24,6 +25,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -33,21 +35,46 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     scrollToBottom()
   }, [messages])
 
-  const handleSend = () => {
+  useEffect(() => {
+    if (isOpen) {
+      loadMessages()
+    }
+  }, [isOpen, companyId])
+
+  const loadMessages = async () => {
+    setIsLoading(true)
+    try {
+      const loadedMessages = await api.getChatMessages(companyId)
+      setMessages(loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) })))
+    } catch (error) {
+      console.error('Failed to load chat messages:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSend = async () => {
     if (!input.trim() || !currentUser) return
 
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      companyId,
+    const messageData = {
       userId: currentUser.id,
-      username: currentUser.username || 'Anonymous',
+      displayName: currentUser.displayName || currentUser.username,
       content: input.trim(),
-      createdAt: new Date(),
       reactions: [],
     }
 
-    setMessages(prev => [...prev, newMessage])
-    setInput('')
+    try {
+      const savedMessage = await api.addChatMessage(companyId, messageData)
+      const newMessage: ChatMessage = {
+        ...savedMessage,
+        createdAt: new Date(savedMessage.createdAt),
+        reactions: [],
+      }
+      setMessages(prev => [...prev, newMessage])
+      setInput('')
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    }
   }
 
   const toggleReaction = (messageId: string, reactionType: ReactionType) => {
@@ -80,11 +107,17 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     )
   }
 
-  const deleteMessage = (messageId: string) => {
+  const deleteMessage = async (messageId: string) => {
     if (!currentUser) return
     const message = messages.find(m => m.id === messageId)
     if (!message || message.userId !== currentUser.id) return
-    setMessages(prev => prev.filter(m => m.id !== messageId))
+
+    try {
+      await api.deleteChatMessage(companyId, messageId)
+      setMessages(prev => prev.filter(m => m.id !== messageId))
+    } catch (error) {
+      console.error('Failed to delete message:', error)
+    }
   }
 
   const getReactionEmoji = (type: ReactionType) => {

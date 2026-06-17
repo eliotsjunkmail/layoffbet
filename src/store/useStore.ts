@@ -367,6 +367,7 @@ interface StoreState {
   events: Event[]
   bets: Bet[]
   comments: Comment[]
+  chatMessages: any[]
   theme: Theme
   onboardingCompanyId: string | null
   favoriteCompanyIds: string[]
@@ -434,6 +435,7 @@ export const useStore = create<StoreState>()(
       events: SEED_EVENTS,
       bets: [],
       comments: SEED_COMMENTS,
+      chatMessages: [],
       theme: 'light',
       onboardingCompanyId: null,
       favoriteCompanyIds: [],
@@ -1290,6 +1292,7 @@ export const useStore = create<StoreState>()(
               events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
               bets: mergedBets,
               comments: mergedComments,
+              chatMessages: serverData.chatMessages || [],
               companies: serverData.companies.length > 0 ? serverData.companies : SEED_COMPANIES,
               favoriteCompanyIds: newFavs,
               pinnedEventIds: newPinned,
@@ -1311,6 +1314,7 @@ export const useStore = create<StoreState>()(
         events: s.events,
         bets: s.bets,
         comments: s.comments,
+        chatMessages: s.chatMessages,
         currentUser: s.currentUser,
         theme: s.theme,
         onboardingCompanyId: s.onboardingCompanyId,

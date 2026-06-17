@@ -204,6 +204,38 @@ export const api = {
     return response.json()
   },
 
+  // Chat message endpoints
+  getChatMessages: async (companyId: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch chat messages')
+    }
+    return response.json()
+  },
+
+  addChatMessage: async (companyId: string, message: any) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(message),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to add chat message')
+    }
+    return response.json()
+  },
+
+  deleteChatMessage: async (companyId: string, messageId: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat/${messageId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to delete chat message')
+    }
+    return response.json()
+  },
+
   // Companies endpoints
   toggleHiddenCompany: async (companyId: string) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/toggle-hidden`, {
