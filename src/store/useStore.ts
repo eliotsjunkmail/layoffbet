@@ -10,6 +10,7 @@ const futureDate = (days: number) => new Date(Date.now() + days * 86400000).toIS
 const pastDate = (days: number) => new Date(Date.now() - days * 86400000).toISOString()
 
 const SEED_COMPANIES: Company[] = [
+  { id: 'comp-0',  name: 'ACME LLC', color: '#FF6B35',                     slug: 'acme-llc',           description: 'ACME LLC is a diversified technology and business services company serving enterprise clients worldwide. Known for innovation in data management, enterprise software, and professional services.', industry: 'Technology & Services', viewCount: 42334, createdAt: pastDate(60) },
   { id: 'comp-1',  name: 'Accenture Inc', color: '#A100F2',             slug: 'accenture',          description: 'Global professional services firm specializing in IT consulting, digital transformation, and outsourcing',          industry: 'Consulting',             viewCount: 142341, createdAt: pastDate(60) },
   { id: 'comp-2',  name: 'ADP', color: '#003DA5',                         slug: 'adp',                description: 'Leading provider of payroll, HR, and workforce management solutions for businesses of all sizes',                  industry: 'HR Technology',          viewCount: 89204,  createdAt: pastDate(58) },
   { id: 'comp-3',  name: 'AIG', color: '#001F3F',                         slug: 'aig',                description: 'Multinational insurance and financial services corporation offering property, casualty, and life insurance',        industry: 'Insurance',              viewCount: 67891,  createdAt: pastDate(56) },
@@ -300,6 +301,20 @@ const SEED_EVENTS: Event[] = [
     description: 'Meta is actively flattening organizational structures and eliminating management layers. Historical pattern shows executive departures accelerate during major restructuring as senior leaders lose direct reports and influence. Some may opt for severance rather than relocate or restructure their teams.',
     expiresAt: futureDate(90), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
     yesPool: 420, noPool: 280, outcome: null, createdAt: pastDate(1), viewCount: 5123, shareCount: 0,
+  },
+  {
+    id: 'evt-acme-1', companyId: 'comp-0', companyName: 'ACME LLC',
+    title: 'ACME Q2 2024 Reorganization',
+    description: 'Structural realignment affecting 8% of workforce. Multiple sources inside the company indicate major cost optimization and efficiency improvements planned for Q2.',
+    expiresAt: futureDate(60), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 280, noPool: 120, outcome: null, createdAt: pastDate(2), viewCount: 1234, shareCount: 0,
+  },
+  {
+    id: 'evt-acme-2', companyId: 'comp-0', companyName: 'ACME LLC',
+    title: 'ACME Strategic Cost Reduction Initiative',
+    description: 'Cost optimization program impacting multiple divisions. Reports suggest efficiency improvements and strategic refocusing will require significant headcount adjustments.',
+    expiresAt: futureDate(90), status: 'active', creatorId: 'user-eliot', creatorName: 'eliotsjunkmail@gmail.com',
+    yesPool: 320, noPool: 180, outcome: null, createdAt: pastDate(1), viewCount: 2145, shareCount: 0,
   },
 ]
 
