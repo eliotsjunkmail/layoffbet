@@ -147,13 +147,6 @@ export const CompanyPage = () => {
     }
   }, [currentUser, bets, events, getEffectiveStatus])
 
-  const chatUserCount = useMemo(() => {
-    if (!company) return 0
-    const companyMessages = chatMessages.filter(m => m.companyId === company.id)
-    const uniqueUserIds = new Set(companyMessages.map(m => m.userId))
-    return uniqueUserIds.size
-  }, [company, chatMessages])
-
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
     const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
@@ -187,6 +180,13 @@ export const CompanyPage = () => {
   }
 
   const company = companies.find(c => c.slug === slug)
+
+  const chatUserCount = useMemo(() => {
+    if (!company) return 0
+    const companyMessages = chatMessages.filter(m => m.companyId === company.id)
+    const uniqueUserIds = new Set(companyMessages.map(m => m.userId))
+    return uniqueUserIds.size
+  }, [company, chatMessages])
 
   const prevVisitTimeRef = useRef<string | undefined>(company ? companyLastVisit[company.id] : undefined)
 
