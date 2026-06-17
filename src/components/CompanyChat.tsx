@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2 } from 'lucide-react'
+import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -158,8 +158,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         <button
           onClick={onClose}
           className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+          title="Minimize chat"
         >
-          <X className="w-6 h-6" />
+          <ChevronDown className="w-6 h-6" />
         </button>
       </div>
 
