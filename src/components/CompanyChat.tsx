@@ -14,7 +14,8 @@ interface ChatMessage {
   id: string
   companyId: string
   userId: string
-  username: string
+  displayName?: string
+  username?: string
   content: string
   createdAt: Date
   reactions: Reaction[]
@@ -172,63 +173,70 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
             </div>
           </div>
         ) : (
-          messages.map(msg => (
-            <div key={msg.id} className="flex flex-col group">
-              <div className="flex items-start gap-3">
-                <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg p-3 sm:p-4">
-                  <div className="flex items-center justify-end mb-1">
-                    <span className="text-xs text-gray-400 dark:text-slate-500">
-                      {msg.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+          messages.map(msg => {
+            const isOwnMessage = currentUser && msg.userId === currentUser.id
+            return (
+              <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group mb-2`}>
+                <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+                  {!isOwnMessage && (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-white flex-shrink-0">
+                      {msg.displayName?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    <div className={`flex items-end gap-1 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
+                      <div
+                        className={`rounded-2xl px-4 py-2.5 break-words ${
+                          isOwnMessage
+                            ? 'bg-blue-600 text-white rounded-br-none'
+                            : 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-bl-none'
+                        }`}
+                      >
+                        <p className="text-sm">{msg.content}</p>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        {(['thumbsup', 'thumbsdown', 'laugh', 'cry'] as ReactionType[]).map(reactionType => (
+                          <button
+                            key={reactionType}
+                            onClick={() => toggleReaction(msg.id, reactionType)}
+                            className="text-lg hover:scale-125 transition-transform cursor-pointer"
+                            title={reactionType}
+                          >
+                            {getReactionEmoji(reactionType)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {msg.reactions.length > 0 && (
+                      <div className={`flex flex-wrap gap-1 ${isOwnMessage ? 'justify-end' : 'justify-start'} px-2`}>
+                        {msg.reactions.map(reaction => (
+                          <button
+                            key={reaction.type}
+                            onClick={() => toggleReaction(msg.id, reaction.type)}
+                            className="text-sm hover:scale-110 transition-transform cursor-pointer"
+                            title={reaction.type}
+                          >
+                            {getReactionEmoji(reaction.type)} <span className="text-xs">{reaction.userIds.length}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-slate-300">{msg.content}</p>
-
-                  {/* Reactions */}
-                  {msg.reactions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {msg.reactions.map(reaction => (
-                        <button
-                          key={reaction.type}
-                          onClick={() => toggleReaction(msg.id, reaction.type)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                            currentUser && reaction.userIds.includes(currentUser.id)
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300'
-                              : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'
-                          }`}
-                        >
-                          <span>{getReactionEmoji(reaction.type)}</span>
-                          {reaction.userIds.length > 0 && <span>{reaction.userIds.length}</span>}
-                        </button>
-                      ))}
+                  {isOwnMessage && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <button
+                        onClick={() => deleteMessage(msg.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Delete message"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* Reaction buttons and delete on hover */}
-              <div className="flex items-center gap-1 mt-2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                {(['thumbsup', 'thumbsdown', 'laugh', 'cry'] as ReactionType[]).map(reactionType => (
-                  <button
-                    key={reactionType}
-                    onClick={() => toggleReaction(msg.id, reactionType)}
-                    className="p-1.5 rounded text-sm transition-colors bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600"
-                    title={reactionType}
-                  >
-                    {getReactionEmoji(reactionType)}
-                  </button>
-                ))}
-                {currentUser && msg.userId === currentUser.id && (
-                  <button
-                    onClick={() => deleteMessage(msg.id)}
-                    className="p-1.5 rounded text-sm transition-colors bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
-                    title="Delete message"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
+            )
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
