@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2 } from 'lucide-react'
+import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -27,6 +27,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isAutoUpdating, setIsAutoUpdating] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -39,8 +42,37 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   useEffect(() => {
     if (isOpen) {
       loadMessages()
+      startPolling()
+    } else {
+      stopPolling()
     }
+
+    return () => stopPolling()
   }, [isOpen, companyId])
+
+  const startPolling = () => {
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
+
+    pollingIntervalRef.current = setInterval(() => {
+      loadMessages()
+    }, 3000) // Poll every 3 seconds
+  }
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+  }
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await loadMessages()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const loadMessages = async () => {
     setIsLoading(true)
@@ -155,13 +187,36 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           <h2 className="font-semibold text-lg">{companyName} Discussion</h2>
           <p className="text-xs text-blue-100">Community chat about this company</p>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
-          title="Minimize chat"
-        >
-          <ChevronDown className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/50 rounded text-xs">
+            {isAutoUpdating ? (
+              <>
+                <CheckCircle className="w-3.5 h-3.5" />
+                <span>Live</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                <span>Offline</span>
+              </>
+            )}
+          </div>
+          <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            className="p-2 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
+            title="Refresh chat"
+          >
+            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+            title="Minimize chat"
+          >
+            <ChevronDown className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
