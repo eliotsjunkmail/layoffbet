@@ -248,7 +248,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
           <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
-          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} prioritizeCompany="BNY" />
+          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} prioritizeCompany="NYB" />
           <CompanyScroller letter="C" scrollDirection="right" speed={0.1} />
         </div>
 
@@ -277,8 +277,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         </div>
 
-        <div className="text-center mt-8 space-y-2">
-          <p className="text-xs text-slate-600">v1.47</p>
+        <div className="text-center mt-6 space-y-3">
+          <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
+          <p className="text-xs text-slate-600">v1.61</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>

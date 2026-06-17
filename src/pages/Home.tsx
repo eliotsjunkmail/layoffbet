@@ -338,6 +338,14 @@ export const Home = () => {
       `}</style>
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
+        {/* Entertainment Disclaimer */}
+        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <p className="text-sm text-amber-900 dark:text-amber-100">
+            <span className="font-semibold">⚠️ For Entertainment Only:</span> All predictions and odds on this site are speculative and for entertainment purposes only. This is not financial advice.
+          </p>
+        </div>
+      </div>
+      <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
         {(currentUser && userStats) || !currentUser ? (
           <div className="pt-3 pb-0 -mx-4 px-4 mb-0">
