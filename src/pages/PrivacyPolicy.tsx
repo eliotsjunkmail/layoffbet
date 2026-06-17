@@ -21,7 +21,7 @@ export const PrivacyPolicy = () => {
       {[
         {
           title: 'Our Commitment to Anonymity',
-          body: 'Layoff Bets is built anonymous-first. We do not require your real name, email address, employer, or any identifying information to create an account or participate. Your username is the only identity associated with your activity on this platform.',
+          body: 'Layoff Live is built anonymous-first. We do not require your real name, email address, employer, or any identifying information to create an account or participate. Your username is the only identity associated with your activity on this platform.',
         },
         {
           title: 'Data We Collect',

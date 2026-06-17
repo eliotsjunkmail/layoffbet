@@ -340,7 +340,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               {policiesTab === 'guidelines' ? (
                 <>
                   <p className="text-gray-600 dark:text-slate-400">
-                    Layoff Bets is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+                    Layoff Live is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
                   </p>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
@@ -371,7 +371,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
                     <p className="text-gray-600 dark:text-slate-400">
-                      Layoff Bets is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
+                      Layoff Live is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
                     </p>
                   </div>
                   <div>

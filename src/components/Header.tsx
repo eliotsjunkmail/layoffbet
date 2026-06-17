@@ -111,7 +111,7 @@ export const Header = () => {
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <div className="flex items-baseline gap-0.5">
               <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
-              <span className="font-black text-blue-600 dark:text-blue-400 text-sm tracking-tight">Bet</span>
+              <span className="font-black text-blue-600 dark:text-blue-400 text-sm tracking-tight">Live</span>
               <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">v1.61</span>
             </div>
           </Link>

@@ -57,8 +57,8 @@ export const EventDetail = () => {
   const event = events.find(e => e.id === id)
 
   useEffect(() => {
-    if (event) document.title = `${event.companyName} | Layoff Bet`
-    return () => { document.title = 'Layoff Bet' }
+    if (event) document.title = `${event.companyName} | Layoff Live`
+    return () => { document.title = 'Layoff Live' }
   }, [event])
 
   if (!event || hiddenCompanyIds.includes(event.companyId)) return <Navigate to="/" replace />
@@ -157,7 +157,7 @@ export const EventDetail = () => {
     const url = company
       ? `${window.location.origin}/${company.slug}/bet/${id}/${eventSlug}`
       : `${window.location.origin}/event/${id}`
-    const shareText = `"${event.title}" — ${prob.yes}% likely on Layoff Bet`
+    const shareText = `"${event.title}" — ${prob.yes}% likely on Layoff Live`
     const shareData = {
       title: event.companyName,
       text: shareText,
