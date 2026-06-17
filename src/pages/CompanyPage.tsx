@@ -66,8 +66,10 @@ export const CompanyPage = () => {
   const [commentErrors, setCommentErrors] = useState<Record<string, string>>({})
   const [chatOpen, setChatOpen] = useState(false)
   const [hasNewMessages, setHasNewMessages] = useState(false)
+  const [shouldShake, setShouldShake] = useState(false)
   const prevMessageCountRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
+  const shakeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -86,18 +88,33 @@ export const CompanyPage = () => {
       // Check if the new message is from someone else
       const newMessages = companyMessages.slice(prevMessageCountRef.current)
       const hasMessageFromOther = newMessages.some(m => m.userId !== myUserIdRef.current)
-      if (hasMessageFromOther) {
+      if (hasMessageFromOther && !hasNewMessages) {
+        // First new message: trigger shake and start 20-second timer
         setHasNewMessages(true)
+        setShouldShake(true)
+        setTimeout(() => setShouldShake(false), 600) // Duration of shake animation
+
+        // Set up interval to shake every 20 seconds
+        if (shakeTimerRef.current) clearInterval(shakeTimerRef.current)
+        shakeTimerRef.current = setInterval(() => {
+          setShouldShake(true)
+          setTimeout(() => setShouldShake(false), 600)
+        }, 20000)
       }
     }
 
     prevMessageCountRef.current = newMessageCount
-  }, [chatMessages, chatOpen, slug])
+  }, [chatMessages, chatOpen, slug, hasNewMessages])
 
-  // Clear notification when chat opens
+  // Clear notification and timer when chat opens
   useEffect(() => {
     if (chatOpen) {
       setHasNewMessages(false)
+      setShouldShake(false)
+      if (shakeTimerRef.current) {
+        clearInterval(shakeTimerRef.current)
+        shakeTimerRef.current = null
+      }
     }
   }, [chatOpen])
 
@@ -610,7 +627,7 @@ export const CompanyPage = () => {
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
     {company && (
       <>
-        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} hasNewMessages={hasNewMessages} />
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} hasNewMessages={hasNewMessages} shouldShake={shouldShake} />
         <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </>
     )}

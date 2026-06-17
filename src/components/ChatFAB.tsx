@@ -1,20 +1,21 @@
 import { MessageCircle } from 'lucide-react'
 
-export const ChatFAB = ({ companyName, onClick, userCount, hasNewMessages }: { companyName: string; onClick: () => void; userCount?: number; hasNewMessages?: boolean }) => {
+export const ChatFAB = ({ companyName, onClick, userCount, hasNewMessages, shouldShake }: { companyName: string; onClick: () => void; userCount?: number; hasNewMessages?: boolean; shouldShake?: boolean }) => {
   return (
     <>
       <style>{`
-        @keyframes fabPulse {
-          0%, 100% { box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5); }
-          50% { box-shadow: 0 10px 35px rgba(37, 99, 235, 0.8); }
+        @keyframes fabShake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+          20%, 40%, 60%, 80% { transform: translateX(4px); }
         }
-        .fab-new-message {
-          animation: fabPulse 1.5s ease-in-out infinite;
+        .fab-shake {
+          animation: fabShake 0.6s ease-in-out;
         }
       `}</style>
       <button
         onClick={onClick}
-        className={`fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 font-medium text-sm hover:scale-105 active:scale-95 ${hasNewMessages ? 'fab-new-message' : ''}`}
+        className={`fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 font-medium text-sm hover:scale-105 active:scale-95 ${shouldShake ? 'fab-shake' : ''}`}
         title={`${companyName} chat${userCount ? ` (${userCount} ${userCount === 1 ? 'user' : 'users'})` : ''}`}
       >
       <MessageCircle className="w-5 h-5" />
