@@ -48,6 +48,7 @@ export const CompanyPage = () => {
   const deleteComment = useStore(s => s.deleteComment)
   const upvoteComment = useStore(s => s.upvoteComment)
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
+  const chatMessages = useStore(s => s.chatMessages)
   const [shareCopied, setShareCopied] = useState(false)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -145,6 +146,13 @@ export const CompanyPage = () => {
       totalBetAmount,
     }
   }, [currentUser, bets, events, getEffectiveStatus])
+
+  const chatUserCount = useMemo(() => {
+    if (!company) return 0
+    const companyMessages = chatMessages.filter(m => m.companyId === company.id)
+    const uniqueUserIds = new Set(companyMessages.map(m => m.userId))
+    return uniqueUserIds.size
+  }, [company, chatMessages])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
@@ -572,7 +580,7 @@ export const CompanyPage = () => {
       {/* Community Chat */}
       {company && (
         <>
-          <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} />
+          <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} />
           <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
         </>
       )}

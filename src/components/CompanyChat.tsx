@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
@@ -31,6 +31,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [isRefreshing, setIsRefreshing] = useState(false)
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
+
+  const chatUserCount = useMemo(() => {
+    const uniqueUserIds = new Set(messages.map(m => m.userId))
+    return uniqueUserIds.size
+  }, [messages])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -190,9 +195,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col">
       {/* Header */}
       <div className="bg-blue-600 text-white px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between border-b border-blue-700">
-        <div>
-          <h2 className="font-semibold text-lg">{companyName} Chat</h2>
-          <p className="text-xs text-blue-100">Live blog meetings</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h2 className="font-semibold text-lg">{companyName} Chat</h2>
+            <p className="text-xs text-blue-100">Live blog meetings</p>
+          </div>
+          {chatUserCount > 0 && (
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white text-xs font-bold">
+              {chatUserCount > 99 ? '99+' : chatUserCount}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {isAutoUpdating ? (

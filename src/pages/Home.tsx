@@ -42,6 +42,7 @@ export const Home = () => {
   const upvoteComment = useStore(s => s.upvoteComment)
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
+  const chatMessages = useStore(s => s.chatMessages)
   const navigate = useNavigate()
   const location = useLocation()
   const users = useStore(s => s.users)
@@ -203,6 +204,17 @@ export const Home = () => {
     })
     return map
   }, [events, getEffectiveStatus])
+
+  const chatUsersByCompany = useMemo(() => {
+    const map: Record<string, number> = {}
+    chatMessages.forEach(m => {
+      const companyId = m.companyId
+      if (!companyId) return
+      const uniqueUsers = new Set(chatMessages.filter(msg => msg.companyId === companyId).map(msg => msg.userId))
+      map[companyId] = uniqueUsers.size
+    })
+    return map
+  }, [chatMessages])
 
   const typeaheadResults = useMemo(() => {
     if (!query.trim()) return []
@@ -468,6 +480,11 @@ export const Home = () => {
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                  {chatUsersByCompany[c.id] > 0 && (
+                    <span className="inline-flex items-center justify-center h-5 px-2 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold">
+                      {chatUsersByCompany[c.id]} {chatUsersByCompany[c.id] === 1 ? 'user' : 'users'}
+                    </span>
+                  )}
                 </Link>
                 <div className="flex items-center gap-2">
                   <button
