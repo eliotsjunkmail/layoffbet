@@ -473,8 +473,11 @@ export const Home = () => {
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                   {chatUsersByCompany[c.id] > 0 && (
-                    <span className="inline-flex items-center justify-center h-5 px-2 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold">
-                      {chatUsersByCompany[c.id]} {chatUsersByCompany[c.id] === 1 ? 'user' : 'users'}
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-slate-400">
+                      <span className="w-4 h-4 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
+                        {chatUsersByCompany[c.id] > 99 ? '99+' : chatUsersByCompany[c.id]}
+                      </span>
+                      <span>{chatUsersByCompany[c.id] === 1 ? 'participant' : 'participants'}</span>
                     </span>
                   )}
                 </Link>

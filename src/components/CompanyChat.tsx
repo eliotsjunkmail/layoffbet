@@ -194,40 +194,10 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col">
       {/* Header */}
-      <div className="bg-blue-600 text-white px-4 py-4 sm:px-6 sm:py-5 flex items-center justify-between border-b border-blue-700">
-        <div className="flex items-center gap-2">
-          <div>
-            <h2 className="font-semibold text-lg">{companyName} Chat</h2>
-            <p className="text-xs text-blue-100">Live blog meetings</p>
-          </div>
-          {chatUserCount > 0 && (
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-500 text-white text-xs font-bold">
-              {chatUserCount > 99 ? '99+' : chatUserCount}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {isAutoUpdating ? (
-            <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span className="text-green-100">Connected</span>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
-                <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                <span className="text-yellow-100">Offline</span>
-              </div>
-              <button
-                onClick={handleManualRefresh}
-                disabled={isRefreshing}
-                className="p-2 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
-                title="Refresh chat"
-              >
-                <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </button>
-            </>
-          )}
+      <div className="bg-blue-600 text-white px-4 py-4 sm:px-6 sm:py-5 border-b border-blue-700">
+        {/* First row: Title and minimize button */}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-semibold text-lg">{companyName} Chat</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
@@ -235,6 +205,42 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           >
             <ChevronDown className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* Second row: Subtext on left, status and user count on right */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-blue-100">Live blog meetings</p>
+          <div className="flex items-center gap-3">
+            {chatUserCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-100">
+                <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
+                  {chatUserCount > 99 ? '99+' : chatUserCount}
+                </span>
+                <span>{chatUserCount === 1 ? 'participant' : 'participants'}</span>
+              </span>
+            )}
+            {isAutoUpdating ? (
+              <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
+                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                <span className="text-green-100">Connected</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
+                  <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                  <span className="text-yellow-100">Offline</span>
+                </div>
+                <button
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="p-2 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
+                  title="Refresh chat"
+                >
+                  <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
