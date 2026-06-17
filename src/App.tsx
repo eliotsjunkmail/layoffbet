@@ -252,7 +252,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
           <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
-          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} prioritizeCompany="BNY" />
+          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} prioritizeCompany="NYB" />
           <CompanyScroller letter="C" scrollDirection="right" speed={0.1} />
         </div>
 
@@ -281,8 +281,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         </div>
 
-        <div className="text-center mt-8 space-y-3">
-          <p className="text-xs text-slate-600">v1.66</p>
+        <div className="text-center mt-6 space-y-3">
+          <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
+          <p className="text-xs text-slate-600">v1.67</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
@@ -343,7 +344,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               {policiesTab === 'guidelines' ? (
                 <>
                   <p className="text-gray-600 dark:text-slate-400">
-                    Layoff Bets is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+                    Layoff Live is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
                   </p>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
@@ -374,7 +375,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
                     <p className="text-gray-600 dark:text-slate-400">
-                      Layoff Bets is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
+                      Layoff Live is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
                     </p>
                   </div>
                   <div>

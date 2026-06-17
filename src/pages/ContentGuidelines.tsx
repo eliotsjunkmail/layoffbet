@@ -31,7 +31,7 @@ export const ContentGuidelines = () => {
 
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Content Guidelines</h1>
       <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
-        Layoff Bets is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+        Layoff Live is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
       </p>
 
       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
