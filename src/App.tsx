@@ -243,7 +243,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           <div className="text-center">
             <div className="flex items-baseline justify-center gap-1 mb-2">
               <span className="text-2xl font-semibold text-slate-300 tracking-tight">Layoff</span>
-              <span className="text-2xl font-black text-blue-400 tracking-tight">Bet</span>
+              <span className="text-2xl font-black text-blue-400 tracking-tight">Live</span>
             </div>
             <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
           </div>
