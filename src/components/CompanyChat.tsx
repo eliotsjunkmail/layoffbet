@@ -80,8 +80,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     )
   }
 
-<<<<<<< HEAD
-=======
   const deleteMessage = (messageId: string) => {
     if (!currentUser) return
     const message = messages.find(m => m.id === messageId)

@@ -1124,7 +1124,7 @@ export const useStore = create<StoreState>()(
           eventId,
           companyId: event?.companyId,
           userId: currentUser.id,
-          displayName: currentUser.displayName || currentUser.username,
+          displayName: currentUser.displayName || currentUser.username || undefined,
           content: trimmed,
           createdAt: new Date().toISOString(),
         }
