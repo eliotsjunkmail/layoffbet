@@ -232,7 +232,7 @@ export const Settings = () => {
         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl divide-y divide-gray-100 dark:divide-slate-700">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="text-sm text-gray-500 dark:text-slate-400">Version</div>
-            <div className="text-sm text-gray-900 dark:text-white">0.199</div>
+            <div className="text-sm text-gray-900 dark:text-white">0.200</div>
           </div>
           <div className="flex items-center justify-between px-5 py-4">
             <div className="text-sm text-gray-500 dark:text-slate-400">Data stored</div>
