@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Send, Heart } from 'lucide-react'
+import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown } from 'lucide-react'
 import { useStore } from '../store/useStore'
+
+type ReactionType = 'thumbsup' | 'thumbsdown' | 'laugh' | 'cry'
+
+interface Reaction {
+  type: ReactionType
+  userIds: string[]
+}
 
 interface ChatMessage {
   id: string
@@ -9,7 +16,7 @@ interface ChatMessage {
   username: string
   content: string
   createdAt: Date
-  likes: string[] // Array of user IDs who liked this message
+  reactions: Reaction[]
 }
 
 export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void }) => {
@@ -36,27 +43,65 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       username: currentUser.username || 'Anonymous',
       content: input.trim(),
       createdAt: new Date(),
-      likes: [],
+      reactions: [],
     }
 
     setMessages(prev => [...prev, newMessage])
     setInput('')
   }
 
-  const toggleLike = (messageId: string) => {
+  const toggleReaction = (messageId: string, reactionType: ReactionType) => {
     if (!currentUser) return
 
     setMessages(prev =>
       prev.map(msg => {
         if (msg.id === messageId) {
-          const likes = msg.likes.includes(currentUser.id)
-            ? msg.likes.filter(id => id !== currentUser.id)
-            : [...msg.likes, currentUser.id]
-          return { ...msg, likes }
+          const reactions = [...msg.reactions]
+          const reactionIndex = reactions.findIndex(r => r.type === reactionType)
+
+          if (reactionIndex >= 0) {
+            const reaction = reactions[reactionIndex]
+            if (reaction.userIds.includes(currentUser.id)) {
+              reaction.userIds = reaction.userIds.filter(id => id !== currentUser.id)
+              if (reaction.userIds.length === 0) {
+                reactions.splice(reactionIndex, 1)
+              }
+            } else {
+              reaction.userIds.push(currentUser.id)
+            }
+          } else {
+            reactions.push({ type: reactionType, userIds: [currentUser.id] })
+          }
+
+          return { ...msg, reactions }
         }
         return msg
       })
     )
+  }
+
+  const getReactionEmoji = (type: ReactionType) => {
+    const emojis: Record<ReactionType, string> = {
+      thumbsup: '👍',
+      thumbsdown: '👎',
+      laugh: '😂',
+      cry: '😢',
+    }
+    return emojis[type]
+  }
+
+  const getReactionIcon = (type: ReactionType) => {
+    const iconProps = 'w-3 h-3'
+    switch (type) {
+      case 'thumbsup':
+        return <ThumbsUp className={iconProps} />
+      case 'thumbsdown':
+        return <ThumbsDown className={iconProps} />
+      case 'laugh':
+        return <Laugh className={iconProps} />
+      case 'cry':
+        return <Frown className={iconProps} />
+    }
   }
 
   if (!isOpen) return null
@@ -98,20 +143,41 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                     </span>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-slate-300">{msg.content}</p>
+
+                  {/* Reactions */}
+                  {msg.reactions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {msg.reactions.map(reaction => (
+                        <button
+                          key={reaction.type}
+                          onClick={() => toggleReaction(msg.id, reaction.type)}
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            currentUser && reaction.userIds.includes(currentUser.id)
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300'
+                              : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'
+                          }`}
+                        >
+                          <span>{getReactionEmoji(reaction.type)}</span>
+                          {reaction.userIds.length > 0 && <span>{reaction.userIds.length}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => toggleLike(msg.id)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                    currentUser && msg.likes.includes(currentUser.id)
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300'
-                      : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'
-                  }`}
-                >
-                  <Heart className="w-3 h-3" fill={currentUser && msg.likes.includes(currentUser.id) ? 'currentColor' : 'none'} />
-                  {msg.likes.length > 0 && <span>{msg.likes.length}</span>}
-                </button>
+
+              {/* Reaction buttons on hover */}
+              <div className="flex items-center gap-1 mt-2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                {(['thumbsup', 'thumbsdown', 'laugh', 'cry'] as ReactionType[]).map(reactionType => (
+                  <button
+                    key={reactionType}
+                    onClick={() => toggleReaction(msg.id, reactionType)}
+                    className="p-1.5 rounded text-sm transition-colors bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600"
+                    title={reactionType}
+                  >
+                    {getReactionEmoji(reactionType)}
+                  </button>
+                ))}
               </div>
             </div>
           ))
