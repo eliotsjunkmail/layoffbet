@@ -252,7 +252,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Company scrollers */}
         <div className="mb-6 space-y-2">
           <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
-          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} prioritizeCompany="NYB" />
+          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} />
           <CompanyScroller letter="C" scrollDirection="right" speed={0.1} />
         </div>
 
