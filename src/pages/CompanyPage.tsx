@@ -337,7 +337,7 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-2 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>
 
@@ -383,10 +383,10 @@ export const CompanyPage = () => {
                   <button onClick={() => setExpandDescription(false)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium mt-2">Show less</button>
                 </>
               ) : (
-                <>
-                  <p>{company.description.split('.')[0]}.</p>
-                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium mt-2">More</button>
-                </>
+                <div className="flex flex-wrap items-baseline gap-1">
+                  <span>{company.description.split('.')[0]}.</span>
+                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium whitespace-nowrap">More</button>
+                </div>
               )}
             </div>
           </div>
@@ -486,37 +486,37 @@ export const CompanyPage = () => {
                           const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                           const canEdit = currentUser && (cmt.userId === currentUser.id || currentUser.isAdmin)
                           return (
-                            <div key={cmt.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5 flex items-start gap-2 shadow-sm group">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed break-words">{cmt.content}</p>
-                                <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
+                            <div key={cmt.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5 shadow-sm group">
+                              <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed break-words">{cmt.content}</p>
+                              <div className="flex items-center justify-between gap-2 mt-1">
+                                <p className="text-[11px] text-gray-400 dark:text-slate-500">
                                   {new Date(cmt.createdAt).toLocaleDateString()}{cmt.editedAt && ' · edited'}
                                 </p>
-                              </div>
-                              <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
-                                <button
-                                  onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                                  className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
-                                >
-                                  <ThumbsUp className="w-3 h-3" />
-                                  {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
-                                </button>
-                                {canEdit && (
-                                  <>
-                                    <button
-                                      onClick={ev => { ev.stopPropagation(); handleEditComment(cmt, event.id) }}
-                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-blue-500 transition-all"
-                                    >
-                                      <Edit2 className="w-3 h-3" />
-                                    </button>
-                                    <button
-                                      onClick={ev => { ev.stopPropagation(); deleteComment(cmt.id) }}
-                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-all"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </>
-                                )}
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
+                                    className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
+                                  >
+                                    <ThumbsUp className="w-3 h-3" />
+                                    {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
+                                  </button>
+                                  {canEdit && (
+                                    <>
+                                      <button
+                                        onClick={ev => { ev.stopPropagation(); handleEditComment(cmt, event.id) }}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-blue-500 transition-all"
+                                      >
+                                        <Edit2 className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={ev => { ev.stopPropagation(); deleteComment(cmt.id) }}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-all"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           )
