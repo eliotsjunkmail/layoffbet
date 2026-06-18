@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2 } from 'lucide-react'
+import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -337,17 +337,19 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-2 text-sm">
-        <ChevronLeft className="w-4 h-4" /> Back
-      </button>
+      <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 mb-3">
+        <button onClick={() => navigate('/')} className="hover:text-gray-700 dark:hover:text-slate-200 transition-colors">Home</button>
+        <span>&gt;</span>
+        <span className="text-gray-900 dark:text-white font-medium">{company.name}</span>
+      </div>
 
       {/* 2-column layout on desktop */}
       <div className="sm:grid sm:grid-cols-[320px_1fr] sm:gap-8 sm:items-start">
 
         {/* LEFT COLUMN: company card + past events (desktop only) */}
         <div className="sm:sticky sm:top-20">
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 mb-5 shadow-sm dark:shadow-none">
-            <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-5 shadow-sm dark:shadow-none">
+            <div className="flex items-start justify-between gap-2 mb-2">
               <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
