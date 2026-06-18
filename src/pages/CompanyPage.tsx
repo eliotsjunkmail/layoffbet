@@ -337,11 +337,12 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout>
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-lg font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-          <ChevronLeft className="w-5 h-5" /> {company.name}
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
+          <ChevronLeft className="w-6 h-6" />
         </button>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
+        <div className="ml-auto flex items-center gap-1">
           <button
             onClick={handleShare}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
