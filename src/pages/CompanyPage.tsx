@@ -65,9 +65,10 @@ export const CompanyPage = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentErrors, setCommentErrors] = useState<Record<string, string>>({})
   const [chatOpen, setChatOpen] = useState(false)
-  const [hasNewMessages, setHasNewMessages] = useState(false)
+  const [newMessageCount, setNewMessageCount] = useState(0)
   const [shouldShake, setShouldShake] = useState(false)
   const prevMessageCountRef = useRef(0)
+  const prevNewMessagesRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
   const shakeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -82,34 +83,41 @@ export const CompanyPage = () => {
   // Detect new messages while chat is minimized
   useEffect(() => {
     const companyMessages = chatMessages.filter(m => m.companyId === slug)
-    const newMessageCount = companyMessages.length
+    const totalMessageCount = companyMessages.length
 
-    if (!chatOpen && newMessageCount > prevMessageCountRef.current) {
-      // Check if the new message is from someone else
+    if (!chatOpen && totalMessageCount > prevMessageCountRef.current) {
+      // Check if the new messages are from someone else
       const newMessages = companyMessages.slice(prevMessageCountRef.current)
-      const hasMessageFromOther = newMessages.some(m => m.userId !== myUserIdRef.current)
-      if (hasMessageFromOther && !hasNewMessages) {
-        // First new message: trigger shake and start 20-second timer
-        setHasNewMessages(true)
-        setShouldShake(true)
-        setTimeout(() => setShouldShake(false), 600) // Duration of shake animation
+      const messagesFromOther = newMessages.filter(m => m.userId !== myUserIdRef.current)
 
-        // Set up interval to shake every 20 seconds
-        if (shakeTimerRef.current) clearInterval(shakeTimerRef.current)
-        shakeTimerRef.current = setInterval(() => {
+      if (messagesFromOther.length > 0) {
+        const newCount = prevNewMessagesRef.current + messagesFromOther.length
+        setNewMessageCount(newCount)
+        prevNewMessagesRef.current = newCount
+
+        // Trigger shake for the first batch of new messages
+        if (prevNewMessagesRef.current === messagesFromOther.length) {
           setShouldShake(true)
-          setTimeout(() => setShouldShake(false), 600)
-        }, 20000)
+          setTimeout(() => setShouldShake(false), 600) // Duration of shake animation
+
+          // Set up interval to shake every 20 seconds
+          if (shakeTimerRef.current) clearInterval(shakeTimerRef.current)
+          shakeTimerRef.current = setInterval(() => {
+            setShouldShake(true)
+            setTimeout(() => setShouldShake(false), 600)
+          }, 20000)
+        }
       }
     }
 
-    prevMessageCountRef.current = newMessageCount
-  }, [chatMessages, chatOpen, slug, hasNewMessages])
+    prevMessageCountRef.current = totalMessageCount
+  }, [chatMessages, chatOpen, slug])
 
   // Clear notification and timer when chat opens
   useEffect(() => {
     if (chatOpen) {
-      setHasNewMessages(false)
+      setNewMessageCount(0)
+      prevNewMessagesRef.current = 0
       setShouldShake(false)
       if (shakeTimerRef.current) {
         clearInterval(shakeTimerRef.current)
@@ -627,7 +635,7 @@ export const CompanyPage = () => {
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
     {company && (
       <>
-        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} userCount={chatUserCount} hasNewMessages={hasNewMessages} shouldShake={shouldShake} />
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} />
         <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </>
     )}
