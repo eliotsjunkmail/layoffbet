@@ -347,34 +347,29 @@ export const CompanyPage = () => {
         {/* LEFT COLUMN: company card + past events (desktop only) */}
         <div className="sm:sticky sm:top-20">
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 mb-5 shadow-sm dark:shadow-none">
-            <div className="flex items-start gap-3 mb-3">
-              <CompanyLogo name={company.name} id={company.id} industry={company.industry} color={company.color} size="lg" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={handleShare}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
-                      title="Share this company"
-                    >
-                      {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
-                      <span>Share</span>
-                    </button>
-                    <button
-                      onClick={() => toggleFavoriteCompany(company.id)}
-                      className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
-                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500 mt-1">
-                  <Eye className="w-3 h-3" />
-                  <span>{fmtViews(company.viewCount)} views</span>
-                </div>
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
+                  title="Share this company"
+                >
+                  {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Share</span>
+                </button>
+                <button
+                  onClick={() => toggleFavoriteCompany(company.id)}
+                  className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
+                </button>
               </div>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500 mb-3">
+              <Eye className="w-3 h-3" />
+              <span>{fmtViews(company.viewCount)} views</span>
             </div>
             <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug">
               {expandDescription ? (
@@ -383,9 +378,9 @@ export const CompanyPage = () => {
                   <button onClick={() => setExpandDescription(false)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium mt-2">Show less</button>
                 </>
               ) : (
-                <div className="flex flex-wrap items-baseline gap-1">
-                  <span>{company.description.split('.')[0]}.</span>
-                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium whitespace-nowrap">More</button>
+                <div className="flex gap-1 items-baseline">
+                  <span className="truncate sm:block">{company.description.split('.')[0]}.</span>
+                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium whitespace-nowrap flex-shrink-0 sm:flex-shrink">More</button>
                 </div>
               )}
             </div>
