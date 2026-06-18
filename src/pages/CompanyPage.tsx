@@ -80,6 +80,22 @@ export const CompanyPage = () => {
     localStorage.setItem('anonCoinsSpent', anonCoinsSpent.toString())
   }, [anonCoinsSpent])
 
+  // Initialize message count on first load
+  useEffect(() => {
+    if (!chatOpen && prevMessageCountRef.current === 0) {
+      const companyMessages = chatMessages.filter(m => m.companyId === slug)
+      if (companyMessages.length > 0) {
+        // On first load, count existing messages from others as new
+        const messagesFromOther = companyMessages.filter(m => m.userId !== myUserIdRef.current)
+        if (messagesFromOther.length > 0) {
+          setNewMessageCount(messagesFromOther.length)
+          prevNewMessagesRef.current = messagesFromOther.length
+          prevMessageCountRef.current = companyMessages.length
+        }
+      }
+    }
+  }, [slug, chatOpen])
+
   // Detect new messages while chat is minimized
   useEffect(() => {
     const companyMessages = chatMessages.filter(m => m.companyId === slug)
