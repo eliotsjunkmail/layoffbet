@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
-import { ChevronLeft, PlusCircle, Eye, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2 } from 'lucide-react'
+import { ChevronLeft, PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -366,10 +366,6 @@ export const CompanyPage = () => {
                   <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
                 </button>
               </div>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500 mb-3">
-              <Eye className="w-3 h-3" />
-              <span>{fmtViews(company.viewCount)} views</span>
             </div>
             <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug">
               {expandDescription ? (
