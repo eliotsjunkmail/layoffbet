@@ -367,7 +367,7 @@ export const CompanyPage = () => {
         {/* LEFT COLUMN: company card + past events (desktop only) */}
         <div className="sm:sticky sm:top-20">
           <div>
-            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5 ml-8">
+            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
               {expandDescription ? (
                 <>
                   <p>{company.description}</p>
@@ -392,10 +392,6 @@ export const CompanyPage = () => {
         <div>
           {active.length > 0 && (
             <section className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Active Predictions</h2>
-                <span className="text-xs text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">{active.length}</span>
-              </div>
               <div className="space-y-3">
                 {active.map((event, idx) => {
                   const { dominant, pct } = barProps(event.yesPool, event.noPool)
