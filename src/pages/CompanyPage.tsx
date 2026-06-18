@@ -367,7 +367,7 @@ export const CompanyPage = () => {
         {/* LEFT COLUMN: company card + past events (desktop only) */}
         <div className="sm:sticky sm:top-20">
           <div>
-            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
+            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5 ml-8">
               {expandDescription ? (
                 <>
                   <p>{company.description}</p>
