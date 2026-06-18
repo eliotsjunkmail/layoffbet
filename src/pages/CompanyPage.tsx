@@ -337,12 +337,6 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout>
-      <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 mb-3">
-        <button onClick={() => navigate('/')} className="hover:text-gray-700 dark:hover:text-slate-200 transition-colors">Home</button>
-        <span>&gt;</span>
-        <span className="text-gray-900 dark:text-white font-medium">{company.name}</span>
-      </div>
-
       {/* 2-column layout on desktop */}
       <div className="sm:grid sm:grid-cols-[320px_1fr] sm:gap-8 sm:items-start">
 
