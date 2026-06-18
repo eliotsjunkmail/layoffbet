@@ -554,7 +554,7 @@ export const CompanyPage = () => {
 
                 {/* Add prediction CTA */}
                 <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center gap-3 mt-2">
-                  <span className="text-sm text-gray-600 dark:text-slate-400">Want to save your favorites?</span>
+                  <span className="text-sm text-gray-600 dark:text-slate-400">Make your prediction</span>
                   {currentUser ? (
                     <button
                       onClick={() => navigate('/create', { state: { companyId: company.id } })}
