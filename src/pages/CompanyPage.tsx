@@ -72,6 +72,8 @@ export const CompanyPage = () => {
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
   const shakeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const company = companies.find(c => c.slug === slug)
+
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
   }, [anonCoins])
@@ -247,8 +249,6 @@ export const CompanyPage = () => {
       }
     }
   }
-
-  const company = companies.find(c => c.slug === slug)
 
   const chatUserCount = useMemo(() => {
     if (!company) return 0
