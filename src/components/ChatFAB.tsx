@@ -12,6 +12,18 @@ export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake }: 
         .fab-shake {
           animation: fabShake 0.6s ease-in-out;
         }
+        @keyframes badgePulse {
+          0%, 100% {
+            background-color: rgb(239, 68, 68);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+          }
+          50% {
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+          }
+        }
+        .badge-pulse {
+          animation: badgePulse 2s infinite;
+        }
       `}</style>
       <button
         onClick={onClick}
@@ -21,8 +33,8 @@ export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake }: 
         <MessageCircle className="w-5 h-5" />
         <span>{companyName} Chat</span>
         {newMessageCount !== undefined && newMessageCount > 0 && (
-          <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-blue-500 text-white text-xs font-semibold ml-1">
-            {newMessageCount > 99 ? '99+' : newMessageCount} new
+          <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold ml-1 ${newMessageCount > 0 ? 'badge-pulse' : ''}`}>
+            {newMessageCount > 99 ? '99+' : newMessageCount}
           </span>
         )}
       </button>
