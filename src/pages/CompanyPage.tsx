@@ -493,13 +493,6 @@ export const CompanyPage = () => {
                                   {new Date(cmt.createdAt).toLocaleDateString()}{cmt.editedAt && ' · edited'}
                                 </p>
                                 <div className="flex items-center gap-1 flex-shrink-0">
-                                  <button
-                                    onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                                    className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
-                                  >
-                                    <ThumbsUp className="w-3 h-3" />
-                                    {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
-                                  </button>
                                   {canEdit && (
                                     <>
                                       <button
@@ -516,6 +509,13 @@ export const CompanyPage = () => {
                                       </button>
                                     </>
                                   )}
+                                  <button
+                                    onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
+                                    className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
+                                  >
+                                    <ThumbsUp className="w-3 h-3" />
+                                    {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
+                                  </button>
                                 </div>
                               </div>
                             </div>
