@@ -337,35 +337,35 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout>
-      <div className="flex items-center gap-2 mb-2">
-        <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
-        <div className="ml-auto flex items-center gap-1">
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
-            title="Share this company"
-          >
-            {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
-            <span className="hidden sm:inline">Share</span>
-          </button>
-          <button
-            onClick={() => toggleFavoriteCompany(company.id)}
-            className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
-          </button>
-        </div>
-      </div>
-
       {/* 2-column layout on desktop */}
       <div className="sm:grid sm:grid-cols-[320px_1fr] sm:gap-8 sm:items-start">
 
-        {/* LEFT COLUMN: company card + past events (desktop only) */}
+        {/* LEFT COLUMN: title + description + past events */}
         <div className="sm:sticky sm:top-20">
+          <div className="flex items-center gap-2 mb-2">
+            <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
+                title="Share this company"
+              >
+                {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+                <span className="hidden sm:inline">Share</span>
+              </button>
+              <button
+                onClick={() => toggleFavoriteCompany(company.id)}
+                className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
+                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
+              </button>
+            </div>
+          </div>
+
           <div>
             <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
               {expandDescription ? (
