@@ -82,8 +82,8 @@ export const CompanyPage = () => {
 
   // Initialize message count on first load
   useEffect(() => {
-    if (!chatOpen && prevMessageCountRef.current === 0) {
-      const companyMessages = chatMessages.filter(m => m.companyId === slug)
+    if (company && !chatOpen && prevMessageCountRef.current === 0) {
+      const companyMessages = chatMessages.filter(m => m.companyId === company.id)
       if (companyMessages.length > 0) {
         // On first load, count existing messages from others as new
         const messagesFromOther = companyMessages.filter(m => m.userId !== myUserIdRef.current)
@@ -94,11 +94,12 @@ export const CompanyPage = () => {
         }
       }
     }
-  }, [slug, chatOpen])
+  }, [company, chatOpen, chatMessages])
 
   // Detect new messages while chat is minimized
   useEffect(() => {
-    const companyMessages = chatMessages.filter(m => m.companyId === slug)
+    if (!company) return
+    const companyMessages = chatMessages.filter(m => m.companyId === company.id)
     const totalMessageCount = companyMessages.length
 
     if (!chatOpen && totalMessageCount > prevMessageCountRef.current) {
@@ -127,7 +128,7 @@ export const CompanyPage = () => {
     }
 
     prevMessageCountRef.current = totalMessageCount
-  }, [chatMessages, chatOpen, slug])
+  }, [company, chatMessages, chatOpen])
 
   // Clear notification and timer when chat opens
   useEffect(() => {
