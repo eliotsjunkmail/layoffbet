@@ -194,7 +194,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col">
       {/* Header */}
-      <div className="bg-blue-600 text-white px-4 py-4 sm:px-6 sm:py-5 border-b border-blue-700">
+      <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-semibold text-lg">{companyName} Chat</h2>
