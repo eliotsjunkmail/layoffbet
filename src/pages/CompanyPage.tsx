@@ -348,7 +348,7 @@ export const CompanyPage = () => {
 
         {/* LEFT COLUMN: company card + past events (desktop only) */}
         <div className="sm:sticky sm:top-20">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-5 shadow-sm dark:shadow-none">
+          <div>
             <div className="flex items-start justify-between gap-2 mb-2">
               <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
               <div className="flex items-center gap-1 flex-shrink-0">
@@ -369,7 +369,7 @@ export const CompanyPage = () => {
                 </button>
               </div>
             </div>
-            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug">
+            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
               {expandDescription ? (
                 <>
                   <p>{company.description}</p>
