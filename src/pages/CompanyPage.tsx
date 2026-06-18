@@ -337,7 +337,7 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-2">
         <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
           <ChevronLeft className="w-6 h-6" />
         </button>
