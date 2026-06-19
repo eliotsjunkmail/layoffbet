@@ -435,6 +435,15 @@ app.delete('/api/companies/:companyId/chat', async (req, res) => {
   res.json({ ok: true })
 })
 
+app.put('/api/companies/:companyId/chat/:messageId/reactions', async (req, res) => {
+  const data = await readData()
+  const message = data.chatMessages.find(m => m.id === req.params.messageId && m.companyId === req.params.companyId)
+  if (!message) return res.status(404).json({ error: 'Message not found' })
+  message.reactions = req.body.reactions
+  await writeData(data)
+  res.json(message)
+})
+
 // ===== COMPANIES =====
 app.get('/api/companies', async (req, res) => {
   const data = await readData()
