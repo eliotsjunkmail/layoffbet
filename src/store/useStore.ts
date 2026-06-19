@@ -1259,6 +1259,11 @@ export const useStore = create<StoreState>()(
               console.log('[syncCommentsFromServer] favorites changed from', currentFavs, 'to', newFavs)
             }
 
+            // Merge seed events with server events (server events can add to/replace seed ones)
+            const mergedEvents = serverData.events.length > 0
+              ? [...SEED_EVENTS, ...serverData.events.filter((e: Event) => !SEED_EVENTS.find(se => se.id === e.id))]
+              : SEED_EVENTS
+
             // Merge seed comments with server comments (server comments can add to/replace seed ones)
             const mergedComments = serverData.comments.length > 0
               ? [...SEED_COMMENTS, ...serverData.comments.filter((c: Comment) => !SEED_COMMENTS.find(sc => sc.id === c.id))]
@@ -1266,7 +1271,7 @@ export const useStore = create<StoreState>()(
 
             set({
               users: serverData.users.length > 0 ? serverData.users : SEED_USERS,
-              events: serverData.events.length > 0 ? serverData.events : SEED_EVENTS,
+              events: mergedEvents,
               bets: mergedBets,
               comments: mergedComments,
               chatMessages: serverData.chatMessages || [],
