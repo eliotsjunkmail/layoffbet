@@ -87,32 +87,45 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     setIsLoading(true)
     try {
       const loadedMessages = await api.getChatMessages(companyId)
+      if (!Array.isArray(loadedMessages)) {
+        console.error('Invalid chat messages response:', loadedMessages)
+        setIsLoading(false)
+        return
+      }
+
       const messagesWithDates = loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }))
 
       // Merge loaded messages with existing messages to preserve reactions
       setMessages(prevMessages => {
-        return messagesWithDates.map((loaded: ChatMessage) => {
-          const existing = prevMessages.find(p => p.id === loaded.id)
-          if (!existing) return loaded
+        try {
+          return messagesWithDates.map((loaded: ChatMessage) => {
+            const existing = prevMessages.find(p => p.id === loaded.id)
+            if (!existing) return loaded
 
-          // Always preserve existing reactions and merge with server data
-          // This prevents reactions from disappearing during polling
-          const mergedReactions = [...loaded.reactions]
+            // Always preserve existing reactions and merge with server data
+            // This prevents reactions from disappearing during polling
+            const mergedReactions = [...(loaded.reactions || [])]
 
-          // Add any local reactions that might not be on the server yet (pending)
-          existing.reactions.forEach(localReaction => {
-            const serverReaction = mergedReactions.find(r => r.type === localReaction.type)
-            if (!serverReaction) {
-              // Local reaction not on server yet (pending)
-              mergedReactions.push(localReaction)
-            } else if (serverReaction.userIds.length < localReaction.userIds.length) {
-              // Local has more reactions (user just added one)
-              mergedReactions[mergedReactions.indexOf(serverReaction)] = localReaction
+            // Add any local reactions that might not be on the server yet (pending)
+            if (existing.reactions && Array.isArray(existing.reactions)) {
+              existing.reactions.forEach(localReaction => {
+                const serverReactionIndex = mergedReactions.findIndex(r => r.type === localReaction.type)
+                if (serverReactionIndex === -1) {
+                  // Local reaction not on server yet (pending)
+                  mergedReactions.push(localReaction)
+                } else if (mergedReactions[serverReactionIndex].userIds.length < localReaction.userIds.length) {
+                  // Local has more reactions (user just added one)
+                  mergedReactions[serverReactionIndex] = localReaction
+                }
+              })
             }
-          })
 
-          return { ...loaded, reactions: mergedReactions }
-        })
+            return { ...loaded, reactions: mergedReactions }
+          })
+        } catch (err) {
+          console.error('Error merging reactions:', err)
+          return messagesWithDates
+        }
       })
     } catch (error) {
       console.error('Failed to load chat messages:', error)
