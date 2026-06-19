@@ -7,6 +7,8 @@ import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
+import { ChatFAB } from '../components/ChatFAB'
+import { CompanyChat } from '../components/CompanyChat'
 import { getProbability, betMovementStr } from '../utils/odds'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
@@ -73,6 +75,7 @@ export const Home = () => {
   })
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -316,6 +319,14 @@ export const Home = () => {
       removeBet(eventId)
     }
   }
+
+  // Get the top favorited company for chat FAB
+  const topFavoritedCompany = useMemo(() => {
+    if (favoriteCompanyIds.length === 0) return null
+    // Get the first favorited company as the top one
+    const companyId = favoriteCompanyIds[0]
+    return companies.find(c => c.id === companyId) || null
+  }, [favoriteCompanyIds, companies])
 
   return (
     <>
@@ -659,6 +670,18 @@ export const Home = () => {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
         </div>
+      )}
+
+      {topFavoritedCompany && (
+        <>
+          <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} />
+          <CompanyChat
+            companyId={topFavoritedCompany.id}
+            companyName={topFavoritedCompany.name}
+            isOpen={chatOpen}
+            onClose={() => setChatOpen(false)}
+          />
+        </>
       )}
     </Layout>
     </>
