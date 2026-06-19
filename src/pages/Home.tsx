@@ -332,7 +332,7 @@ export const Home = () => {
 
   // Load chat display name when topFavoritedCompany changes
   useEffect(() => {
-    if (topFavoritedCompany && chatOpen) {
+    if (topFavoritedCompany) {
       api.getChatSettings(topFavoritedCompany.id, topFavoritedCompany.name)
         .then(settings => {
           if (settings.displayName) {
@@ -341,7 +341,20 @@ export const Home = () => {
         })
         .catch(err => console.error('Failed to load chat settings:', err))
     }
-  }, [topFavoritedCompany?.id, chatOpen])
+  }, [topFavoritedCompany?.id])
+
+  // Reload chat display name when chat closes (to get any changes made)
+  useEffect(() => {
+    if (!chatOpen && topFavoritedCompany) {
+      api.getChatSettings(topFavoritedCompany.id, topFavoritedCompany.name)
+        .then(settings => {
+          if (settings.displayName) {
+            setChatDisplayName(settings.displayName)
+          }
+        })
+        .catch(err => console.error('Failed to load chat settings:', err))
+    }
+  }, [chatOpen, topFavoritedCompany?.id])
 
   return (
     <>
