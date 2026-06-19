@@ -122,34 +122,44 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     }
   }
 
-  const toggleReaction = (messageId: string, reactionType: ReactionType) => {
+  const toggleReaction = async (messageId: string, reactionType: ReactionType) => {
     if (!currentUser) return
 
-    setMessages(prev =>
-      prev.map(msg => {
-        if (msg.id === messageId) {
-          const reactions = [...msg.reactions]
-          const reactionIndex = reactions.findIndex(r => r.type === reactionType)
+    const updatedMessages = messages.map(msg => {
+      if (msg.id === messageId) {
+        const reactions = [...msg.reactions]
+        const reactionIndex = reactions.findIndex(r => r.type === reactionType)
 
-          if (reactionIndex >= 0) {
-            const reaction = reactions[reactionIndex]
-            if (reaction.userIds.includes(currentUser.id)) {
-              reaction.userIds = reaction.userIds.filter(id => id !== currentUser.id)
-              if (reaction.userIds.length === 0) {
-                reactions.splice(reactionIndex, 1)
-              }
-            } else {
-              reaction.userIds.push(currentUser.id)
+        if (reactionIndex >= 0) {
+          const reaction = reactions[reactionIndex]
+          if (reaction.userIds.includes(currentUser.id)) {
+            reaction.userIds = reaction.userIds.filter(id => id !== currentUser.id)
+            if (reaction.userIds.length === 0) {
+              reactions.splice(reactionIndex, 1)
             }
           } else {
-            reactions.push({ type: reactionType, userIds: [currentUser.id] })
+            reaction.userIds.push(currentUser.id)
           }
-
-          return { ...msg, reactions }
+        } else {
+          reactions.push({ type: reactionType, userIds: [currentUser.id] })
         }
-        return msg
-      })
-    )
+
+        return { ...msg, reactions }
+      }
+      return msg
+    })
+
+    setMessages(updatedMessages)
+
+    // Persist to server
+    const updatedMessage = updatedMessages.find(m => m.id === messageId)
+    if (updatedMessage) {
+      try {
+        await api.updateChatMessageReactions(companyId, messageId, updatedMessage.reactions)
+      } catch (error) {
+        console.error('Failed to save reaction:', error)
+      }
+    }
   }
 
   const deleteMessage = async (messageId: string) => {
@@ -276,7 +286,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                         <p className="text-sm">{msg.content}</p>
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                        {(['thumbsup', 'thumbsdown', 'laugh', 'cry'] as ReactionType[]).map(reactionType => (
+                        {(['thumbsup'] as ReactionType[]).map(reactionType => (
                           <button
                             key={reactionType}
                             onClick={() => toggleReaction(msg.id, reactionType)}
