@@ -123,7 +123,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   }
 
   const toggleReaction = async (messageId: string, reactionType: ReactionType) => {
-    if (!currentUser) return
+    const userId = myUserIdRef.current
 
     const updatedMessages = messages.map(msg => {
       if (msg.id === messageId) {
@@ -132,16 +132,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
         if (reactionIndex >= 0) {
           const reaction = reactions[reactionIndex]
-          if (reaction.userIds.includes(currentUser.id)) {
-            reaction.userIds = reaction.userIds.filter(id => id !== currentUser.id)
+          if (reaction.userIds.includes(userId)) {
+            reaction.userIds = reaction.userIds.filter(id => id !== userId)
             if (reaction.userIds.length === 0) {
               reactions.splice(reactionIndex, 1)
             }
           } else {
-            reaction.userIds.push(currentUser.id)
+            reaction.userIds.push(userId)
           }
         } else {
-          reactions.push({ type: reactionType, userIds: [currentUser.id] })
+          reactions.push({ type: reactionType, userIds: [userId] })
         }
 
         return { ...msg, reactions }
