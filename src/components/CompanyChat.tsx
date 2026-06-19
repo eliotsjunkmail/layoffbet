@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle } from 'lucide-react'
+import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Trash } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -29,6 +29,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [isLoading, setIsLoading] = useState(false)
   const [isAutoUpdating, setIsAutoUpdating] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showClearDialog, setShowClearDialog] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
 
@@ -165,6 +167,21 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     }
   }
 
+  const handleClearChatHistory = async () => {
+    if (!currentUser?.isAdmin) return
+
+    setIsClearing(true)
+    try {
+      await api.clearChatMessages(companyId)
+      setMessages([])
+      setShowClearDialog(false)
+    } catch (error) {
+      console.error('Failed to clear chat history:', error)
+    } finally {
+      setIsClearing(false)
+    }
+  }
+
   const getReactionEmoji = (type: ReactionType) => {
     const emojis: Record<ReactionType, string> = {
       thumbsup: '👍',
@@ -210,7 +227,17 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         {/* Second row: Subtext on left, status and user count on right */}
         <div className="flex items-center justify-between">
           <p className="text-xs text-blue-100">Live blog meetings</p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {currentUser?.isAdmin && (
+              <button
+                onClick={() => setShowClearDialog(true)}
+                className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+                title="Clear all chat history"
+              >
+                <Trash className="w-5 h-5" />
+              </button>
+            )}
+            <div className="flex items-center gap-3">
             {chatUserCount > 0 && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-100">
                 <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
@@ -240,6 +267,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                 </button>
               </>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -343,6 +371,33 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           </button>
         </div>
       </div>
+
+      {/* Clear Chat Dialog */}
+      {showClearDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Clear Chat History?</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
+              This will permanently delete all messages in this chat. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowClearDialog(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearChatHistory}
+                disabled={isClearing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {isClearing ? 'Clearing...' : 'Clear All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
