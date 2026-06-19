@@ -31,6 +31,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [isRefreshing, setIsRefreshing] = useState(false)
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
+  const pendingReactionsRef = useRef<Set<string>>(new Set())
 
   const chatUserCount = useMemo(() => {
     const uniqueUserIds = new Set(messages.map(m => m.userId))
@@ -86,17 +87,24 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       const loadedMessages = await api.getChatMessages(companyId)
       const messagesWithDates = loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }))
 
-      // Merge loaded messages with existing messages to preserve local reaction changes
+      // Merge loaded messages with existing messages to preserve pending reactions
       setMessages(prevMessages => {
-        const merged = [...messagesWithDates]
-        // Update any local reactions that might have changed
-        return merged.map(loaded => {
+        return messagesWithDates.map((loaded: ChatMessage) => {
           const existing = prevMessages.find(p => p.id === loaded.id)
-          if (existing && JSON.stringify(existing.reactions) !== JSON.stringify(loaded.reactions)) {
-            // If reactions differ, use the loaded version (from server)
-            return loaded
+          if (!existing) return loaded
+
+          // Check if there are pending reactions for this message
+          const hasPendingReactions = existing.reactions.some((er) => {
+            const key = `${loaded.id}-${er.type}`
+            return pendingReactionsRef.current.has(key)
+          })
+
+          // If there are pending reactions, prefer local version to prevent loss
+          if (hasPendingReactions) {
+            return { ...loaded, reactions: existing.reactions }
           }
-          return existing || loaded
+
+          return loaded
         })
       })
     } catch (error) {
@@ -138,6 +146,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
   const toggleReaction = async (messageId: string, reactionType: ReactionType) => {
     const userId = myUserIdRef.current
+    const key = `${messageId}-${reactionType}`
+    pendingReactionsRef.current.add(key)
 
     const updatedMessages = messages.map(msg => {
       if (msg.id === messageId) {
@@ -172,6 +182,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         await api.updateChatMessageReactions(companyId, messageId, updatedMessage.reactions)
       } catch (error) {
         console.error('Failed to save reaction:', error)
+      } finally {
+        pendingReactionsRef.current.delete(key)
       }
     }
   }
