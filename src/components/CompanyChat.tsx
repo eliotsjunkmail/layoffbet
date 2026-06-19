@@ -376,9 +376,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       {showClearDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Clear Chat History?</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Clear Chat & Reset?</h3>
             <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
-              This will permanently delete all messages in this chat. This action cannot be undone.
+              This will permanently delete all messages and reset all chat names and user assignments. This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
