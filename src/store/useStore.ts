@@ -372,7 +372,7 @@ interface StoreState {
   removeBet: (eventId: string) => void
   removeAnonymousVote: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
-  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Event | false
+  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Promise<Event | false>
   updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
@@ -972,7 +972,7 @@ export const useStore = create<StoreState>()(
         return bets.find(b => b.eventId === eventId && b.userId === userId)
       },
 
-      createEvent: (data) => {
+      createEvent: async (data) => {
         const { currentUser, guestCoins, placeBet, placeAnonymousVote } = get()
         const { initialSide, ...eventData } = data as any
         const creatorId = currentUser?.id || 'anon'
@@ -997,6 +997,13 @@ export const useStore = create<StoreState>()(
         }
 
         set(s => ({ events: [event, ...s.events] }))
+
+        // Persist to server
+        try {
+          await api.createEvent(event)
+        } catch (error) {
+          console.error('Failed to persist event to server:', error)
+        }
 
         if (initialSide) {
           if (currentUser) {

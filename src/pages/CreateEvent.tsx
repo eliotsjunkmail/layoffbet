@@ -25,7 +25,7 @@ export const CreateEvent = () => {
   const selectedCompany = companies.find(c => c.id === companyId)
   const titlePlaceholder = selectedCompany ? `e.g. ${selectedCompany.name} will announce layoffs this quarter` : "e.g. Company will announce layoffs this quarter"
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (!companyId) return setError('Select a company.')
@@ -34,7 +34,7 @@ export const CreateEvent = () => {
     if (!side) return setError('Choose YES or NO for your prediction.')
     const company = companies.find(c => c.id === companyId)
     if (!company) return
-    const newEvent = createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
+    const newEvent = await createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
     if (!newEvent) return setError('Not enough coins to create prediction. (Costs 10 coins)')
     navigate(`/${company.slug}`, { state: { newEventId: newEvent.id, showToast: true } })
   }

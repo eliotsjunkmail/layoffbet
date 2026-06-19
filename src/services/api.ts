@@ -135,6 +135,19 @@ export const api = {
     }
   },
 
+  // Events endpoints
+  createEvent: async (event: any) => {
+    const response = await fetch(`${API_BASE}/api/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to create event')
+    }
+    return response.json()
+  },
+
   // Bets endpoints
   placeBet: async (bet: Omit<any, 'id' | 'createdAt'>) => {
     const response = await fetch(`${API_BASE}/api/bets`, {
