@@ -84,7 +84,21 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     setIsLoading(true)
     try {
       const loadedMessages = await api.getChatMessages(companyId)
-      setMessages(loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) })))
+      const messagesWithDates = loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }))
+
+      // Merge loaded messages with existing messages to preserve local reaction changes
+      setMessages(prevMessages => {
+        const merged = [...messagesWithDates]
+        // Update any local reactions that might have changed
+        return merged.map(loaded => {
+          const existing = prevMessages.find(p => p.id === loaded.id)
+          if (existing && JSON.stringify(existing.reactions) !== JSON.stringify(loaded.reactions)) {
+            // If reactions differ, use the loaded version (from server)
+            return loaded
+          }
+          return existing || loaded
+        })
+      })
     } catch (error) {
       console.error('Failed to load chat messages:', error)
     } finally {
