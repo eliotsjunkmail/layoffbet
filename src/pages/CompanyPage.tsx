@@ -132,12 +132,14 @@ export const CompanyPage = () => {
         // Trigger shake for the first batch of new messages
         if (prevNewMessagesRef.current === messagesFromOther.length) {
           setShouldShake(true)
+          navigator.vibrate?.(15)
           setTimeout(() => setShouldShake(false), 600) // Duration of shake animation
 
           // Set up interval to shake every 20 seconds
           if (shakeTimerRef.current) clearInterval(shakeTimerRef.current)
           shakeTimerRef.current = setInterval(() => {
             setShouldShake(true)
+            navigator.vibrate?.(15)
             setTimeout(() => setShouldShake(false), 600)
           }, 20000)
         }
