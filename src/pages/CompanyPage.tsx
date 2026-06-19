@@ -656,7 +656,7 @@ export const CompanyPage = () => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => navigate('/login')}
+                      onClick={() => navigate('/create', { state: { companyId: company.id } })}
                       className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                     >
                       + Bet
