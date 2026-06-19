@@ -49,6 +49,8 @@ export const CompanyPage = () => {
   const upvoteComment = useStore(s => s.upvoteComment)
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const chatMessages = useStore(s => s.chatMessages)
+  const deleteEvent = useStore(s => s.deleteEvent)
+  const updateEvent = useStore(s => s.updateEvent)
   const [shareCopied, setShareCopied] = useState(false)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -68,6 +70,9 @@ export const CompanyPage = () => {
   const [newMessageCount, setNewMessageCount] = useState(0)
   const [shouldShake, setShouldShake] = useState(false)
   const [expandDescription, setExpandDescription] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [editEventTitle, setEditEventTitle] = useState('')
+  const [editEventDesc, setEditEventDesc] = useState('')
   const prevMessageCountRef = useRef(0)
   const prevNewMessagesRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
@@ -212,6 +217,25 @@ export const CompanyPage = () => {
       }
     } else {
       removeBet(eventId)
+    }
+  }
+
+  const handleEditEvent = (event: typeof events[0]) => {
+    setEditingEventId(event.id)
+    setEditEventTitle(event.title)
+    setEditEventDesc(event.description)
+  }
+
+  const handleSaveEventEdit = (eventId: string) => {
+    updateEvent(eventId, { title: editEventTitle.trim(), description: editEventDesc.trim() } as any)
+    setEditingEventId(null)
+    showToast('Prediction updated!')
+  }
+
+  const handleDeleteEvent = (eventId: string) => {
+    if (confirm('Are you sure you want to delete this prediction? This action cannot be undone.')) {
+      deleteEvent(eventId)
+      showToast('Prediction deleted')
     }
   }
 
@@ -454,11 +478,61 @@ export const CompanyPage = () => {
                             </button>
                           </div>
                         )}
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
-                          {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
-                            <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                        <div className="flex items-start justify-between gap-2 mb-2 group">
+                          {editingEventId === event.id ? (
+                            <input
+                              type="text"
+                              value={editEventTitle}
+                              onChange={e => setEditEventTitle(e.target.value)}
+                              className="flex-1 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded px-2 py-1 text-gray-900 dark:text-white"
+                            />
+                          ) : (
+                            <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
                           )}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {currentUser && (event.creatorId === currentUser.id || currentUser.isAdmin) && (
+                              <>
+                                {editingEventId === event.id ? (
+                                  <>
+                                    <button
+                                      onClick={(ev) => { ev.stopPropagation(); handleSaveEventEdit(event.id) }}
+                                      className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                                      title="Save changes"
+                                    >
+                                      <Check className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(ev) => { ev.stopPropagation(); setEditingEventId(null) }}
+                                      className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={(ev) => { ev.stopPropagation(); handleEditEvent(event) }}
+                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-blue-500 transition-all"
+                                      title="Edit prediction"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(ev) => { ev.stopPropagation(); handleDeleteEvent(event.id) }}
+                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-all"
+                                      title="Delete prediction"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
+                              </>
+                            )}
+                            {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
+                              <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                            )}
+                          </div>
                         </div>
                         <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                           <div
