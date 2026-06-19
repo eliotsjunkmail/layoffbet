@@ -316,7 +316,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                       >
                         <p className="text-sm">{msg.content}</p>
                       </div>
-                      {!msg.reactions.some(r => r.type === 'thumbsup' && r.userIds.includes(myUserIdRef.current)) && (
+                      {!isOwnMessage && !msg.reactions.some(r => r.type === 'thumbsup' && r.userIds.includes(myUserIdRef.current)) && (
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                           {(['thumbsup'] as ReactionType[]).map(reactionType => (
                             <button
@@ -330,21 +330,21 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                           ))}
                         </div>
                       )}
+                      {msg.reactions.length > 0 && (
+                        <div className="flex gap-1 items-center">
+                          {msg.reactions.map(reaction => (
+                            <button
+                              key={reaction.type}
+                              onClick={() => toggleReaction(msg.id, reaction.type)}
+                              className="text-sm hover:scale-110 transition-transform cursor-pointer whitespace-nowrap"
+                              title={reaction.type}
+                            >
+                              {getReactionEmoji(reaction.type)} <span className="text-xs">{reaction.userIds.length}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {msg.reactions.length > 0 && (
-                      <div className={`flex flex-wrap gap-1 ${isOwnMessage ? 'justify-end' : 'justify-start'} px-2`}>
-                        {msg.reactions.map(reaction => (
-                          <button
-                            key={reaction.type}
-                            onClick={() => toggleReaction(msg.id, reaction.type)}
-                            className="text-sm hover:scale-110 transition-transform cursor-pointer"
-                            title={reaction.type}
-                          >
-                            {getReactionEmoji(reaction.type)} <span className="text-xs">{reaction.userIds.length}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   {isOwnMessage && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
