@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
@@ -72,8 +72,22 @@ export const CompanyPage = () => {
   const prevNewMessagesRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
   const shakeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const scrollTargetRef = useRef<HTMLDivElement>(null)
+  const { state } = useLocation() as { state?: { newEventId?: string; showToast?: boolean } | null }
 
   const company = companies.find(c => c.slug === slug)
+
+  // Handle scrolling to newly created event
+  useEffect(() => {
+    if (state?.newEventId && scrollTargetRef.current) {
+      setTimeout(() => {
+        scrollTargetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 100)
+      if (state?.showToast) {
+        setToast('Prediction created!')
+      }
+    }
+  }, [state?.newEventId])
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -404,7 +418,7 @@ export const CompanyPage = () => {
                   const userBet = currentUser ? bets.find(b => b.eventId === event.id && b.userId === currentUser.id) : null
                   return (
                     <>
-                      <div key={event.id}>
+                      <div key={event.id} ref={state?.newEventId === event.id ? scrollTargetRef : null}>
                       <SwipeCard
                         onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                         onSwipeNo={() => handleSwipeBet(event.id, 'no')}

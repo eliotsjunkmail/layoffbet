@@ -372,7 +372,7 @@ interface StoreState {
   removeBet: (eventId: string) => void
   removeAnonymousVote: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
-  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => boolean
+  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Event | false
   updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
@@ -1005,7 +1005,7 @@ export const useStore = create<StoreState>()(
             placeAnonymousVote(event.id, initialSide, costCoins)
           }
         }
-        return true
+        return event
       },
 
       updateEvent: (eventId, data) => {

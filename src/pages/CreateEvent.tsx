@@ -34,9 +34,9 @@ export const CreateEvent = () => {
     if (!side) return setError('Choose YES or NO for your prediction.')
     const company = companies.find(c => c.id === companyId)
     if (!company) return
-    const success = createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
-    if (!success) return setError('Not enough coins to create prediction. (Costs 10 coins)')
-    navigate('/')
+    const newEvent = createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
+    if (!newEvent) return setError('Not enough coins to create prediction. (Costs 10 coins)')
+    navigate(`/${company.slug}`, { state: { newEventId: newEvent.id, showToast: true } })
   }
 
   const inputCls = "w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
