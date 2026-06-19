@@ -87,24 +87,29 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       const loadedMessages = await api.getChatMessages(companyId)
       const messagesWithDates = loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }))
 
-      // Merge loaded messages with existing messages to preserve pending reactions
+      // Merge loaded messages with existing messages to preserve reactions
       setMessages(prevMessages => {
         return messagesWithDates.map((loaded: ChatMessage) => {
           const existing = prevMessages.find(p => p.id === loaded.id)
           if (!existing) return loaded
 
-          // Check if there are pending reactions for this message
-          const hasPendingReactions = existing.reactions.some((er) => {
-            const key = `${loaded.id}-${er.type}`
-            return pendingReactionsRef.current.has(key)
+          // Always preserve existing reactions and merge with server data
+          // This prevents reactions from disappearing during polling
+          const mergedReactions = [...loaded.reactions]
+
+          // Add any local reactions that might not be on the server yet (pending)
+          existing.reactions.forEach(localReaction => {
+            const serverReaction = mergedReactions.find(r => r.type === localReaction.type)
+            if (!serverReaction) {
+              // Local reaction not on server yet (pending)
+              mergedReactions.push(localReaction)
+            } else if (serverReaction.userIds.length < localReaction.userIds.length) {
+              // Local has more reactions (user just added one)
+              mergedReactions[mergedReactions.indexOf(serverReaction)] = localReaction
+            }
           })
 
-          // If there are pending reactions, prefer local version to prevent loss
-          if (hasPendingReactions) {
-            return { ...loaded, reactions: existing.reactions }
-          }
-
-          return loaded
+          return { ...loaded, reactions: mergedReactions }
         })
       })
     } catch (error) {
@@ -311,18 +316,20 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                       >
                         <p className="text-sm">{msg.content}</p>
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                        {(['thumbsup'] as ReactionType[]).map(reactionType => (
-                          <button
-                            key={reactionType}
-                            onClick={() => toggleReaction(msg.id, reactionType)}
-                            className="text-lg hover:scale-125 transition-transform cursor-pointer"
-                            title={reactionType}
-                          >
-                            {getReactionEmoji(reactionType)}
-                          </button>
-                        ))}
-                      </div>
+                      {!msg.reactions.some(r => r.type === 'thumbsup' && r.userIds.includes(myUserIdRef.current)) && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          {(['thumbsup'] as ReactionType[]).map(reactionType => (
+                            <button
+                              key={reactionType}
+                              onClick={() => toggleReaction(msg.id, reactionType)}
+                              className="text-lg hover:scale-125 transition-transform cursor-pointer"
+                              title={reactionType}
+                            >
+                              {getReactionEmoji(reactionType)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {msg.reactions.length > 0 && (
                       <div className={`flex flex-wrap gap-1 ${isOwnMessage ? 'justify-end' : 'justify-start'} px-2`}>
