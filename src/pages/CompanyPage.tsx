@@ -62,6 +62,7 @@ export const CompanyPage = () => {
   })
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
+  const [toastExiting, setToastExiting] = useState(false)
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
@@ -205,7 +206,14 @@ export const CompanyPage = () => {
     setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
   }
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 10000) }
+  const showToast = (msg: string) => {
+    setToastExiting(false)
+    setToast(msg)
+    setTimeout(() => {
+      setToastExiting(true)
+      setTimeout(() => setToast(''), 400)
+    }, 5000)
+  }
 
   const handleCancelBet = (eventId: string, isGuest: boolean) => {
     if (isGuest) {
@@ -690,7 +698,7 @@ export const CompanyPage = () => {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[60] pointer-events-none">
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[60] pointer-events-none ${toastExiting ? 'animate-slide-down' : 'animate-slide-up'}`}>
           {toast}
         </div>
       )}
