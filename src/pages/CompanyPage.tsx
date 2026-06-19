@@ -91,6 +91,7 @@ export const CompanyPage = () => {
       }, 100)
       if (state?.showToast) {
         setToast('Prediction created!')
+        setTimeout(() => setToast(''), 15000)
       }
     }
   }, [state?.newEventId])
