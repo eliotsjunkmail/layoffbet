@@ -196,7 +196,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       {/* Header */}
       <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-1">
           <h2 className="font-semibold text-lg">{companyName} Chat</h2>
           <button
             onClick={onClose}
@@ -245,7 +245,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-400 dark:text-slate-500">
             <div className="text-center">
