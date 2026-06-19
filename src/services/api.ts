@@ -296,4 +296,25 @@ export const api = {
     }
     return response.json()
   },
+
+  // Chat settings endpoints
+  getChatSettings: async (companyId: string, companyName: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat-settings?companyName=${encodeURIComponent(companyName)}`)
+    if (!response.ok) {
+      throw new Error('Failed to get chat settings')
+    }
+    return response.json()
+  },
+
+  updateChatSettings: async (companyId: string, settings: any) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat-settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update chat settings')
+    }
+    return response.json()
+  },
 }

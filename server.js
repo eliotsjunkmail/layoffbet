@@ -523,6 +523,22 @@ app.post('/api/companies/:companyId/chat-names/:userId', async (req, res) => {
   res.json({ chatName })
 })
 
+// Chat settings (display name)
+app.get('/api/companies/:companyId/chat-settings', async (req, res) => {
+  const data = await readData()
+  if (!data.chatSettings) data.chatSettings = {}
+  const settings = data.chatSettings[req.params.companyId] || { displayName: `${req.query.companyName || ''} Chat` }
+  res.json(settings)
+})
+
+app.put('/api/companies/:companyId/chat-settings', async (req, res) => {
+  const data = await readData()
+  if (!data.chatSettings) data.chatSettings = {}
+  data.chatSettings[req.params.companyId] = req.body
+  await writeData(data)
+  res.json(data.chatSettings[req.params.companyId])
+})
+
 // ===== STATE SYNC =====
 app.get('/api/sync', async (req, res) => {
   const data = await readData()

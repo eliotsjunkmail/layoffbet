@@ -10,6 +10,7 @@ import { AdBanner } from '../components/AdBanner'
 import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
 import { getProbability, betMovementStr } from '../utils/odds'
+import { api } from '../services/api'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
 
@@ -76,6 +77,7 @@ export const Home = () => {
   const [coinPuff, setCoinPuff] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  const [chatDisplayName, setChatDisplayName] = useState('')
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -327,6 +329,19 @@ export const Home = () => {
     const companyId = favoriteCompanyIds[0]
     return companies.find(c => c.id === companyId) || null
   }, [favoriteCompanyIds, companies])
+
+  // Load chat display name when topFavoritedCompany changes
+  useEffect(() => {
+    if (topFavoritedCompany && chatOpen) {
+      api.getChatSettings(topFavoritedCompany.id, topFavoritedCompany.name)
+        .then(settings => {
+          if (settings.displayName) {
+            setChatDisplayName(settings.displayName)
+          }
+        })
+        .catch(err => console.error('Failed to load chat settings:', err))
+    }
+  }, [topFavoritedCompany?.id, chatOpen])
 
   return (
     <>
@@ -674,7 +689,7 @@ export const Home = () => {
 
       {topFavoritedCompany && (
         <>
-          <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} />
+          <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} chatDisplayName={chatDisplayName} />
           <CompanyChat
             companyId={topFavoritedCompany.id}
             companyName={topFavoritedCompany.name}

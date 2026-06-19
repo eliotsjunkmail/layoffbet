@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Trash } from 'lucide-react'
+import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Trash, Edit2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -25,6 +25,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
+  const [chatDisplayName, setChatDisplayName] = useState(companyName + ' Chat')
+  const [editingName, setEditingName] = useState(false)
+  const [editNameValue, setEditNameValue] = useState(companyName + ' Chat')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isAutoUpdating, setIsAutoUpdating] = useState(true)
@@ -52,12 +55,36 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     if (isOpen) {
       loadMessages()
       startPolling()
+      loadChatSettings()
     } else {
       stopPolling()
     }
 
     return () => stopPolling()
   }, [isOpen, companyId])
+
+  const loadChatSettings = async () => {
+    try {
+      const settings = await api.getChatSettings(companyId, companyName)
+      if (settings.displayName) {
+        setChatDisplayName(settings.displayName)
+        setEditNameValue(settings.displayName)
+      }
+    } catch (error) {
+      console.error('Failed to load chat settings:', error)
+    }
+  }
+
+  const handleSaveChatName = async () => {
+    if (!editNameValue.trim()) return
+    try {
+      await api.updateChatSettings(companyId, { displayName: editNameValue.trim() })
+      setChatDisplayName(editNameValue.trim())
+      setEditingName(false)
+    } catch (error) {
+      console.error('Failed to update chat name:', error)
+    }
+  }
 
   const startPolling = () => {
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
@@ -268,7 +295,30 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-semibold text-lg">{companyName} Chat</h2>
+          {editingName && currentUser?.isAdmin ? (
+            <input
+              type="text"
+              value={editNameValue}
+              onChange={(e) => setEditNameValue(e.target.value)}
+              onBlur={handleSaveChatName}
+              onKeyPress={(e) => e.key === 'Enter' && handleSaveChatName()}
+              autoFocus
+              className="flex-1 px-2 py-1 rounded text-gray-900 text-sm font-semibold"
+            />
+          ) : (
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+              {currentUser?.isAdmin && (
+                <button
+                  onClick={() => setEditingName(true)}
+                  className="p-1 hover:bg-blue-500 rounded transition-colors"
+                  title="Edit chat name"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
           <button
             onClick={onClose}
             className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
