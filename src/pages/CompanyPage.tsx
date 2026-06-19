@@ -206,14 +206,7 @@ export const CompanyPage = () => {
     setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
   }
 
-  const showToast = (msg: string) => {
-    setToastExiting(false)
-    setToast(msg)
-    setTimeout(() => {
-      setToastExiting(true)
-      setTimeout(() => setToast(''), 400)
-    }, 5000)
-  }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 15000) }
 
   const handleCancelBet = (eventId: string, isGuest: boolean) => {
     if (isGuest) {

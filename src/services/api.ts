@@ -249,6 +249,18 @@ export const api = {
     return response.json()
   },
 
+  clearChatMessages: async (companyId: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to clear chat messages')
+    }
+    return response.json()
+  },
+
+
   updateChatMessageReactions: async (companyId: string, messageId: string, reactions: any) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat/${messageId}/reactions`, {
       method: 'PUT',

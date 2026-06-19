@@ -424,6 +424,17 @@ app.delete('/api/companies/:companyId/chat/:messageId', async (req, res) => {
   res.json({ ok: true })
 })
 
+app.delete('/api/companies/:companyId/chat', async (req, res) => {
+  const data = await readData()
+  data.chatMessages = data.chatMessages.filter(m => m.companyId !== req.params.companyId)
+  // Also clear chat names for this company
+  if (data.userChatNames && data.userChatNames[req.params.companyId]) {
+    delete data.userChatNames[req.params.companyId]
+  }
+  await writeData(data)
+  res.json({ ok: true })
+})
+
 // ===== COMPANIES =====
 app.get('/api/companies', async (req, res) => {
   const data = await readData()
