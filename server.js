@@ -21,12 +21,12 @@ app.get('/api/setup-database', async (req, res) => {
 
     // Try to read data.json and migrate
     const fs = await import('fs/promises')
-    const path = await import('path')
-    const { fileURLToPath } = await import('url')
-    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const pathModule = await import('path')
+    const { fileURLToPath: getFileUrl } = await import('url')
+    const dirName = pathModule.dirname(getFileUrl(import.meta.url))
 
     try {
-      const dataContent = await fs.readFile(path.join(__dirname, 'data.json'), 'utf-8')
+      const dataContent = await fs.readFile(pathModule.join(dirName, 'data.json'), 'utf-8')
       const data = JSON.parse(dataContent)
 
       // Migrate users
