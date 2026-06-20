@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5174",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run db:push",
     "preview": "vite preview",
     "db:migrate": "prisma migrate deploy",
-    "db:push": "prisma db push",
+    "db:push": "prisma db push --skip-generate",
     "migrate:data": "node scripts/migrate-from-json.js"
   },
   "dependencies": {
