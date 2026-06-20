@@ -317,4 +317,16 @@ export const api = {
     }
     return response.json()
   },
+
+  createCompany: async (company: any) => {
+    const response = await fetch(`${API_BASE}/api/companies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(company),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to create company')
+    }
+    return response.json()
+  },
 }

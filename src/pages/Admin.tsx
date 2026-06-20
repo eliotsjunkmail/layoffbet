@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { Trash2, Users, TrendingUp, MessageSquare, Building2 } from 'lucide-react'
+import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus } from 'lucide-react'
+import { api } from '../services/api'
 
 type Tab = 'users' | 'bets' | 'comments' | 'companies'
 
@@ -21,6 +22,10 @@ export const Admin = () => {
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)
   const [showOnlyActive, setShowOnlyActive] = useState(false)
+  const [showAddCompany, setShowAddCompany] = useState(false)
+  const [newCompanyName, setNewCompanyName] = useState('')
+  const [newCompanyDescription, setNewCompanyDescription] = useState('')
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -48,6 +53,37 @@ export const Admin = () => {
       setTimeout(() => window.location.reload(), 1000)
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : `Failed to delete ${type}` })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddCompany = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCompanyName.trim()) {
+      setMessage({ type: 'error', text: 'Company name is required' })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const slug = newCompanyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const newCompany = {
+        name: newCompanyName.trim(),
+        slug,
+        description: newCompanyDescription.trim(),
+        industry: '',
+        viewCount: 0,
+        color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+      }
+      await api.createCompany(newCompany)
+      setMessage({ type: 'success', text: 'Company created successfully' })
+      setNewCompanyName('')
+      setNewCompanyDescription('')
+      setShowAddCompany(false)
+      await syncCommentsFromServer()
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to create company' })
     } finally {
       setLoading(false)
     }
@@ -255,7 +291,7 @@ export const Admin = () => {
 
           return (
             <>
-              <div className="flex items-center gap-3 mb-4 px-0">
+              <div className="flex items-center justify-between gap-3 mb-4 px-0">
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -268,7 +304,56 @@ export const Admin = () => {
                   </div>
                   <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300">Only companies with activity</span>
                 </label>
+                <button
+                  onClick={() => setShowAddCompany(!showAddCompany)}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" /> Add Company
+                </button>
               </div>
+
+              {showAddCompany && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+                  <form onSubmit={handleAddCompany} className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Name *</label>
+                      <input
+                        type="text"
+                        value={newCompanyName}
+                        onChange={(e) => setNewCompanyName(e.target.value)}
+                        placeholder="e.g., Apple Inc"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description (optional)</label>
+                      <textarea
+                        value={newCompanyDescription}
+                        onChange={(e) => setNewCompanyDescription(e.target.value)}
+                        placeholder="Brief description of the company..."
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={loading || !newCompanyName.trim()}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Create Company
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddCompany(false)}
+                        className="px-4 py-2 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
