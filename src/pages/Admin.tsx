@@ -75,7 +75,9 @@ export const Admin = () => {
       }
 
       setMessage({ type: 'success', text: 'Seeded data cleared successfully' })
-      setTimeout(() => window.location.reload(), 1000)
+      // Clear localStorage cache and reload
+      localStorage.clear()
+      setTimeout(() => window.location.href = '/admin', 1500)
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to clear seeded data' })
     } finally {
