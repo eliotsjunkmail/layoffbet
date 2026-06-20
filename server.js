@@ -367,9 +367,22 @@ app.get('/api/companies', async (req, res) => {
 
 app.post('/api/companies', async (req, res) => {
   try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    const { name, description = '', industry = '', color = '#003DA5' } = req.body
+    if (!name) return res.status(400).json({ error: 'Company name required' })
+
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     const company = await db.createCompany({
       id: 'comp-' + crypto.randomBytes(8).toString('hex'),
-      ...req.body,
+      name,
+      slug,
+      description,
+      industry,
+      color,
       createdAt: new Date().toISOString(),
     })
     res.json(company)
