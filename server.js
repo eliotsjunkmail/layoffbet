@@ -534,6 +534,64 @@ app.delete('/api/favorites/:userId/:companyId', async (req, res) => {
   res.json({ ok: true })
 })
 
+// ===== SETUP PAGE =====
+app.get('/setup', async (req, res) => {
+  try {
+    // Try to create admin user
+    const users = await db.getUsers()
+
+    if (users.length === 0) {
+      await db.createUser({
+        id: 'user-admin',
+        username: 'eliot',
+        password: 'Eliot123',
+        coins: 999,
+        isAdmin: true,
+        createdAt: new Date(),
+        lastCoinsDate: new Date().toISOString().split('T')[0],
+        anonymousNumber: 100000,
+        displayName: 'Eliot'
+      })
+
+      return res.send(`
+        <html>
+          <body style="font-family: Arial; padding: 20px; text-align: center;">
+            <h1>✅ Setup Complete!</h1>
+            <p>Admin user created successfully.</p>
+            <p><strong>Login with:</strong></p>
+            <p>Username: <code>eliot</code></p>
+            <p>Password: <code>Eliot123</code></p>
+            <a href="/" style="margin-top: 20px; padding: 10px 20px; background: #0066ff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">Go to App</a>
+          </body>
+        </html>
+      `)
+    } else {
+      return res.send(`
+        <html>
+          <body style="font-family: Arial; padding: 20px; text-align: center;">
+            <h1>✅ Already Initialized</h1>
+            <p>Database already has ${users.length} user(s).</p>
+            <a href="/" style="margin-top: 20px; padding: 10px 20px; background: #0066ff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">Go to App</a>
+          </body>
+        </html>
+      `)
+    }
+  } catch (error) {
+    console.error('Setup error:', error)
+    return res.send(`
+      <html>
+        <body style="font-family: Arial; padding: 20px; text-align: center;">
+          <h1>⚠️ Setup Error</h1>
+          <p style="color: red;">${error.message}</p>
+          <p>The database may not be fully initialized yet.</p>
+          <p>Try refreshing in a few moments, or contact support.</p>
+          <a href="/" style="margin-top: 20px; padding: 10px 20px; background: #0066ff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">Go Back</a>
+        </body>
+      </html>
+    `)
+  }
+})
+
 // Serve static frontend
 app.use(express.static(path.join(__dirname, 'dist')))
 
