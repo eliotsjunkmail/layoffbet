@@ -17,28 +17,66 @@ app.use(express.json())
 // ===== DATABASE SETUP =====
 app.post('/api/setup-database', async (req, res) => {
   try {
-    const users = await db.getUsers()
+    console.log('Setting up database...')
 
-    if (users.length === 0) {
-      // Create admin user if none exist
-      await db.createUser({
-        id: 'user-admin',
-        username: 'eliot',
-        password: 'Eliot123',
-        coins: 999,
-        isAdmin: true,
-        createdAt: new Date(),
-        lastCoinsDate: new Date().toISOString().split('T')[0],
-        anonymousNumber: 100000,
-        displayName: 'Eliot'
-      })
-      res.json({ ok: true, message: 'Database initialized with admin user' })
-    } else {
-      res.json({ ok: true, message: 'Database already initialized', userCount: users.length })
+    try {
+      const users = await db.getUsers()
+
+      if (users.length === 0) {
+        // Create admin user if none exist
+        await db.createUser({
+          id: 'user-admin',
+          username: 'eliot',
+          password: 'Eliot123',
+          coins: 999,
+          isAdmin: true,
+          createdAt: new Date(),
+          lastCoinsDate: new Date().toISOString().split('T')[0],
+          anonymousNumber: 100000,
+          displayName: 'Eliot'
+        })
+        console.log('✓ Admin user created')
+        return res.json({ ok: true, message: 'Database initialized with admin user' })
+      } else {
+        return res.json({ ok: true, message: 'Database already initialized', userCount: users.length })
+      }
+    } catch (dbError) {
+      // Database tables might not exist - try to generate Prisma client
+      console.log('Attempting to initialize Prisma schema...')
+
+      // Try to access Prisma to generate client
+      try {
+        await prisma.$connect()
+        await prisma.$disconnect()
+
+        // Retry user creation
+        await db.getUsers()
+
+        // If we got here, try creating admin again
+        await db.createUser({
+          id: 'user-admin',
+          username: 'eliot',
+          password: 'Eliot123',
+          coins: 999,
+          isAdmin: true,
+          createdAt: new Date(),
+          lastCoinsDate: new Date().toISOString().split('T')[0],
+          anonymousNumber: 100000,
+          displayName: 'Eliot'
+        })
+        return res.json({ ok: true, message: 'Database initialized' })
+      } catch (e) {
+        console.error('Database initialization error:', e.message)
+        return res.status(500).json({
+          error: 'Database tables need to be created',
+          message: 'Please run: npm run db:push in your Railway console',
+          details: e.message
+        })
+      }
     }
   } catch (error) {
-    console.error('Database setup error:', error)
-    res.status(500).json({ error: 'Database setup failed', details: error.message })
+    console.error('Setup error:', error)
+    res.status(500).json({ error: 'Setup failed', details: error.message })
   }
 })
 
