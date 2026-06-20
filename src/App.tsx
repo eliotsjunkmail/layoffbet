@@ -180,11 +180,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentUser) {
       setUnlocked(true)
-    } else if (unlocked && localStorage.getItem(GATE_KEY) === '1') {
-      // User logged out but gate was unlocked - keep it unlocked for anonymous access
-      // This preserves the gate unlock state
+    } else {
+      // When user logs out, always reset gate to locked so next user must enter password
+      setUnlocked(false)
     }
-  }, [currentUser, unlocked])
+  }, [currentUser])
 
   if (unlocked) return <>{children}</>
 
