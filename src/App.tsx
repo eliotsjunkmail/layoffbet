@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
 import { X } from 'lucide-react'
@@ -292,17 +292,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
-            <div className="text-center mt-3">
-              <Link to="/login" className="text-xs text-blue-500 hover:text-blue-400 underline">
-                Have an account? Sign in
-              </Link>
-            </div>
           </form>
         </div>
 
         <div className="text-center mt-6 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
-          <p className="text-xs text-slate-600">v2.48</p>
+          <p className="text-xs text-slate-600">v2.47</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
