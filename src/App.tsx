@@ -192,8 +192,15 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     e.preventDefault()
     if (GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
-        // Register user with anonUsername and password "guest"
-        const user = await api.register(anonUsername, 'guest')
+        setLoadingAnonId(true)
+
+        // Fetch fresh anonymous username for this user
+        const res = await fetch(`${API_BASE}/api/next-anon-id`)
+        const data = await res.json()
+        const freshAnonUsername = data.username
+
+        // Register user with fresh anonUsername and password "guest"
+        const user = await api.register(freshAnonUsername, 'guest')
 
         // Store in localStorage
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
@@ -201,18 +208,22 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         if (selectedCompanyId) {
           localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
         }
-        localStorage.setItem(GATE_KEY, '1')
+
+        // Don't lock the gate permanently - allow others to enter
+        // localStorage.setItem(GATE_KEY, '1')
 
         // Sync data from server BEFORE setting currentUser so Home has data ready
         await syncCommentsFromServer()
 
-        // Now set currentUser and unlock gate
+        // Now set currentUser and navigate to home
         useStore.setState({ currentUser: user })
         setUnlocked(true)
       } catch (err) {
         console.error('Failed to register user:', err)
         setError(true); setShake(true); setInput('')
         setTimeout(() => setShake(false), 500)
+      } finally {
+        setLoadingAnonId(false)
       }
     } else {
       setError(true); setShake(true); setInput('')
@@ -285,7 +296,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         <div className="text-center mt-6 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
-          <p className="text-xs text-slate-600">v2.44</p>
+          <p className="text-xs text-slate-600">v2.45</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
