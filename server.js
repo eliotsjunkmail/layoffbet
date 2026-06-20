@@ -15,15 +15,9 @@ app.use(express.json())
 // API Routes
 
 // ===== DATABASE SETUP =====
-app.post('/api/setup-database', async (req, res) => {
+app.get('/api/setup-database', async (req, res) => {
   try {
     console.log('Setting up database...')
-
-    // Check if admin is accessing
-    const { isAdmin } = req.body
-    if (!isAdmin) {
-      return res.status(403).json({ error: 'Admin access required' })
-    }
 
     // Try to read data.json and migrate
     const fs = await import('fs/promises')
