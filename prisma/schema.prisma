@@ -1,10 +1,10 @@
 generator client {
   provider = "prisma-client"
+  output   = "../src/generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL", "postgresql://localhost/layoffbet")
 }
 
 model User {
@@ -47,7 +47,7 @@ model Company {
   chatMessages      ChatMessage[]
   chatSetting       ChatSetting?
   favorites         Favorite[]
-  hiddenBy          HiddenCompany[]
+  hiddenBy          HiddenCompany[] @relation("hiddenBy")
 
   @@index([slug])
 }
