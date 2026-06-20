@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String @id
+  username           String? @unique
+  password           String?
+  coins              Int
+  isAdmin            Boolean @default(false)
+  isAnonymous        Boolean @default(false)
+  displayName        String?
+  anonymousNumber    Int?
+  createdAt          DateTime @default(now())
+  lastCoinsDate      String
+
+  bets               Bet[]
+  comments           Comment[]
+  chatMessages       ChatMessage[]
+  feedback           FeedbackItem[]
+  favorites          Favorite[]
+  pinnedEvents       PinnedEvent[]
+  hiddenCompanies    HiddenCompany[]
+  chatNames          UserChatName[]
+
+  @@index([username])
+}
+
+model Company {
+  id                String @id
+  name              String
+  slug              String @unique
+  description       String
+  industry          String
+  viewCount         Int @default(0)
+  color             String?
+  createdAt         DateTime @default(now())
+  aliases           String[]
+
+  events            Event[]
+  comments          Comment[]
+  chatMessages      ChatMessage[]
+  chatSetting       ChatSetting?
+  favorites         Favorite[]
+  hiddenBy          HiddenCompany[]
+
+  @@index([slug])
+}
+
+model Event {
+  id                String @id
+  companyId         String
+  company           Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyName       String
+  title             String
+  description       String
+  expiresAt         DateTime
+  status            String @default("active")
+  creatorId         String
+  creatorName       String
+  yesPool           Int @default(0)
+  noPool            Int @default(0)
+  outcome           String?
+  createdAt         DateTime @default(now())
+  viewCount         Int @default(0)
+  shareCount        Int @default(0)
+
+  bets              Bet[]
+  comments          Comment[]
+  pinnedBy          PinnedEvent[]
+  anonVotes         AnonVotedEvent[]
+
+  @@index([companyId])
+  @@index([creatorId])
+}
+
+model Bet {
+  id                String @id
+  eventId           String
+  event             Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  side              String
+  amount            Int
+  createdAt         DateTime @default(now())
+
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Comment {
+  id                String @id
+  eventId           String?
+  event             Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  companyId         String?
+  company           Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content           String
+  createdAt         DateTime @default(now())
+  editedAt          DateTime?
+  upvotes           Int @default(0)
+  displayName       String?
+
+  @@index([eventId])
+  @@index([companyId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id                String @id
+  companyId         String
+  company           Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username          String
+  text              String
+  reactions         Json @default("{}")
+  createdAt         DateTime @default(now())
+
+  @@index([companyId])
+  @@index([userId])
+}
+
+model FeedbackItem {
+  id                String @id
+  text              String
+  type              String
+  userId            String?
+  user              User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+  status            String @default("active")
+
+  @@index([userId])
+}
+
+model Favorite {
+  id                String @id @default(cuid())
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId         String
+  company           Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+}
+
+model PinnedEvent {
+  id                String @id @default(cuid())
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId           String
+  event             Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+}
+
+model HiddenCompany {
+  id                String @id @default(cuid())
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId         String
+  company           Company @relation("hiddenBy", fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+}
+
+model ChatSetting {
+  id                String @id @default(cuid())
+  companyId         String @unique
+  company           Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  displayName       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model UserChatName {
+  id                String @id @default(cuid())
+  userId            String
+  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId         String
+  displayName       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, companyId])
+  @@index([userId])
+}
+
+model AnonVotedEvent {
+  id                String @id @default(cuid())
+  eventId           String
+  event             Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  anonId            String
+  createdAt         DateTime @default(now())
+
+  @@unique([eventId, anonId])
+  @@index([eventId])
+}

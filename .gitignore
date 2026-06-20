@@ -3,3 +3,8 @@ dist
 .DS_Store
 *.local
 data.json
+.env
+.env.local
+.env.*.local
+
+/src/generated/prisma
