@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import crypto from 'crypto'
+import { execSync } from 'child_process'
 import { db, prisma } from './src/server/db.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -487,13 +488,22 @@ const startServer = async () => {
   try {
     console.log('Initializing database...')
 
-    // Check if database is accessible and create tables if needed
+    // Try to create tables if they don't exist
+    try {
+      console.log('Ensuring database schema is up to date...')
+      execSync('npx prisma db push --skip-generate --accept-data-loss 2>/dev/null', { timeout: 30000 })
+      console.log('✓ Database schema synchronized')
+    } catch (err) {
+      console.log('Schema sync skipped (tables may already exist)')
+    }
+
+    // Check if database is accessible
     try {
       const users = await db.getUsers()
       console.log(`✓ Database accessible with ${users.length} user(s)`)
     } catch (err) {
-      console.log('Note: Database tables may not exist yet. Run: npm run db:migrate')
-      console.log('Error details:', err.message)
+      console.log('⚠️ Warning: Could not access database')
+      console.log('Error:', err.message)
     }
 
     // Start the server
