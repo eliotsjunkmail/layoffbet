@@ -1,4 +1,4 @@
-import { MessageCircle, Radio } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 
 export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, chatDisplayName }: { companyName: string; onClick: () => void; newMessageCount?: number; shouldShake?: boolean; chatDisplayName?: string }) => {
   const displayText = chatDisplayName || `${companyName} Chat`
@@ -33,7 +33,7 @@ export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, ch
       >
         <MessageCircle className="w-5 h-5" />
         <span>{displayText}</span>
-        <Radio className="w-3 h-3 text-red-400 fill-red-400" />
+        <span className="text-xs font-bold text-red-400">LIVE</span>
         {newMessageCount !== undefined && newMessageCount > 0 && (
           <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold ml-1 ${newMessageCount > 0 ? 'badge-pulse' : ''}`}>
             {newMessageCount > 99 ? '99+' : newMessageCount}
