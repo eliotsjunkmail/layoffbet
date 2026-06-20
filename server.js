@@ -227,6 +227,15 @@ app.get('/api/bets', async (req, res) => {
   }
 })
 
+app.get('/api/users/:userId/bets/count', async (req, res) => {
+  try {
+    const count = await db.getUserBetCount(req.params.userId)
+    res.json({ count })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/bets', async (req, res) => {
   try {
     const bet = await db.createBet({ id: 'bet-' + crypto.randomBytes(8).toString('hex'), ...req.body, createdAt: new Date().toISOString() })

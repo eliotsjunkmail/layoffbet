@@ -7,6 +7,7 @@ import { SwipeCard } from '../components/SwipeCard'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 import confetti from 'canvas-confetti'
+import { api } from '../services/api'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -42,6 +43,16 @@ export const Bets = () => {
     return stored ? parseInt(stored) : 0
   })
   const navigate = useNavigate()
+  const [userBetCount, setUserBetCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (currentUser) {
+      fetch(`/api/users/${currentUser.id}/bets/count`)
+        .then(res => res.json())
+        .then(data => setUserBetCount(data.count))
+        .catch(err => console.error('Failed to fetch bet count:', err))
+    }
+  }, [currentUser])
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -76,11 +87,11 @@ export const Bets = () => {
     const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
     return {
       coins: currentUser.coins,
-      totalBets: userBets.length,
+      totalBets: userBetCount !== null ? userBetCount : userBets.length,
       activeBets: activeBetCount,
       totalBetAmount,
     }
-  }, [currentUser, bets, events, getEffectiveStatus])
+  }, [currentUser, userBetCount, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)

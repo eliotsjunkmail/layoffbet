@@ -193,6 +193,12 @@ export const db = {
     return (data || []).map(fromDb)
   },
 
+  async getUserBetCount(userId) {
+    const { count, error } = await supabase.from('bets').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+    throwOnError(error, 'getUserBetCount')
+    return count || 0
+  },
+
   async createBet(bet) {
     const { data, error } = await supabase.from('bets').insert(toDb(bet)).select().single()
     throwOnError(error, 'createBet')
