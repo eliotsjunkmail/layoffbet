@@ -14,6 +14,100 @@ app.use(express.json())
 
 // API Routes
 
+// ===== DATABASE SETUP =====
+app.post('/api/setup-database', async (req, res) => {
+  try {
+    console.log('Setting up database...')
+
+    // Check if admin is accessing
+    const { isAdmin } = req.body
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' })
+    }
+
+    // Try to read data.json and migrate
+    const fs = await import('fs/promises')
+    const path = await import('path')
+    const { fileURLToPath } = await import('url')
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+    try {
+      const dataContent = await fs.readFile(path.join(__dirname, 'data.json'), 'utf-8')
+      const data = JSON.parse(dataContent)
+
+      // Migrate users
+      for (const user of data.users || []) {
+        const existing = await db.getUser(user.id)
+        if (!existing) {
+          await db.createUser(user)
+        }
+      }
+
+      // Migrate companies
+      for (const company of data.companies || []) {
+        const existing = await db.getCompanyById(company.id)
+        if (!existing) {
+          await db.createCompany(company)
+        }
+      }
+
+      // Migrate events
+      for (const event of data.events || []) {
+        const existing = await db.getEventById(event.id)
+        if (!existing) {
+          await db.createEvent(event)
+        }
+      }
+
+      // Migrate bets
+      for (const bet of data.bets || []) {
+        const existing = await db.getBetById(bet.id)
+        if (!existing) {
+          await db.createBet(bet)
+        }
+      }
+
+      // Migrate comments
+      for (const comment of data.comments || []) {
+        const existing = await db.getCommentById(comment.id)
+        if (!existing) {
+          await db.createComment(comment)
+        }
+      }
+
+      // Migrate chat messages
+      for (const msg of data.chatMessages || []) {
+        const existing = await db.getChatMessageById(msg.id)
+        if (!existing) {
+          await db.createChatMessage(msg)
+        }
+      }
+
+      // Migrate favorites
+      if (data.favorites) {
+        for (const [userId, companyIds] of Object.entries(data.favorites)) {
+          for (const companyId of (companyIds || [])) {
+            try {
+              await db.createFavorite(userId, companyId)
+            } catch (e) {
+              // Ignore duplicates
+            }
+          }
+        }
+      }
+
+      console.log('✓ Database setup completed')
+      res.json({ ok: true, message: 'Database setup completed successfully' })
+    } catch (err) {
+      console.log('No data.json found or setup not needed')
+      res.json({ ok: true, message: 'Database ready (no migration needed)' })
+    }
+  } catch (error) {
+    console.error('Database setup error:', error)
+    res.status(500).json({ error: 'Database setup failed', details: error.message })
+  }
+})
+
 // ===== INIT =====
 app.post('/api/init', async (req, res) => {
   const users = await db.getUsers()
