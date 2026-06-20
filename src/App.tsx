@@ -129,7 +129,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
-  const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
+  const [unlocked, setUnlocked] = useState(true)
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
@@ -296,7 +296,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         <div className="text-center mt-6 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
-          <p className="text-xs text-slate-600">v2.45</p>
+          <p className="text-xs text-slate-600">v2.46</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
