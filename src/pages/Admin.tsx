@@ -55,6 +55,34 @@ export const Admin = () => {
     }
   }
 
+  const clearSeededData = async () => {
+    if (!window.confirm('Delete all seeded bets, comments, and events? This cannot be undone.')) return
+
+    setLoading(true)
+    try {
+      const response = await fetch('/api/admin/clear-seeded-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUser?.username,
+          password: currentUser?.password,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to clear data')
+      }
+
+      setMessage({ type: 'success', text: 'Seeded data cleared successfully' })
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to clear seeded data' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const addCompany = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentUser || !newCompany.name.trim()) return
@@ -112,6 +140,16 @@ export const Admin = () => {
             {message.text}
           </div>
         )}
+
+        <div className="flex gap-2 px-4 mb-3">
+          <button
+            onClick={clearSeededData}
+            disabled={loading}
+            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          >
+            Clear Seeded Data
+          </button>
+        </div>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-3 overflow-x-auto px-4">

@@ -78,11 +78,21 @@ export const Home = () => {
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [chatDisplayName, setChatDisplayName] = useState('')
+  const [userBetCount, setUserBetCount] = useState<number | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const anonFavInitialized = useRef(false)
+
+  useEffect(() => {
+    if (currentUser) {
+      fetch(`/api/users/${currentUser.id}/bets/count`)
+        .then(res => res.json())
+        .then(data => setUserBetCount(data.count))
+        .catch(err => console.error('Failed to fetch bet count:', err))
+    }
+  }, [currentUser])
 
   useEffect(() => {
     if (anonFavInitialized.current) {
@@ -146,7 +156,7 @@ export const Home = () => {
       }).reduce((sum, b) => sum + b.amount, 0)
       return {
         coins: currentUser.coins,
-        totalBets: userBets.length,
+        totalBets: userBetCount !== null ? userBetCount : userBets.length,
         activeBets: activeBetCount,
         totalBetAmount,
       }
@@ -168,7 +178,7 @@ export const Home = () => {
     }
 
     return null
-  }, [currentUser, anonUser, bets, events, getEffectiveStatus])
+  }, [currentUser, anonUser, userBetCount, bets, events, getEffectiveStatus])
 
   const favorites = companies.filter(c => favoriteCompanyIds.includes(c.id) && !hiddenCompanyIds.includes(c.id)).sort((a, b) => {
     const aIdx = favoriteCompanyIds.indexOf(a.id)

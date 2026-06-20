@@ -405,4 +405,15 @@ export const db = {
     }
     if (updated > 0) console.log(`[db] Migrated ${updated} comments`)
   },
+
+  // ===== CLEAR SEEDED DATA =====
+  async clearSeededData() {
+    const { error: e1 } = await supabase.from('bets').delete().gt('created_at', '1900-01-01')
+    const { error: e2 } = await supabase.from('comments').delete().gt('created_at', '1900-01-01')
+    const { error: e3 } = await supabase.from('events').delete().gt('created_at', '1900-01-01')
+    if (e1) throwOnError(e1, 'clearBets')
+    if (e2) throwOnError(e2, 'clearComments')
+    if (e3) throwOnError(e3, 'clearEvents')
+    console.log('[db] Cleared all seeded data')
+  },
 }
