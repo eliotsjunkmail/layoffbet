@@ -482,12 +482,53 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' })
 })
 
-// Start server
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-  console.log(`Connected to database via Prisma`)
-})
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    console.log('Initializing database...')
+
+    // Run Prisma migrations to create tables
+    console.log('Running database migrations...')
+    const { execSync } = await import('child_process')
+    try {
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' })
+      console.log('✓ Database migrations completed')
+    } catch (err) {
+      console.log('Database migrations already applied or error running them')
+    }
+
+    // Check if data migration is needed
+    const users = await db.getUsers()
+    if (users.length === 0) {
+      console.log('No users found, attempting data migration from data.json...')
+      try {
+        const fs = await import('fs/promises')
+        const dataPath = './data.json'
+        await fs.stat(dataPath)
+
+        console.log('Running data migration from data.json...')
+        execSync('node scripts/migrate-from-json.js', { stdio: 'inherit' })
+        console.log('✓ Data migration completed')
+      } catch (err) {
+        console.log('No data.json file or migration not needed')
+      }
+    } else {
+      console.log(`✓ Database already has ${users.length} user(s)`)
+    }
+
+    // Start the server
+    const PORT = process.env.PORT || 3000
+    app.listen(PORT, () => {
+      console.log(`✓ Server running on port ${PORT}`)
+      console.log(`✓ Connected to database via Prisma`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+startServer()
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
