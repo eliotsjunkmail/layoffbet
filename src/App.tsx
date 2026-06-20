@@ -188,43 +188,45 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   if (unlocked) return <>{children}</>
 
+  const registerAnonymous = async () => {
+    try {
+      setLoadingAnonId(true)
+
+      // Fetch fresh anonymous username for this user
+      const res = await fetch(`${API_BASE}/api/next-anon-id`)
+      const data = await res.json()
+      const freshAnonUsername = data.username
+
+      // Register user with fresh anonUsername and password "guest"
+      const user = await api.register(freshAnonUsername, 'guest')
+
+      // Store in localStorage
+      localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
+
+      if (selectedCompanyId) {
+        localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+      }
+
+      // Sync data from server BEFORE setting currentUser so Home has data ready
+      await syncCommentsFromServer()
+
+      // Now set currentUser and navigate to home
+      useStore.setState({ currentUser: user })
+      setUnlocked(true)
+    } catch (err) {
+      console.error('Failed to register user:', err)
+      setError(true); setShake(true)
+      setTimeout(() => setShake(false), 500)
+    } finally {
+      setLoadingAnonId(false)
+    }
+  }
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (GATE_CODES.includes(input.trim().toLowerCase())) {
-      try {
-        setLoadingAnonId(true)
-
-        // Fetch fresh anonymous username for this user
-        const res = await fetch(`${API_BASE}/api/next-anon-id`)
-        const data = await res.json()
-        const freshAnonUsername = data.username
-
-        // Register user with fresh anonUsername and password "guest"
-        const user = await api.register(freshAnonUsername, 'guest')
-
-        // Store in localStorage
-        localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
-
-        if (selectedCompanyId) {
-          localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
-        }
-
-        // Don't lock the gate permanently - allow others to enter
-        // localStorage.setItem(GATE_KEY, '1')
-
-        // Sync data from server BEFORE setting currentUser so Home has data ready
-        await syncCommentsFromServer()
-
-        // Now set currentUser and navigate to home
-        useStore.setState({ currentUser: user })
-        setUnlocked(true)
-      } catch (err) {
-        console.error('Failed to register user:', err)
-        setError(true); setShake(true); setInput('')
-        setTimeout(() => setShake(false), 500)
-      } finally {
-        setLoadingAnonId(false)
-      }
+      setInput('')
+      await registerAnonymous()
     } else {
       setError(true); setShake(true); setInput('')
       setTimeout(() => setShake(false), 500)
@@ -270,7 +272,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* Challenge card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-3">
           <form onSubmit={submit} className="space-y-3">
             <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
               <input
@@ -289,9 +291,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               </p>
             )}
             <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-              {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
+              {loadingAnonId ? 'Loading...' : 'Enter'}
             </button>
           </form>
+          <button type="button" onClick={registerAnonymous} disabled={loadingAnonId} className="w-full bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
+          </button>
         </div>
 
         <div className="text-center mt-6 space-y-3">
