@@ -14,72 +14,6 @@ app.use(express.json())
 
 // API Routes
 
-// ===== DATABASE SETUP =====
-app.post('/api/setup-database', async (req, res) => {
-  try {
-    console.log('Setting up database...')
-
-    try {
-      const users = await db.getUsers()
-
-      if (users.length === 0) {
-        // Create admin user if none exist
-        await db.createUser({
-          id: 'user-admin',
-          username: 'eliot',
-          password: 'Eliot123',
-          coins: 999,
-          isAdmin: true,
-          createdAt: new Date(),
-          lastCoinsDate: new Date().toISOString().split('T')[0],
-          anonymousNumber: 100000,
-          displayName: 'Eliot'
-        })
-        console.log('✓ Admin user created')
-        return res.json({ ok: true, message: 'Database initialized with admin user' })
-      } else {
-        return res.json({ ok: true, message: 'Database already initialized', userCount: users.length })
-      }
-    } catch (dbError) {
-      // Database tables might not exist - try to generate Prisma client
-      console.log('Attempting to initialize Prisma schema...')
-
-      // Try to access Prisma to generate client
-      try {
-        await prisma.$connect()
-        await prisma.$disconnect()
-
-        // Retry user creation
-        await db.getUsers()
-
-        // If we got here, try creating admin again
-        await db.createUser({
-          id: 'user-admin',
-          username: 'eliot',
-          password: 'Eliot123',
-          coins: 999,
-          isAdmin: true,
-          createdAt: new Date(),
-          lastCoinsDate: new Date().toISOString().split('T')[0],
-          anonymousNumber: 100000,
-          displayName: 'Eliot'
-        })
-        return res.json({ ok: true, message: 'Database initialized' })
-      } catch (e) {
-        console.error('Database initialization error:', e.message)
-        return res.status(500).json({
-          error: 'Database tables need to be created',
-          message: 'Please run: npm run db:push in your Railway console',
-          details: e.message
-        })
-      }
-    }
-  } catch (error) {
-    console.error('Setup error:', error)
-    res.status(500).json({ error: 'Setup failed', details: error.message })
-  }
-})
-
 // ===== INIT =====
 app.post('/api/init', async (req, res) => {
   const users = await db.getUsers()
@@ -532,64 +466,6 @@ app.post('/api/favorites/:userId/:companyId', async (req, res) => {
 app.delete('/api/favorites/:userId/:companyId', async (req, res) => {
   await db.deleteFavorite(req.params.userId, req.params.companyId)
   res.json({ ok: true })
-})
-
-// ===== SETUP PAGE =====
-app.get('/setup', async (req, res) => {
-  try {
-    // Try to create admin user
-    const users = await db.getUsers()
-
-    if (users.length === 0) {
-      await db.createUser({
-        id: 'user-admin',
-        username: 'eliot',
-        password: 'Eliot123',
-        coins: 999,
-        isAdmin: true,
-        createdAt: new Date(),
-        lastCoinsDate: new Date().toISOString().split('T')[0],
-        anonymousNumber: 100000,
-        displayName: 'Eliot'
-      })
-
-      return res.send(`
-        <html>
-          <body style="font-family: Arial; padding: 20px; text-align: center;">
-            <h1>✅ Setup Complete!</h1>
-            <p>Admin user created successfully.</p>
-            <p><strong>Login with:</strong></p>
-            <p>Username: <code>eliot</code></p>
-            <p>Password: <code>Eliot123</code></p>
-            <a href="/" style="margin-top: 20px; padding: 10px 20px; background: #0066ff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">Go to App</a>
-          </body>
-        </html>
-      `)
-    } else {
-      return res.send(`
-        <html>
-          <body style="font-family: Arial; padding: 20px; text-align: center;">
-            <h1>✅ Already Initialized</h1>
-            <p>Database already has ${users.length} user(s).</p>
-            <a href="/" style="margin-top: 20px; padding: 10px 20px; background: #0066ff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">Go to App</a>
-          </body>
-        </html>
-      `)
-    }
-  } catch (error) {
-    console.error('Setup error:', error)
-    return res.send(`
-      <html>
-        <body style="font-family: Arial; padding: 20px; text-align: center;">
-          <h1>⚠️ Setup Error</h1>
-          <p style="color: red;">${error.message}</p>
-          <p>The database may not be fully initialized yet.</p>
-          <p>Try refreshing in a few moments, or contact support.</p>
-          <a href="/" style="margin-top: 20px; padding: 10px 20px; background: #0066ff; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">Go Back</a>
-        </body>
-      </html>
-    `)
-  }
 })
 
 // Serve static frontend
