@@ -106,6 +106,36 @@ app.post('/api/users/register', async (req, res) => {
   }
 })
 
+app.post('/api/admin/users', async (req, res) => {
+  try {
+    const { username, password, adminUsername, adminPassword } = req.body
+    if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
+    if (!adminUsername || !adminPassword) return res.status(401).json({ error: 'Admin authentication required' })
+
+    const admin = await db.getUserByUsername(adminUsername)
+    if (!admin || admin.password !== adminPassword || !admin.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    const existing = await db.getUserByUsername(username)
+    if (existing) return res.status(400).json({ error: 'User already exists' })
+
+    const user = await db.createUser({
+      id: 'user-' + crypto.randomBytes(8).toString('hex'),
+      username,
+      password,
+      coins: 100,
+      isAdmin: true,
+      isAnonymous: false,
+      createdAt: new Date().toISOString(),
+      lastCoinsDate: new Date().toISOString().split('T')[0],
+      anonymousNumber: 100001,
+      displayName: username,
+    })
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.get('/api/users', async (req, res) => {
   try {
     res.json(await db.getUsers())
