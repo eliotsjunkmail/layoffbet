@@ -8,3 +8,4 @@ data.json
 .env.*.local
 
 /src/generated/prisma
+src/generated/
