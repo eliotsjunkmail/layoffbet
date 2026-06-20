@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
 import { X } from 'lucide-react'
@@ -293,6 +293,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
           </form>
+          <Link to="/login" className="block w-full text-center bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
+            Sign In
+          </Link>
         </div>
 
         <div className="text-center mt-6 space-y-3">
