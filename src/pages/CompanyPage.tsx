@@ -244,15 +244,15 @@ export const CompanyPage = () => {
     setEditEventDesc(event.description)
   }
 
-  const handleSaveEventEdit = (eventId: string) => {
-    updateEvent(eventId, { title: editEventTitle.trim(), description: editEventDesc.trim() } as any)
+  const handleSaveEventEdit = async (eventId: string) => {
+    await updateEvent(eventId, { title: editEventTitle.trim(), description: editEventDesc.trim() } as any)
     setEditingEventId(null)
     showToast('Prediction updated!')
   }
 
-  const handleDeleteEvent = (eventId: string) => {
+  const handleDeleteEvent = async (eventId: string) => {
     if (confirm('Are you sure you want to delete this prediction? This action cannot be undone.')) {
-      deleteEvent(eventId)
+      await deleteEvent(eventId)
       showToast('Prediction deleted')
     }
   }

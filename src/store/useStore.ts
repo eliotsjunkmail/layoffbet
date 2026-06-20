@@ -72,10 +72,10 @@ interface StoreState {
   removeAnonymousVote: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Promise<Event | false>
-  updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
+  updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => Promise<void>
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
-  deleteEvent: (eventId: string) => void
+  deleteEvent: (eventId: string) => Promise<void>
 
   addCompany: (name: string, description: string, industry: string) => void
   updateCompany: (id: string, name: string, description: string, industry: string) => void
@@ -714,10 +714,15 @@ export const useStore = create<StoreState>()(
         return event
       },
 
-      updateEvent: (eventId, data) => {
+      updateEvent: async (eventId, data) => {
         set(s => ({
           events: s.events.map(e => e.id === eventId ? { ...e, ...data } : e),
         }))
+        try {
+          await api.updateEvent(eventId, data)
+        } catch (err) {
+          console.error('Failed to update event on server:', err)
+        }
       },
 
       resolveEvent: (eventId, outcome) => {
@@ -751,12 +756,17 @@ export const useStore = create<StoreState>()(
         set(s => ({ events: s.events.map(e => e.id === eventId ? { ...e, status: 'archived' } : e) }))
       },
 
-      deleteEvent: (eventId) => {
+      deleteEvent: async (eventId) => {
         set(s => ({
           events: s.events.filter(e => e.id !== eventId),
           bets: s.bets.filter(b => b.eventId !== eventId),
           comments: s.comments.filter(c => c.eventId !== eventId),
         }))
+        try {
+          await api.deleteEvent(eventId)
+        } catch (err) {
+          console.error('Failed to delete event on server:', err)
+        }
       },
 
       addCompany: (name, description, industry) => {
