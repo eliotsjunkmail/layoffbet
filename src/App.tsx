@@ -162,7 +162,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         setAnonUsername(data.username)
       } catch (err) {
         console.error('Failed to fetch anonymous ID:', err)
-        setAnonUsername('Anon0000001') // Fallback
+        // Generate unique fallback username with timestamp to avoid conflicts
+        const timestamp = Date.now().toString().slice(-7)
+        setAnonUsername(`Anon${timestamp}`)
       } finally {
         setLoadingAnonId(false)
       }
