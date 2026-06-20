@@ -10,6 +10,7 @@ import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
 import { getProbability, timeUntil, formatDate, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
+import { api } from '../services/api'
 
 const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
@@ -74,6 +75,7 @@ export const CompanyPage = () => {
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [editEventTitle, setEditEventTitle] = useState('')
   const [editEventDesc, setEditEventDesc] = useState('')
+  const [chatDisplayName, setChatDisplayName] = useState('')
   const prevMessageCountRef = useRef(0)
   const prevNewMessagesRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
@@ -82,6 +84,28 @@ export const CompanyPage = () => {
   const { state } = useLocation() as { state?: { newEventId?: string; showToast?: boolean } | null }
 
   const company = companies.find(c => c.slug === slug)
+
+  // Load chat display name when company changes
+  useEffect(() => {
+    if (company) {
+      api.getChatSettings(company.id, company.name)
+        .then(settings => {
+          if (settings.displayName) setChatDisplayName(settings.displayName)
+        })
+        .catch(() => {})
+    }
+  }, [company?.id])
+
+  // Reload chat display name when chat closes (picks up changes made in chat)
+  useEffect(() => {
+    if (!chatOpen && company) {
+      api.getChatSettings(company.id, company.name)
+        .then(settings => {
+          if (settings.displayName) setChatDisplayName(settings.displayName)
+        })
+        .catch(() => {})
+    }
+  }, [chatOpen, company?.id])
 
   // Handle scrolling to newly created event
   useEffect(() => {
@@ -707,7 +731,7 @@ export const CompanyPage = () => {
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
     {company && (
       <>
-        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} />
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} />
         <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </>
     )}
