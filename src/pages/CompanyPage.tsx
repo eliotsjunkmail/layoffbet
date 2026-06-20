@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate, Navigate, useLocation } from 'react-route
 import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
+import { api } from '../services/api'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { SwipeCard } from '../components/SwipeCard'
@@ -74,6 +75,7 @@ export const CompanyPage = () => {
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [editEventTitle, setEditEventTitle] = useState('')
   const [editEventDesc, setEditEventDesc] = useState('')
+  const [chatDisplayName, setChatDisplayName] = useState('')
   const prevMessageCountRef = useRef(0)
   const prevNewMessagesRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
@@ -95,6 +97,20 @@ export const CompanyPage = () => {
       }
     }
   }, [state?.newEventId])
+
+  // Load chat display name when company changes
+  useEffect(() => {
+    if (!company) return
+    const loadChatSettings = async () => {
+      try {
+        const settings = await api.getChatSettings(company.id, company.name)
+        setChatDisplayName(settings.displayName || '')
+      } catch (err) {
+        console.error('Failed to load chat settings:', err)
+      }
+    }
+    loadChatSettings()
+  }, [company])
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -707,7 +723,7 @@ export const CompanyPage = () => {
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
     {company && (
       <>
-        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} />
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} />
         <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </>
     )}
