@@ -197,8 +197,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         // Create a fresh anonymous user server-side (handles sequential numbering atomically)
         const res = await fetch(`${API_BASE}/api/users/anonymous`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
-        if (!res.ok) throw new Error('Failed to create anonymous user')
-        const user = await res.json()
+        const data = await res.json()
+        if (!res.ok) {
+          const errorMsg = data?.error || `Server error: ${res.status}`
+          console.error('[Gate] Anonymous user creation failed:', errorMsg, data)
+          throw new Error(errorMsg)
+        }
+        const user = data
 
         // Store in localStorage
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
