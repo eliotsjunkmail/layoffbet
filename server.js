@@ -618,7 +618,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000
 db.ensureAdminUser()
   .then(() => db.migrateComments())
-  .then(() => db.deleteExcessBets(2))
   .then(() => {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
   })
