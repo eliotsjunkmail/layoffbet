@@ -224,6 +224,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentUser) {
       setUnlocked(true)
+      window.scrollTo(0, 0)
     } else {
       // When user logs out, always reset gate to locked so next user must enter password
       setUnlocked(false)
@@ -279,6 +280,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         // Now set currentUser and navigate to home
         useStore.setState({ currentUser: user })
         setUnlocked(true)
+        window.scrollTo(0, 0)
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
         console.error('[Gate] ERROR during anonymous user creation:', errorMsg, err)
