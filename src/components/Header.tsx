@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, User, Shield, LogOut, Settings, ChevronDown, Coins, X, MessageSquare } from 'lucide-react'
 import { useStore } from '../store/useStore'
+import { APP_VERSION } from '../constants'
 
 const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
   const currentUser = useStore(s => s.currentUser)
@@ -112,7 +113,7 @@ export const Header = () => {
             <div className="flex items-baseline gap-0.5">
               <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
               <span className="font-black text-blue-600 dark:text-blue-400 text-sm tracking-tight">Live</span>
-              <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">v2.51</span>
+              <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">{APP_VERSION}</span>
             </div>
           </Link>
 
