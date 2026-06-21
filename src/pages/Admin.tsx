@@ -192,7 +192,7 @@ export const Admin = () => {
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Password</th>
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Coins</th>
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                    <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -204,7 +204,7 @@ export const Admin = () => {
                       <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-2 py-4 text-right">
+                      <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
                         <button
                           onClick={() => deleteItem('users', user.id)}
                           disabled={loading}
@@ -234,7 +234,7 @@ export const Admin = () => {
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Side</th>
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Amount</th>
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                    <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -247,7 +247,7 @@ export const Admin = () => {
                       <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                         {new Date(bet.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-2 py-4 text-right">
+                      <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
                         <button
                           onClick={() => deleteItem('bets', bet.id)}
                           disabled={loading}
@@ -277,7 +277,7 @@ export const Admin = () => {
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Upvotes</th>
                     <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                    <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -290,7 +290,7 @@ export const Admin = () => {
                       <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-2 py-4 text-right">
+                      <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
                         <button
                           onClick={() => deleteItem('comments', comment.id)}
                           disabled={loading}
@@ -431,7 +431,7 @@ export const Admin = () => {
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Description</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
                         <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Events</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Actions</th>
+                        <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Actions</th>
                       </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -494,7 +494,7 @@ export const Admin = () => {
                           ) : company.industry || '—'}
                         </td>
                         <td className="px-2 py-3 text-center text-sm text-gray-600 dark:text-slate-400">{activeEventsCount}</td>
-                        <td className="px-2 py-3 text-right">
+                        <td className="sticky right-0 px-2 py-3 text-right bg-white dark:bg-slate-800 z-10">
                           <div className="flex items-center justify-end gap-1">
                             {isEditing ? (
                               <>
