@@ -84,7 +84,16 @@ export const db = {
   },
 
   async getMaxAnonNumber() {
-    const { data, error } = await supabase.from('users').select('anonymous_number').order('anonymous_number', { ascending: false }).limit(1)
+    // IMPORTANT: filter out NULL anonymous_number rows. In Postgres, `ORDER BY ... DESC`
+    // puts NULLs FIRST by default, so without this filter a single user with a NULL
+    // anonymous_number would make this return 0 every time — causing every gate user to
+    // collide on username "Anon0000001" and fail after the first one succeeds.
+    const { data, error } = await supabase
+      .from('users')
+      .select('anonymous_number')
+      .not('anonymous_number', 'is', null)
+      .order('anonymous_number', { ascending: false })
+      .limit(1)
     throwOnError(error, 'getMaxAnonNumber')
     return data?.[0]?.anonymous_number ?? 0
   },
