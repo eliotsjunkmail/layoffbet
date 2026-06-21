@@ -646,25 +646,6 @@ export const Home = () => {
                   })}
                 </div>
               ) : null}
-              {/* Add prediction button */}
-              <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center gap-3 mt-6">
-                <span className="text-sm text-gray-600 dark:text-slate-400">Know something about {c.name}?</span>
-                {currentUser ? (
-                  <button
-                    onClick={() => navigate('/create', { state: { companyId: c.id } })}
-                    className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
-                  >
-                    + New bet
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
-                  >
-                    + New bet
-                  </button>
-                )}
-              </div>
               {activeEvents.length === 0 && (
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-center shadow-sm">
                   <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
