@@ -58,14 +58,16 @@ export const Admin = () => {
         }),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const data = await response.json()
         throw new Error(data.error || `Failed to delete ${type}`)
       }
 
       setMessage({ type: 'success', text: `${type} deleted successfully` })
       setTimeout(() => window.location.reload(), 1000)
     } catch (err) {
+      console.error('Delete error:', err)
       setMessage({ type: 'error', text: err instanceof Error ? err.message : `Failed to delete ${type}` })
     } finally {
       setLoading(false)
