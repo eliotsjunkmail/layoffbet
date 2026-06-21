@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus } from 'lucide-react'
+import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X } from 'lucide-react'
 
 type Tab = 'users' | 'bets' | 'comments' | 'companies'
 
@@ -15,6 +15,7 @@ export const Admin = () => {
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const toggleHiddenCompany = useStore(s => s.toggleHiddenCompany)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const updateCompany = useStore(s => s.updateCompany)
 
   const [activeTab, setActiveTab] = useState<Tab>('companies')
   const [loading, setLoading] = useState(false)
@@ -23,6 +24,8 @@ export const Admin = () => {
   const [showOnlyActive, setShowOnlyActive] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newCompany, setNewCompany] = useState({ name: '', description: '', industry: '', color: '#003DA5' })
+  const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ name: '', description: '', industry: '' })
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -82,6 +85,35 @@ export const Admin = () => {
       setTimeout(() => window.location.reload(), 1000)
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to create company' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const startEditCompany = (company: typeof companies[0]) => {
+    setEditingCompanyId(company.id)
+    setEditForm({ name: company.name, description: company.description || '', industry: company.industry || '' })
+  }
+
+  const saveEditCompany = async (companyId: string) => {
+    if (!editForm.name.trim()) return
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/companies/${companyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editForm.name.trim(), description: editForm.description.trim(), industry: editForm.industry.trim() }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update company')
+      }
+      updateCompany(companyId, editForm.name.trim(), editForm.description.trim(), editForm.industry.trim())
+      setEditingCompanyId(null)
+      setMessage({ type: 'success', text: 'Company updated' })
+      setTimeout(() => setMessage(null), 2000)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update company' })
     } finally {
       setLoading(false)
     }
@@ -384,21 +416,20 @@ export const Admin = () => {
                       <tr>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Visible</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Description</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
                         <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Events</th>
-                        <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comments</th>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Action</th>
+                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Actions</th>
                       </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                   {displayedCompanies.map(company => {
                     const isHidden = hiddenCompanyIds.includes(company.id)
                     const isToggling = togglingCompanyId === company.id
+                    const isEditing = editingCompanyId === company.id
 
-                    // Calculate active events and comments for this company
                     const eventsForCompany = events.filter(e => e.companyId === company.id)
                     const activeEventsCount = eventsForCompany.filter(e => getEffectiveStatus(e) === 'active').length
-                    const commentsCount = comments.filter(c => c.companyId === company.id).length
 
                     const handleToggle = async () => {
                       setTogglingCompanyId(company.id)
@@ -412,34 +443,67 @@ export const Admin = () => {
                     }
                     return (
                       <tr key={company.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 ${isHidden ? 'opacity-50' : ''}`}>
-                        <td className="px-2 py-4">
+                        <td className="px-2 py-3">
                           <label className="flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={!isHidden}
-                              onChange={handleToggle}
-                              disabled={isToggling}
-                              className="sr-only"
-                            />
+                            <input type="checkbox" checked={!isHidden} onChange={handleToggle} disabled={isToggling} className="sr-only" />
                             <div className={`relative w-11 h-6 rounded-full transition-colors ${!isHidden ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
                               <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${!isHidden ? 'translate-x-5' : ''}`} />
                             </div>
                           </label>
                         </td>
-                        <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{company.name}</td>
-                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{activeEventsCount}</td>
-                        <td className="px-2 py-4 text-center text-sm text-gray-600 dark:text-slate-400">{commentsCount}</td>
-                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
-                          {new Date(company.createdAt).toLocaleDateString()}
+                        <td className="px-2 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                          {isEditing ? (
+                            <input
+                              value={editForm.name}
+                              onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                              className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
+                              autoFocus
+                            />
+                          ) : company.name}
                         </td>
-                        <td className="px-2 py-4 text-right">
-                          <button
-                            onClick={() => deleteItem('companies', company.id)}
-                            disabled={loading}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            <Trash2 className="w-4 h-4" /> Delete
-                          </button>
+                        <td className="px-2 py-3 text-sm text-gray-600 dark:text-slate-400 max-w-[140px]">
+                          {isEditing ? (
+                            <input
+                              value={editForm.description}
+                              onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                              placeholder="Description"
+                              className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
+                            />
+                          ) : <span className="truncate block">{company.description || '—'}</span>}
+                        </td>
+                        <td className="px-2 py-3 text-sm text-gray-600 dark:text-slate-400">
+                          {isEditing ? (
+                            <input
+                              value={editForm.industry}
+                              onChange={e => setEditForm(f => ({ ...f, industry: e.target.value }))}
+                              placeholder="Industry"
+                              className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
+                            />
+                          ) : company.industry || '—'}
+                        </td>
+                        <td className="px-2 py-3 text-center text-sm text-gray-600 dark:text-slate-400">{activeEventsCount}</td>
+                        <td className="px-2 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {isEditing ? (
+                              <>
+                                <button onClick={() => saveEditCompany(company.id)} disabled={loading} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50">
+                                  <Check className="w-3.5 h-3.5" /> Save
+                                </button>
+                                <button onClick={() => setEditingCompanyId(null)} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                  <X className="w-3.5 h-3.5" /> Cancel
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button onClick={() => startEditCompany(company)} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                                  <Pencil className="w-3.5 h-3.5" /> Edit
+                                </button>
+                                <button onClick={() => deleteItem('companies', company.id)} disabled={loading} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50">
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )

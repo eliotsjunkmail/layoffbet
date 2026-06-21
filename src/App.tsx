@@ -14,6 +14,7 @@ const DEFAULT_LAUNCH = '2026-09-01'
 const GATE_ADMIN_USER = 'admin'
 const GATE_ADMIN_PASS = 'admin'
 const ANON_FAVORITE_COMPANY_KEY = 'lb-anon-favorite-company'
+const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -149,6 +150,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [adminErr, setAdminErr] = useState(false)
   const [newDate, setNewDate] = useState(launchDate)
   const [saved, setSaved] = useState(false)
+  const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
 
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
@@ -192,7 +194,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (GATE_CODES.includes(input.trim().toLowerCase())) {
+    if (!codeRequired || GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
         setLoadingAnonId(true)
         console.log('[Gate] Starting anonymous user creation flow...')
@@ -269,6 +271,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     setTimeout(() => { setSaved(false); setAdminOpen(false); setAdminStep('login'); setAdminUser(''); setAdminPass('') }, 1200)
   }
 
+  const toggleCodeRequired = () => {
+    const next = !codeRequired
+    setCodeRequired(next)
+    localStorage.setItem(GATE_CODE_REQUIRED_KEY, next ? 'true' : 'false')
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -293,21 +301,25 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
           <form onSubmit={submit} className="space-y-3">
-            <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
-              <input
-                type="text"
-                value={input}
-                onChange={e => { setInput(e.target.value); setError(false) }}
-                placeholder="Enter invite code"
-                autoComplete="off"
-                className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
-              />
-            </div>
-            {error && (
-              <p className="text-xs text-rose-400 flex items-center gap-1.5">
-                <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
-                That's not right — try again
-              </p>
+            {codeRequired && (
+              <>
+                <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={e => { setInput(e.target.value); setError(false) }}
+                    placeholder="Enter invite code"
+                    autoComplete="off"
+                    className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
+                  />
+                </div>
+                {error && (
+                  <p className="text-xs text-rose-400 flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
+                    That's not right — try again
+                  </p>
+                )}
+              </>
             )}
             <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
@@ -353,6 +365,16 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     {saved ? '✓ Saved' : 'Save date'}
                   </button>
                 </form>
+                <div className="mt-4 pt-4 border-t border-slate-700">
+                  <p className="text-sm font-semibold text-white mb-1">Invite code</p>
+                  <p className="text-xs text-slate-500 mb-3">Require users to enter an invite code before entering</p>
+                  <button onClick={toggleCodeRequired} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${codeRequired ? 'bg-slate-800 border-slate-600 text-white' : 'bg-emerald-900/40 border-emerald-700 text-emerald-300'}`}>
+                    <span className="text-sm font-medium">{codeRequired ? 'Code required' : 'Open entry (no code)'}</span>
+                    <div className={`relative w-10 h-5 rounded-full transition-colors ${codeRequired ? 'bg-blue-600' : 'bg-slate-600'}`}>
+                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${codeRequired ? 'translate-x-5' : ''}`} />
+                    </div>
+                  </button>
+                </div>
               </>
             )}
           </div>
