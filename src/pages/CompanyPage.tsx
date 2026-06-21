@@ -40,6 +40,7 @@ export const CompanyPage = () => {
   const markCompanyVisited = useStore(s => s.markCompanyVisited)
   const placeBet = useStore(s => s.placeBet)
   const placeAnonymousVote = useStore(s => s.placeAnonymousVote)
+  const getUserBet = useStore(s => s.getUserBet)
   const removeBet = useStore(s => s.removeBet)
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
@@ -292,22 +293,34 @@ export const CompanyPage = () => {
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
     if (currentUser) {
+      const existingBet = getUserBet(eventId)
+      const isReducing = !!existingBet && existingBet.side !== side
       if (placeBet(eventId, side, betAmount)) {
         setSwipeFlash({ id: eventId, side })
         setTimeout(() => setSwipeFlash(null), 600)
-        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-        showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+        if (isReducing) {
+          showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+        } else {
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+          showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+        }
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
-      if (Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
+      const existingVote = anonVotedEvents[eventId]
+      const isReducing = !!existingVote && existingVote.lastSide !== side
+      if (isReducing || Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
-          setAnonCoinsSpent(prev => prev + betAmount)
+          setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
           setSwipeFlash({ id: eventId, side })
           setTimeout(() => setSwipeFlash(null), 600)
-          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-          showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+          if (isReducing) {
+            showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+          } else {
+            confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+            showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+          }
         } else {
           showToast('Prediction is no longer active')
         }

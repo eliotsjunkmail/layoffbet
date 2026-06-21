@@ -82,22 +82,32 @@ export const EventDetail = () => {
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
     if (!currentUser) {
-      if (!canPlaceGuestBet) {
+      const isReducing = !!anonVote && anonVote.lastSide !== side
+      if (!isReducing && !canPlaceGuestBet) {
         showToast('Not enough coins')
         return
       }
       if (placeAnonymousVote(id!, side, betAmount)) {
-        setAnonCoinsSpent(prev => prev + betAmount)
-        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-        showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+        setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
+        if (isReducing) {
+          showToast(`Reduced your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+        } else {
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+          showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+        }
       } else {
         showToast('Prediction is no longer active')
       }
       return
     }
+    const isReducing = !!userBet && userBet.side !== side
     if (placeBet(id!, side, betAmount)) {
-      confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
-      showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
+      if (isReducing) {
+        showToast(`Reduced your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+      } else {
+        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+        showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
+      }
     } else {
       showToast('Not enough Coins or already bet.')
     }
