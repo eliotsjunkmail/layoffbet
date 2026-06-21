@@ -187,7 +187,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     }
   }, [currentUser])
 
-  if (unlocked) return <>{children}</>
+  if (unlocked || window.location.pathname === '/login') return <>{children}</>
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
