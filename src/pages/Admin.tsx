@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X } from 'lucide-react'
+import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings } from 'lucide-react'
 
-type Tab = 'users' | 'bets' | 'comments' | 'companies'
+const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
+
+type Tab = 'users' | 'bets' | 'comments' | 'companies' | 'settings'
 
 export const Admin = () => {
   const currentUser = useStore(s => s.currentUser)
@@ -26,6 +28,7 @@ export const Admin = () => {
   const [newCompany, setNewCompany] = useState({ name: '', description: '', industry: '', color: '#003DA5' })
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ name: '', description: '', industry: '' })
+  const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -124,11 +127,18 @@ export const Admin = () => {
   const getUsername = (userId?: string) => !userId ? '-' : users.find(u => u.id === userId)?.username || userId
   const getCompanyName = (companyId?: string) => !companyId ? '-' : companies.find(c => c.id === companyId)?.name || companyId
 
-  const tabs: { id: Tab; label: string; count: number; icon: React.ReactNode }[] = [
+  const toggleCodeRequired = () => {
+    const next = !codeRequired
+    setCodeRequired(next)
+    localStorage.setItem(GATE_CODE_REQUIRED_KEY, next ? 'true' : 'false')
+  }
+
+  const tabs: { id: Tab; label: string; count?: number; icon: React.ReactNode }[] = [
     { id: 'companies', label: 'Companies', count: companies.length, icon: <Building2 className="w-4 h-4" /> },
     { id: 'users', label: 'Users', count: nonAdminUsers.length, icon: <Users className="w-4 h-4" /> },
     { id: 'bets', label: 'Bets', count: bets.length, icon: <TrendingUp className="w-4 h-4" /> },
     { id: 'comments', label: 'Comments', count: comments.length, icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ]
 
   return (
@@ -158,13 +168,15 @@ export const Admin = () => {
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
-                activeTab === tab.id
-                  ? 'bg-white/30'
-                  : 'bg-gray-300 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
-              }`}>
-                {tab.count}
-              </span>
+              {tab.count !== undefined && (
+                <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                  activeTab === tab.id
+                    ? 'bg-white/30'
+                    : 'bg-gray-300 dark:bg-slate-700 text-gray-700 dark:text-slate-300'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -516,6 +528,25 @@ export const Admin = () => {
             </>
           )
         })()}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-4 px-0">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Gate — Invite code</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">When disabled, users can enter the gate without an invite code.</p>
+              <button
+                onClick={toggleCodeRequired}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${codeRequired ? 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white' : 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'}`}
+              >
+                <span className="text-sm font-medium">{codeRequired ? 'Code required' : 'Open entry (no code needed)'}</span>
+                <div className={`relative w-11 h-6 rounded-full transition-colors ${codeRequired ? 'bg-blue-600' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${codeRequired ? 'translate-x-5' : ''}`} />
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )

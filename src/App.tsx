@@ -365,16 +365,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     {saved ? '✓ Saved' : 'Save date'}
                   </button>
                 </form>
-                <div className="mt-4 pt-4 border-t border-slate-700">
-                  <p className="text-sm font-semibold text-white mb-1">Invite code</p>
-                  <p className="text-xs text-slate-500 mb-3">Require users to enter an invite code before entering</p>
-                  <button onClick={toggleCodeRequired} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${codeRequired ? 'bg-slate-800 border-slate-600 text-white' : 'bg-emerald-900/40 border-emerald-700 text-emerald-300'}`}>
-                    <span className="text-sm font-medium">{codeRequired ? 'Code required' : 'Open entry (no code)'}</span>
-                    <div className={`relative w-10 h-5 rounded-full transition-colors ${codeRequired ? 'bg-blue-600' : 'bg-slate-600'}`}>
-                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${codeRequired ? 'translate-x-5' : ''}`} />
-                    </div>
-                  </button>
-                </div>
               </>
             )}
           </div>
