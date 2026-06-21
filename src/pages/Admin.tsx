@@ -42,15 +42,23 @@ export const Admin = () => {
 
   const deleteItem = async (type: string, id: string) => {
     if (!window.confirm(`Delete this ${type}?`)) return
+    if (!currentUser) return
 
     setLoading(true)
     try {
       const response = await fetch(`/api/${type}/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUser.username,
+          password: currentUser.password,
+        }),
       })
 
-      if (!response.ok) throw new Error(`Failed to delete ${type}`)
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || `Failed to delete ${type}`)
+      }
 
       setMessage({ type: 'success', text: `${type} deleted successfully` })
       setTimeout(() => window.location.reload(), 1000)

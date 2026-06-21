@@ -273,6 +273,11 @@ app.post('/api/users/:id/coins', async (req, res) => {
 
 app.delete('/api/users/:id', async (req, res) => {
   try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
     await db.deleteUser(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -310,6 +315,11 @@ app.put('/api/events/:id', async (req, res) => {
 
 app.delete('/api/events/:id', async (req, res) => {
   try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
     await db.deleteEvent(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -356,6 +366,11 @@ app.put('/api/bets/:id', async (req, res) => {
 
 app.delete('/api/bets/:id', async (req, res) => {
   try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
     await db.deleteBet(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -396,6 +411,11 @@ app.put('/api/comments/:id', async (req, res) => {
 
 app.delete('/api/comments/:id', async (req, res) => {
   try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
     await db.deleteComment(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -511,6 +531,11 @@ app.put('/api/companies/:id', async (req, res) => {
 
 app.delete('/api/companies/:id', async (req, res) => {
   try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
     await db.deleteCompany(req.params.id)
     res.json({ ok: true })
   } catch (err) {
