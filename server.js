@@ -62,6 +62,20 @@ app.post('/api/admin/clear-seeded-data', async (req, res) => {
   }
 })
 
+app.post('/api/admin/delete-excess-bets', async (req, res) => {
+  try {
+    const { username, password, keepCount } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    await db.deleteExcessBets(keepCount || 2)
+    res.json({ ok: true, deleted: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== USERS =====
 app.post('/api/users/register', async (req, res) => {
   try {

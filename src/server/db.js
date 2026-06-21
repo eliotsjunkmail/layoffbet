@@ -425,4 +425,23 @@ export const db = {
     if (e3) throwOnError(e3, 'clearEvents')
     console.log('[db] Cleared all seeded data')
   },
+
+  async deleteExcessBets(keepCount = 2) {
+    const { data: allBets, error: fetchErr } = await supabase
+      .from('bets')
+      .select('id')
+      .order('created_at', { ascending: true })
+
+    if (fetchErr) throwOnError(fetchErr, 'fetchBets')
+    if (!allBets || allBets.length <= keepCount) return
+
+    const betsToDelete = allBets.slice(keepCount).map(b => b.id)
+    const { error: deleteErr } = await supabase
+      .from('bets')
+      .delete()
+      .in('id', betsToDelete)
+
+    if (deleteErr) throwOnError(deleteErr, 'deleteExcessBets')
+    console.log(`[db] Deleted ${betsToDelete.length} excess bets, kept ${keepCount}`)
+  },
 }
