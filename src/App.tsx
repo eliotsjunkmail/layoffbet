@@ -128,6 +128,44 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
   )
 }
 
+const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
+  const companies = useStore(s => s.companies)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
+
+  const sorted = companies
+    .filter(c => !hiddenCompanyIds.includes(c.id))
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const rowSize = Math.ceil(sorted.length / 3)
+  const rows = [
+    sorted.slice(0, rowSize),
+    sorted.slice(rowSize, rowSize * 2),
+    sorted.slice(rowSize * 2),
+  ]
+
+  return (
+    <div className="space-y-2">
+      {rows.map((row, rowIdx) => (
+        <div key={rowIdx} className="flex gap-2 flex-wrap">
+          {row.map(c => (
+            <button
+              key={c.id}
+              onClick={() => onSelectCompany?.(c.id)}
+              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+                selectedCompanyId === c.id
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
@@ -291,11 +329,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
-        {/* Company scrollers */}
-        <div className="mb-6 space-y-2">
-          <CompanyScroller letter="A" scrollDirection="right" speed={0.2} />
-          <CompanyScroller letter="B" scrollDirection="right" speed={0.15} />
-          <CompanyScroller letter="C" scrollDirection="right" speed={0.1} />
+        {/* Company selection grid */}
+        <div className="mb-6">
+          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
         </div>
 
         {/* Challenge card */}
