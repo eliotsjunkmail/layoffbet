@@ -195,13 +195,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
       try {
         setLoadingAnonId(true)
 
-        // Fetch fresh anonymous username for this user
-        const res = await fetch(`${API_BASE}/api/next-anon-id`)
-        const data = await res.json()
-        const freshAnonUsername = data.username
-
-        // Register user with fresh anonUsername and password "guest"
-        const user = await api.register(freshAnonUsername, 'guest')
+        // Create a fresh anonymous user server-side (handles sequential numbering atomically)
+        const res = await fetch(`${API_BASE}/api/users/anonymous`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+        if (!res.ok) throw new Error('Failed to create anonymous user')
+        const user = await res.json()
 
         // Store in localStorage
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
