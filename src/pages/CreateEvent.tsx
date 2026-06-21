@@ -8,10 +8,18 @@ export const CreateEvent = () => {
   const companies = useStore(s => s.companies)
   const createEvent = useStore(s => s.createEvent)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
+  const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const navigate = useNavigate()
 
   const { state } = useLocation() as { state: { companyId?: string } | null }
-  const sorted = [...companies].filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name))
+  const sorted = [...companies]
+    .filter(c => !hiddenCompanyIds.includes(c.id))
+    .sort((a, b) => {
+      const aIsFav = favoriteCompanyIds.includes(a.id)
+      const bIsFav = favoriteCompanyIds.includes(b.id)
+      if (aIsFav !== bIsFav) return aIsFav ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
   const minDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]
   const maxDate = new Date(Date.now() + 730 * 86400000).toISOString().split('T')[0]
   const [companyId, setCompanyId] = useState(state?.companyId ?? sorted[0]?.id ?? '')
