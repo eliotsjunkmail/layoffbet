@@ -17,6 +17,7 @@ const hideAutocompleteIconsStyle = `
 export const Login = () => {
   const [searchParams] = useSearchParams()
   const [mode, setMode] = useState<'login' | 'register'>(searchParams.get('mode') === 'register' ? 'register' : 'login')
+  const fromGate = searchParams.get('gate') === '1'
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
@@ -133,20 +134,22 @@ export const Login = () => {
             <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Anonymous prediction markets</p>
           </div>
 
-          <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1 mb-6">
-            <button
-              onClick={() => { setMode('login'); setError('') }}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMode('register'); setError('') }}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'register' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
-            >
-              Create Account
-            </button>
-          </div>
+          {!fromGate && (
+            <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1 mb-6">
+              <button
+                onClick={() => { setMode('login'); setError('') }}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'login' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setMode('register'); setError('') }}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === 'register' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
+              >
+                Create Account
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

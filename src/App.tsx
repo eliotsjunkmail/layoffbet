@@ -293,7 +293,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
             <p className="text-center mt-3">
-              <a href="/login" className="text-xs text-slate-500 hover:text-slate-400 transition-colors">Have an account? Sign in</a>
+              <a href="/login?gate=1" className="text-xs text-slate-500 hover:text-slate-400 transition-colors">Have an account? Sign in</a>
             </p>
           </form>
         </div>
