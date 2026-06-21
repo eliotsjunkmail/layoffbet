@@ -398,7 +398,6 @@ export const Bets = () => {
           ))}
         </div>
       )}
-      {totalShown > 0 && <AdBanner />}
 
       {/* Suggested bets */}
       {tab === 'active' && suggestedByCompany.length > 0 && (
@@ -454,6 +453,12 @@ export const Bets = () => {
               </section>
             ))}
           </div>
+        </div>
+      )}
+
+      {totalShown > 0 && (
+        <div className="max-w-2xl mx-auto px-4 mt-12 mb-12">
+          <AdBanner />
         </div>
       )}
 

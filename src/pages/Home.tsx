@@ -546,7 +546,6 @@ export const Home = () => {
                     const midpoint = Math.floor(activeEvents.length / 2)
                     return (
                       <>
-                        {eIdx === midpoint && cIdx === 0 && <AdBanner />}
                         <div key={e.id} data-event-id={e.id}>
                         <SwipeCard
                           onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
@@ -702,6 +701,10 @@ export const Home = () => {
             </div>
           ) : null
         })()}
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 mt-12 mb-12">
+        <AdBanner />
       </div>
 
       {toast && (
