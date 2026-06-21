@@ -19,7 +19,10 @@ export const Admin = () => {
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const updateCompany = useStore(s => s.updateCompany)
 
-  const [activeTab, setActiveTab] = useState<Tab>('companies')
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const stored = localStorage.getItem('admin-active-tab')
+    return (stored as Tab) || 'companies'
+  })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)
@@ -168,7 +171,10 @@ export const Admin = () => {
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id)
+                localStorage.setItem('admin-active-tab', tab.id)
+              }}
               className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-lg shadow-blue-600/30'
