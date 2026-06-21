@@ -171,19 +171,29 @@ app.get('/api/next-anon-id', async (req, res) => {
 app.post('/api/users/anonymous', async (req, res) => {
   try {
     const { anonUserId } = req.body
+    console.log('[API /api/users/anonymous] Request received', { anonUserId })
+
     if (anonUserId) {
+      console.log('[API /api/users/anonymous] Checking if anonUserId exists:', anonUserId)
       const existing = await db.getUserById(anonUserId)
-      if (existing) return res.json(existing)
+      if (existing) {
+        console.log('[API /api/users/anonymous] Found existing user:', existing.username)
+        return res.json(existing)
+      }
     }
 
     // Retry loop for handling race conditions on concurrent anonymous user creation
     let user, lastError
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
+        console.log(`[API /api/users/anonymous] Attempt ${attempt + 1}/5: Getting max anon number...`)
         const max = await db.getMaxAnonNumber()
+        console.log(`[API /api/users/anonymous] Attempt ${attempt + 1}/5: Max anon number = ${max}`)
+
         const nextNum = max + 1
         const anonUsername = `Anon${String(nextNum).padStart(7, '0')}`
-        console.log(`[anonymous user] Attempt ${attempt + 1}: Creating ${anonUsername}`)
+        console.log(`[API /api/users/anonymous] Attempt ${attempt + 1}/5: Creating user with username=${anonUsername}, nextNum=${nextNum}`)
+
         user = await db.createUser({
           id: 'anon-' + crypto.randomBytes(8).toString('hex'),
           username: anonUsername,
@@ -196,27 +206,34 @@ app.post('/api/users/anonymous', async (req, res) => {
           anonymousNumber: nextNum,
           displayName: anonUsername,
         })
-        console.log(`[anonymous user] Success: Created ${anonUsername}`)
+        console.log(`[API /api/users/anonymous] SUCCESS: Created user ${anonUsername} (id=${user.id})`)
         return res.json(user)
       } catch (err) {
         lastError = err
-        const errorMsg = err.message || ''
-        console.log(`[anonymous user] Attempt ${attempt + 1} failed: ${errorMsg}`)
-        // If unique constraint error on username, retry (race condition)
-        if (errorMsg.includes('unique') || errorMsg.includes('duplicate') || errorMsg.includes('User exists')) {
-          if (attempt < 4) {
-            const delay = Math.pow(2, attempt) * 10
-            console.log(`[anonymous user] Retrying in ${delay}ms...`)
-            await new Promise(resolve => setTimeout(resolve, delay))
-            continue
-          }
+        const errorMsg = err.message || String(err)
+        console.error(`[API /api/users/anonymous] Attempt ${attempt + 1} FAILED: ${errorMsg}`, err)
+
+        // Check if it's a unique constraint error (race condition)
+        const isUniqueConstraintError = errorMsg.includes('unique') || errorMsg.includes('duplicate') || errorMsg.includes('User exists') || errorMsg.includes('violates')
+        console.log(`[API /api/users/anonymous] Is unique constraint error? ${isUniqueConstraintError}`)
+
+        if (isUniqueConstraintError && attempt < 4) {
+          const delay = Math.pow(2, attempt) * 10
+          console.log(`[API /api/users/anonymous] Retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+          continue
         }
+
+        // Not a retryable error or out of retries
+        console.error(`[API /api/users/anonymous] Throwing error after attempt ${attempt + 1}`)
         throw err
       }
     }
-    throw lastError || new Error('Failed to create anonymous user')
+    throw lastError || new Error('Failed to create anonymous user after 5 attempts')
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    const errorMsg = err.message || String(err)
+    console.error('[API /api/users/anonymous] FATAL ERROR:', errorMsg, err)
+    res.status(500).json({ error: `Anonymous user creation failed: ${errorMsg}` })
   }
 })
 

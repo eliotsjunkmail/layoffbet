@@ -194,18 +194,33 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     if (GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
         setLoadingAnonId(true)
+        console.log('[Gate] Starting anonymous user creation flow...')
 
         // Create a fresh anonymous user server-side (handles sequential numbering atomically)
+        console.log('[Gate] Sending POST request to /api/users/anonymous...')
         const res = await fetch(`${API_BASE}/api/users/anonymous`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
-        const data = await res.json()
+        console.log('[Gate] Response status:', res.status, res.statusText)
+
+        let data
+        try {
+          data = await res.json()
+          console.log('[Gate] Response JSON:', data)
+        } catch (parseErr) {
+          console.error('[Gate] Failed to parse response JSON:', parseErr)
+          throw new Error(`Invalid response from server: ${res.status}`)
+        }
+
         if (!res.ok) {
-          const errorMsg = data?.error || `Server error: ${res.status}`
-          console.error('[Gate] Anonymous user creation failed:', errorMsg, data)
+          const errorMsg = data?.error || `HTTP ${res.status}: ${res.statusText}`
+          console.error('[Gate] Server returned error status. Message:', errorMsg)
           throw new Error(errorMsg)
         }
+
         const user = data
+        console.log('[Gate] Successfully created anonymous user:', user.username, user.id)
 
         // Store in localStorage
+        console.log('[Gate] Storing user in localStorage...')
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
 
         if (selectedCompanyId) {
@@ -222,7 +237,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         useStore.setState({ currentUser: user })
         setUnlocked(true)
       } catch (err) {
-        console.error('Failed to register user:', err)
+        const errorMsg = err instanceof Error ? err.message : String(err)
+        console.error('[Gate] ERROR during anonymous user creation:', errorMsg, err)
+        console.error('[Gate] Stack:', err instanceof Error ? err.stack : 'N/A')
         setError(true); setShake(true); setInput('')
         setTimeout(() => setShake(false), 500)
       } finally {
