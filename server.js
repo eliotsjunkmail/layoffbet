@@ -131,22 +131,40 @@ app.post('/api/users/anonymous', async (req, res) => {
       const existing = await db.getUserById(anonUserId)
       if (existing) return res.json(existing)
     }
-    const max = await db.getMaxAnonNumber()
-    const nextNum = max + 1
-    const anonUsername = `Anon${String(nextNum).padStart(7, '0')}`
-    const user = await db.createUser({
-      id: 'anon-' + crypto.randomBytes(8).toString('hex'),
-      username: anonUsername,
-      password: null,
-      coins: 50,
-      isAdmin: false,
-      isAnonymous: true,
-      createdAt: new Date().toISOString(),
-      lastCoinsDate: new Date().toISOString().split('T')[0],
-      anonymousNumber: nextNum,
-      displayName: anonUsername,
-    })
-    res.json(user)
+
+    // Retry loop for handling race conditions on concurrent anonymous user creation
+    let user, lastError
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const max = await db.getMaxAnonNumber()
+        const nextNum = max + 1
+        const anonUsername = `Anon${String(nextNum).padStart(7, '0')}`
+        user = await db.createUser({
+          id: 'anon-' + crypto.randomBytes(8).toString('hex'),
+          username: anonUsername,
+          password: null,
+          coins: 50,
+          isAdmin: false,
+          isAnonymous: true,
+          createdAt: new Date().toISOString(),
+          lastCoinsDate: new Date().toISOString().split('T')[0],
+          anonymousNumber: nextNum,
+          displayName: anonUsername,
+        })
+        return res.json(user)
+      } catch (err) {
+        lastError = err
+        // If unique constraint error on username, retry (race condition)
+        if (err.message.includes('unique constraint') || err.message.includes('duplicate')) {
+          if (attempt < 4) {
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 10))
+            continue
+          }
+        }
+        throw err
+      }
+    }
+    throw lastError || new Error('Failed to create anonymous user')
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
