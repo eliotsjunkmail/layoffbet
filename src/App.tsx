@@ -292,12 +292,15 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
+            <p className="text-center mt-3">
+              <a href="/login" className="text-xs text-slate-500 hover:text-slate-400 transition-colors">Have an account? Sign in</a>
+            </p>
           </form>
         </div>
 
         <div className="text-center mt-6 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
-          <p className="text-xs text-slate-600">v2.47</p>
+          <p className="text-xs text-slate-600">v2.48</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
             <span className="text-slate-600">·</span>
