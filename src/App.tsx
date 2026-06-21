@@ -146,20 +146,22 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
   return (
     <div className="space-y-2">
       {rows.map((row, rowIdx) => (
-        <div key={rowIdx} className="flex gap-2 flex-wrap">
-          {row.map(c => (
-            <button
-              key={c.id}
-              onClick={() => onSelectCompany?.(c.id)}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
-                selectedCompanyId === c.id
-                  ? 'bg-blue-600 border-blue-500 text-white'
-                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
+        <div key={rowIdx} className="overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-2">
+            {row.map(c => (
+              <button
+                key={c.id}
+                onClick={() => onSelectCompany?.(c.id)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+                  selectedCompanyId === c.id
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
       ))}
     </div>
