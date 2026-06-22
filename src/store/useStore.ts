@@ -915,7 +915,10 @@ export const useStore = create<StoreState>()(
           })
 
           if (currentUser || anonUser) {
-            api.removeBet(existing.id)
+            const creds = currentUser?.username && currentUser?.password
+              ? { username: currentUser.username, password: currentUser.password }
+              : undefined
+            api.removeBet(existing.id, creds)
               .catch(err => console.error('Failed to remove bet:', err))
             api.updateUser(userId, { coins: refundCoins })
               .catch(err => console.error('Failed to update coins:', err))
@@ -982,9 +985,12 @@ export const useStore = create<StoreState>()(
         if (!bet || !userId) return
 
         const newCoins = Math.min((currentUser?.coins ?? anonUser?.coins ?? 0) + bet.amount, 999)
+        const creds = currentUser?.username && currentUser?.password
+          ? { username: currentUser.username, password: currentUser.password }
+          : undefined
 
         // Send to server
-        api.removeBet(bet.id)
+        api.removeBet(bet.id, creds)
           .then(() => {
             if (currentUser || anonUser) {
               api.updateUser(userId!, { coins: newCoins })

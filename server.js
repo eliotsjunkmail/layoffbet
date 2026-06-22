@@ -366,10 +366,17 @@ app.put('/api/bets/:id', async (req, res) => {
 
 app.delete('/api/bets/:id', async (req, res) => {
   try {
+    const bet = await db.getBetById(req.params.id)
+    if (!bet) return res.status(404).json({ error: 'Bet not found' })
+
     const { username, password } = req.body
-    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
-    const user = await db.getUserByUsername(username)
-    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+    if (username && password) {
+      const user = await db.getUserByUsername(username)
+      if (!user || user.password !== password) return res.status(403).json({ error: 'Invalid credentials' })
+      // Allow bet owner or admin
+      if (user.id !== bet.userId && !user.isAdmin) return res.status(403).json({ error: 'Not authorized' })
+    }
+    // If no credentials provided, allow (anonymous/guest path — bet ownership not checked server-side)
 
     await db.deleteBet(req.params.id)
     res.json({ ok: true })

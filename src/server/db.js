@@ -220,6 +220,12 @@ export const db = {
     return fromDb(data)
   },
 
+  async getBetById(id) {
+    const { data, error } = await supabase.from('bets').select('*').eq('id', id).maybeSingle()
+    throwOnError(error, 'getBetById')
+    return data ? fromDb(data) : null
+  },
+
   async deleteBet(id) {
     const { error } = await supabase.from('bets').delete().eq('id', id)
     throwOnError(error, 'deleteBet')

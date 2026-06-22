@@ -173,10 +173,11 @@ export const api = {
     return response.json()
   },
 
-  removeBet: async (betId: string) => {
+  removeBet: async (betId: string, credentials?: { username: string; password: string }) => {
     const response = await fetch(`${API_BASE}/api/bets/${betId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
+      body: credentials ? JSON.stringify(credentials) : undefined,
     })
     if (!response.ok) {
       throw new Error('Failed to remove bet')
