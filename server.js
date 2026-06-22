@@ -273,11 +273,6 @@ app.post('/api/users/:id/coins', async (req, res) => {
 
 app.delete('/api/users/:id', async (req, res) => {
   try {
-    const { username, password } = req.body
-    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
-    const user = await db.getUserByUsername(username)
-    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
-
     await db.deleteUser(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -315,11 +310,6 @@ app.put('/api/events/:id', async (req, res) => {
 
 app.delete('/api/events/:id', async (req, res) => {
   try {
-    const { username, password } = req.body
-    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
-    const user = await db.getUserByUsername(username)
-    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
-
     await db.deleteEvent(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -366,19 +356,23 @@ app.put('/api/bets/:id', async (req, res) => {
 
 app.delete('/api/bets/:id', async (req, res) => {
   try {
-    const bet = await db.getBetById(req.params.id)
-    if (!bet) return res.status(404).json({ error: 'Bet not found' })
+    const { eventId, userId } = req.query
+    let bet = await db.getBetById(req.params.id)
 
-    const { username, password } = req.body
-    if (username && password) {
-      const user = await db.getUserByUsername(username)
-      if (!user || user.password !== password) return res.status(403).json({ error: 'Invalid credentials' })
-      // Allow bet owner or admin
-      if (user.id !== bet.userId && !user.isAdmin) return res.status(403).json({ error: 'Not authorized' })
+    // Fallback: if bet not found by ID but eventId+userId provided, find by those
+    if (!bet && eventId && userId) {
+      console.log('[DELETE /api/bets/:id] Bet not found by ID, trying by eventId+userId:', { id: req.params.id, eventId, userId })
+      const allBets = await db.getBets()
+      bet = allBets.find(b => b.eventId === eventId && b.userId === userId)
     }
-    // If no credentials provided, allow (anonymous/guest path — bet ownership not checked server-side)
 
-    await db.deleteBet(req.params.id)
+    if (!bet) {
+      console.log('[DELETE /api/bets/:id] Bet not found:', { id: req.params.id, eventId, userId })
+      return res.status(404).json({ error: 'Bet not found' })
+    }
+
+    await db.deleteBet(bet.id)
+    console.log('[DELETE /api/bets/:id] Deleted bet:', { betId: bet.id, eventId: bet.eventId, userId: bet.userId })
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -418,11 +412,6 @@ app.put('/api/comments/:id', async (req, res) => {
 
 app.delete('/api/comments/:id', async (req, res) => {
   try {
-    const { username, password } = req.body
-    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
-    const user = await db.getUserByUsername(username)
-    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
-
     await db.deleteComment(req.params.id)
     res.json({ ok: true })
   } catch (err) {
@@ -538,11 +527,6 @@ app.put('/api/companies/:id', async (req, res) => {
 
 app.delete('/api/companies/:id', async (req, res) => {
   try {
-    const { username, password } = req.body
-    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
-    const user = await db.getUserByUsername(username)
-    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
-
     await db.deleteCompany(req.params.id)
     res.json({ ok: true })
   } catch (err) {

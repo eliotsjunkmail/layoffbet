@@ -173,17 +173,20 @@ export const api = {
     return response.json()
   },
 
-  removeBet: async (betId: string, credentials?: { username: string; password: string }) => {
-    const response = await fetch(`${API_BASE}/api/bets/${betId}`, {
+  removeBet: async (betId: string, eventId?: string, userId?: string) => {
+    const params = new URLSearchParams()
+    if (eventId) params.append('eventId', eventId)
+    if (userId) params.append('userId', userId)
+    const query = params.toString() ? `?${params.toString()}` : ''
+
+    const response = await fetch(`${API_BASE}/api/bets/${betId}${query}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: credentials ? JSON.stringify(credentials) : undefined,
     })
-    // Treat "not found" as success — the bet is already gone, which is the goal.
-    if (!response.ok && response.status !== 404) {
+    if (!response.ok) {
       throw new Error('Failed to remove bet')
     }
-    return response.json().catch(() => ({ ok: true }))
+    return response.json()
   },
 
   updateUser: async (userId: string, data: any) => {

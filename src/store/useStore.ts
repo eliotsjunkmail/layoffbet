@@ -500,41 +500,17 @@ export const useStore = create<StoreState>()(
         const existing = anonVotedEvents[eventId]
         const event = events.find(e => e.id === eventId)
         if (!event || getEffectiveStatus(event) !== 'active') return false
-
-        // No prior vote or same direction: increase the single position
-        if (!existing || existing.lastSide === side) {
-          set(s => ({
-            anonVotedEvents: {
-              ...s.anonVotedEvents,
-              [eventId]: { lastSide: side, count: (existing?.count ?? 0) + 1 },
-            },
-            events: s.events.map(e => e.id === eventId ? {
-              ...e,
-              yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool,
-              noPool:  side === 'no'  ? e.noPool  + amount : e.noPool,
-            } : e),
-          }))
-          return true
-        }
-
-        // Opposite direction: reduce the single position by one step; remove when it hits zero
-        const newCount = existing.count - 1
-        set(s => {
-          const newVotes = { ...s.anonVotedEvents }
-          if (newCount <= 0) {
-            delete newVotes[eventId]
-          } else {
-            newVotes[eventId] = { lastSide: existing.lastSide, count: newCount }
-          }
-          return {
-            anonVotedEvents: newVotes,
-            events: s.events.map(e => e.id === eventId ? {
-              ...e,
-              yesPool: existing.lastSide === 'yes' ? Math.max(0, e.yesPool - amount) : e.yesPool,
-              noPool:  existing.lastSide === 'no'  ? Math.max(0, e.noPool  - amount) : e.noPool,
-            } : e),
-          }
-        })
+        set(s => ({
+          anonVotedEvents: {
+            ...s.anonVotedEvents,
+            [eventId]: { lastSide: side, count: (existing?.count ?? 0) + 1 },
+          },
+          events: s.events.map(e => e.id === eventId ? {
+            ...e,
+            yesPool: side === 'yes' ? e.yesPool + amount : e.yesPool,
+            noPool:  side === 'no'  ? e.noPool  + amount : e.noPool,
+          } : e),
+        }))
         return true
       },
 
@@ -882,76 +858,47 @@ export const useStore = create<StoreState>()(
           return true
         }
 
-        // ── Opposite side: reduce the single existing bet by the swipe amount ──────────────────────────
-        // A user can only hold one position per event. Swiping the opposite side
-        // decreases that position by the swipe amount — it never flips direction
-        // or creates a second bet. Reducing to zero removes the bet entirely and
-        // refunds the remaining staked coins.
-        const reduceBy = Math.min(amount, existing.amount)
-        const newAmount = existing.amount - reduceBy
-        const refund = reduceBy
-        const refundCoins = Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) + refund, 999)
+        // ── Opposite side: cancel existing bet and create new one ──────────────────────────
+        // When betting opposite side: cancel the existing bet (coins returned) and place new bet with swipe amount
+        const netCost = amount  // Cost of the new bet
+        if (userCoins < netCost) return false
 
-        if (newAmount <= 0) {
-          // Remove the bet entirely
-          set((s): any => {
-            let stateUpdate: any = {
-              bets: s.bets.filter(b => b.id !== existing.id),
-              events: s.events.map(e => e.id !== eventId ? e : {
-                ...e,
-                yesPool: existing.side === 'yes' ? Math.max(0, e.yesPool - existing.amount) : e.yesPool,
-                noPool:  existing.side === 'no'  ? Math.max(0, e.noPool  - existing.amount) : e.noPool,
-              }),
-            }
-            if (currentUser) {
-              stateUpdate.currentUser = { ...currentUser, coins: refundCoins }
-              stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: refundCoins } : u)
-            } else if (anonUser) {
-              stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: refundCoins } : u)
-            } else {
-              stateUpdate.guestCoins = refundCoins
-            }
-            return stateUpdate
-          })
+        const newCoins = isGuest && !anonUser ? guestCoins - netCost : Math.min((currentUser?.coins ?? anonUser?.coins ?? guestCoins) - netCost, 999)
 
-          if (currentUser || anonUser) {
-            const creds = currentUser?.username && currentUser?.password
-              ? { username: currentUser.username, password: currentUser.password }
-              : undefined
-            api.removeBet(existing.id, creds)
-              .catch(err => console.error('Failed to remove bet:', err))
-            api.updateUser(userId, { coins: refundCoins })
-              .catch(err => console.error('Failed to update coins:', err))
-          }
+        // Remove existing bet and create new bet with swipe amount
+        const withoutExisting = bets.filter(b => b.id !== existing.id)
+        const newBets = [...withoutExisting, { id: `bet-${uid()}`, eventId, userId, side, amount, createdAt: new Date().toISOString() }]
 
-          return true
-        }
-
-        // Reduce the existing bet's amount, keeping the same direction
         set((s): any => {
           let stateUpdate: any = {
-            bets: s.bets.map(b => b.id === existing.id ? { ...b, amount: newAmount } : b),
+            bets: newBets,
             events: s.events.map(e => e.id !== eventId ? e : {
               ...e,
-              yesPool: existing.side === 'yes' ? Math.max(0, e.yesPool - reduceBy) : e.yesPool,
-              noPool:  existing.side === 'no'  ? Math.max(0, e.noPool  - reduceBy) : e.noPool,
+              yesPool: Math.max(0, e.yesPool - (existing.side === 'yes' ? existing.amount : 0) + (side === 'yes' ? amount : 0)),
+              noPool:  Math.max(0, e.noPool  - (existing.side === 'no'  ? existing.amount : 0) + (side === 'no'  ? amount : 0)),
             }),
           }
           if (currentUser) {
-            stateUpdate.currentUser = { ...currentUser, coins: refundCoins }
-            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: refundCoins } : u)
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
           } else if (anonUser) {
-            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: refundCoins } : u)
+            stateUpdate.users = s.users.map(u => u.id === anonUser.id ? { ...u, coins: newCoins } : u)
           } else {
-            stateUpdate.guestCoins = refundCoins
+            stateUpdate.guestCoins = newCoins
           }
           return stateUpdate
         })
 
+        // Update server for opposite side bets
         if (currentUser || anonUser) {
-          api.updateBet(existing.id, { amount: newAmount })
-            .catch(err => console.error('Failed to update bet:', err))
-          api.updateUser(userId, { coins: refundCoins })
+          // Remove existing bet
+          api.removeBet(existing.id)
+            .catch(err => console.error('Failed to remove bet:', err))
+          // Create new bet with swipe amount
+          const newBetData = { eventId, userId, side, amount }
+          api.placeBet(newBetData)
+            .catch(err => console.error('Failed to place new bet:', err))
+          api.updateUser(userId, { coins: newCoins })
             .catch(err => console.error('Failed to update coins:', err))
         }
 
@@ -982,45 +929,44 @@ export const useStore = create<StoreState>()(
           }
         }
 
-        if (!bet || !userId) return
+        if (!bet || !userId) {
+          console.warn('[removeBet] Bet not found for eventId:', eventId)
+          return
+        }
+
+        console.log('[removeBet] Removing bet:', { betId: bet.id, eventId, userId, amount: bet.amount })
 
         const newCoins = Math.min((currentUser?.coins ?? anonUser?.coins ?? 0) + bet.amount, 999)
-        const creds = currentUser?.username && currentUser?.password
-          ? { username: currentUser.username, password: currentUser.password }
-          : undefined
 
-        // Send to server first, then update local state only if successful
-        api.removeBet(bet.id, creds)
+        // Send to server, passing eventId and userId as fallback in case the bet ID doesn't match server
+        api.removeBet(bet.id, eventId, userId!)
           .then(() => {
-            // Update local state only after successful server deletion
-            set((s): any => {
-              let stateUpdate: any = {
-                bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
-                events: s.events.map(e => e.id === eventId ? {
-                  ...e,
-                  yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
-                  noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
-                } : e),
-              }
-              if (currentUser) {
-                stateUpdate.currentUser = { ...currentUser, coins: newCoins }
-                stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-              } else if (anonUser) {
-                stateUpdate.users = s.users.map(u => u.id === userId ? { ...u, coins: newCoins } : u)
-              }
-              return stateUpdate
-            })
-
-            // Update user coins on server
+            console.log('[removeBet] Server deletion successful')
             if (currentUser || anonUser) {
               api.updateUser(userId!, { coins: newCoins })
                 .catch(err => console.error('Failed to update coins:', err))
             }
           })
-          .catch(err => {
-            console.error('Failed to remove bet:', err)
-            // Revert would happen automatically because we didn't update the store yet
-          })
+          .catch(err => console.error('[removeBet] Failed to remove bet from server:', err, 'betId:', bet.id))
+
+        // Update local state optimistically
+        set((s): any => {
+          let stateUpdate: any = {
+            bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
+            events: s.events.map(e => e.id === eventId ? {
+              ...e,
+              yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
+              noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
+            } : e),
+          }
+          if (currentUser) {
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+          } else if (anonUser) {
+            stateUpdate.users = s.users.map(u => u.id === userId ? { ...u, coins: newCoins } : u)
+          }
+          return stateUpdate
+        })
       },
 
       getUserBet: (eventId) => {
@@ -1033,7 +979,7 @@ export const useStore = create<StoreState>()(
       },
 
       createEvent: async (data) => {
-        const { currentUser, guestCoins, placeBet, placeAnonymousVote, bets, events } = get()
+        const { currentUser, guestCoins, placeBet, placeAnonymousVote } = get()
         const { initialSide, ...eventData } = data as any
         const creatorId = currentUser?.id || 'anon'
         const creatorName = currentUser?.username || 'Guest'
@@ -1047,9 +993,8 @@ export const useStore = create<StoreState>()(
           id: `evt-${uid()}`,
           creatorId,
           creatorName,
-          // Adjust initial pools based on the creator's initial bet
-          yesPool: initialSide === 'yes' ? 60 : 50,
-          noPool: initialSide === 'no' ? 60 : 50,
+          yesPool: 50,
+          noPool: 50,
           outcome: null,
           status: 'active',
           viewCount: 0,
@@ -1057,52 +1002,22 @@ export const useStore = create<StoreState>()(
           createdAt: new Date().toISOString(),
         }
 
-        // Create the initial bet for the creator
-        const userId = currentUser?.id ?? 'guest'
-        const betId = `bet-${uid()}`
-        const initialBet: any = {
-          id: betId,
-          eventId: event.id,
-          userId,
-          side: initialSide || 'yes',
-          amount: costCoins,
-          createdAt: new Date().toISOString(),
-        }
-
-        // Update store with both event and bet
-        const newCoins = (currentUser?.coins ?? guestCoins) - costCoins
-        set((s): any => {
-          let stateUpdate: any = {
-            events: [event, ...s.events],
-            bets: [...s.bets, initialBet],
-          }
-
-          if (currentUser) {
-            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
-            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-          } else {
-            stateUpdate.guestCoins = Math.max(0, guestCoins - costCoins)
-          }
-
-          return stateUpdate
-        })
+        set(s => ({ events: [event, ...s.events] }))
 
         // Persist to server
         try {
           await api.createEvent(event)
-          // Also persist the initial bet, then reconcile the local bet's id with
-          // the server-generated id so a later delete targets the right row.
-          if (currentUser) {
-            const serverBet = await api.placeBet({ eventId: event.id, userId: currentUser.id, side: initialSide || 'yes', amount: costCoins })
-            if (serverBet?.id) {
-              set(s => ({ bets: s.bets.map(b => b.id === betId ? { ...b, ...serverBet } : b) }))
-            }
-            await api.updateUser(currentUser.id, { coins: newCoins })
-          }
         } catch (error) {
           console.error('Failed to persist event to server:', error)
         }
 
+        if (initialSide) {
+          if (currentUser) {
+            placeBet(event.id, initialSide, costCoins)
+          } else {
+            placeAnonymousVote(event.id, initialSide, costCoins)
+          }
+        }
         return event
       },
 
