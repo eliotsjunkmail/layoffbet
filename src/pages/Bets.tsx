@@ -104,10 +104,17 @@ export const Bets = () => {
       const existingBet = getUserBet(eventId)
       const isReducing = !!existingBet && existingBet.side !== side
       if (placeBet(eventId, side, betAmount)) {
+        const newBet = getUserBet(eventId)
         setSwipeFlash({ id: eventId, side })
         setTimeout(() => setSwipeFlash(null), 600)
         if (isReducing) {
-          showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+          if (!newBet) {
+            // Bet was deleted (reduced to zero)
+            showToast(`Deleted your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet`)
+          } else {
+            // Bet was just reduced
+            showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+          }
         } else {
           confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
@@ -120,11 +127,18 @@ export const Bets = () => {
       const isReducing = !!existingVote && existingVote.lastSide !== side
       if (isReducing || Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
+          const newVote = anonVotedEvents[eventId]
           setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
           setSwipeFlash({ id: eventId, side })
           setTimeout(() => setSwipeFlash(null), 600)
           if (isReducing) {
-            showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+            if (!newVote) {
+              // Vote was deleted (reduced to zero)
+              showToast(`Deleted your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet`)
+            } else {
+              // Vote was just reduced
+              showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+            }
           } else {
             confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
             showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)

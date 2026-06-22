@@ -88,9 +88,16 @@ export const EventDetail = () => {
         return
       }
       if (placeAnonymousVote(id!, side, betAmount)) {
+        const newVote = anonVotedEvents[id!]
         setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
         if (isReducing) {
-          showToast(`Reduced your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+          if (!newVote) {
+            // Vote was deleted (reduced to zero)
+            showToast(`Deleted your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet`)
+          } else {
+            // Vote was just reduced
+            showToast(`Reduced your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+          }
         } else {
           confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
@@ -102,8 +109,15 @@ export const EventDetail = () => {
     }
     const isReducing = !!userBet && userBet.side !== side
     if (placeBet(id!, side, betAmount)) {
+      const newBet = bets.find(b => b.eventId === id && b.userId === currentUser.id)
       if (isReducing) {
-        showToast(`Reduced your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+        if (!newBet) {
+          // Bet was deleted (reduced to zero)
+          showToast(`Deleted your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet`)
+        } else {
+          // Bet was just reduced
+          showToast(`Reduced your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+        }
       } else {
         confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
         showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
