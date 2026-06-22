@@ -421,17 +421,25 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                         </div>
                       )}
                       {msg.reactions.length > 0 && (
-                        <div className="flex gap-1 items-center">
-                          {msg.reactions.map(reaction => (
-                            <button
-                              key={reaction.type}
-                              onClick={() => toggleReaction(msg.id, reaction.type)}
-                              className="text-sm hover:scale-110 transition-transform cursor-pointer whitespace-nowrap"
-                              title={reaction.type}
-                            >
-                              {getReactionEmoji(reaction.type)} <span className="text-xs">{reaction.userIds.length}</span>
-                            </button>
-                          ))}
+                        <div className="flex gap-1 items-center flex-wrap mt-2">
+                          {msg.reactions.map(reaction => {
+                            const hasUserReacted = reaction.userIds.includes(myUserIdRef.current)
+                            return (
+                              <button
+                                key={reaction.type}
+                                onClick={() => toggleReaction(msg.id, reaction.type)}
+                                className={`px-2 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                                  hasUserReacted
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                    : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                                }`}
+                                title={`${hasUserReacted ? 'Remove' : 'Add'} ${reaction.type} reaction`}
+                              >
+                                <span>{getReactionEmoji(reaction.type)}</span>
+                                <span className="text-xs font-medium">{reaction.userIds.length}</span>
+                              </button>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
