@@ -179,10 +179,11 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: credentials ? JSON.stringify(credentials) : undefined,
     })
-    if (!response.ok) {
+    // Treat "not found" as success — the bet is already gone, which is the goal.
+    if (!response.ok && response.status !== 404) {
       throw new Error('Failed to remove bet')
     }
-    return response.json()
+    return response.json().catch(() => ({ ok: true }))
   },
 
   updateUser: async (userId: string, data: any) => {

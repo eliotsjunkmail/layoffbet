@@ -1090,9 +1090,13 @@ export const useStore = create<StoreState>()(
         // Persist to server
         try {
           await api.createEvent(event)
-          // Also persist the initial bet
+          // Also persist the initial bet, then reconcile the local bet's id with
+          // the server-generated id so a later delete targets the right row.
           if (currentUser) {
-            await api.placeBet({ eventId: event.id, userId: currentUser.id, side: initialSide || 'yes', amount: costCoins })
+            const serverBet = await api.placeBet({ eventId: event.id, userId: currentUser.id, side: initialSide || 'yes', amount: costCoins })
+            if (serverBet?.id) {
+              set(s => ({ bets: s.bets.map(b => b.id === betId ? { ...b, ...serverBet } : b) }))
+            }
             await api.updateUser(currentUser.id, { coins: newCoins })
           }
         } catch (error) {
