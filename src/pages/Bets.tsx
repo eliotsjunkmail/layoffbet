@@ -142,7 +142,16 @@ export const Bets = () => {
     }
   }
 
-  const myBets = currentUser ? bets.filter(b => b.userId === currentUser.id) : []
+  const myBets = currentUser ? (() => {
+    const betsMap = new Map<string, typeof bets[0]>()
+    // Keep only the first (most recent) bet per eventId
+    bets.forEach(b => {
+      if (b.userId === currentUser.id && !betsMap.has(b.eventId)) {
+        betsMap.set(b.eventId, b)
+      }
+    })
+    return Array.from(betsMap.values())
+  })() : []
 
   // For pre-login users, convert anonVotedEvents to bet-like objects
   // Amount is calculated as count * 10 (since each vote is 10 coins)

@@ -134,7 +134,15 @@ export const Home = () => {
   const userStats = useMemo(() => {
     // For logged-in users
     if (currentUser) {
-      const userBets = bets.filter(b => b.userId === currentUser.id)
+      // Deduplicate bets: keep only one bet per eventId
+      const betsMap = new Map<string, typeof bets[0]>()
+      bets.forEach(b => {
+        if (b.userId === currentUser.id && !betsMap.has(b.eventId)) {
+          betsMap.set(b.eventId, b)
+        }
+      })
+      const userBets = Array.from(betsMap.values())
+
       const activeBetCount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
@@ -154,7 +162,15 @@ export const Home = () => {
 
     // For anonymous users, use server bets if anonymous user exists
     if (anonUser) {
-      const userBets = bets.filter(b => b.userId === anonUser.id && !b.id.startsWith('pending-'))
+      // Deduplicate bets: keep only one bet per eventId
+      const betsMap = new Map<string, typeof bets[0]>()
+      bets.forEach(b => {
+        if (b.userId === anonUser.id && !b.id.startsWith('pending-') && !betsMap.has(b.eventId)) {
+          betsMap.set(b.eventId, b)
+        }
+      })
+      const userBets = Array.from(betsMap.values())
+
       const activeBetCount = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
