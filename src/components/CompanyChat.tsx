@@ -14,9 +14,8 @@ interface ChatMessage {
   id: string
   companyId: string
   userId: string
-  displayName?: string
-  username?: string
-  content: string
+  username: string
+  text: string
   createdAt: Date
   reactions: Reaction[]
 }
@@ -173,8 +172,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
       const messageData = {
         userId,
-        displayName: chatName,
-        content: input.trim(),
+        username: chatName,
+        text: input.trim(),
         reactions: [],
       }
 
@@ -393,7 +392,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                 <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
                   {!isOwnMessage && (
                     <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-white flex-shrink-0">
-                      {msg.displayName?.charAt(0).toUpperCase() || '?'}
+                      {msg.username?.charAt(0).toUpperCase() || '?'}
                     </div>
                   )}
                   <div className="flex flex-col gap-1">
@@ -405,7 +404,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                             : 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-bl-none'
                         }`}
                       >
-                        <p className="text-sm">{msg.content}</p>
+                        <p className="text-sm">{msg.text}</p>
                       </div>
                       {!isOwnMessage && !msg.reactions.some(r => r.type === 'thumbsup' && r.userIds.includes(myUserIdRef.current)) && (
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
