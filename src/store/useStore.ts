@@ -989,34 +989,38 @@ export const useStore = create<StoreState>()(
           ? { username: currentUser.username, password: currentUser.password }
           : undefined
 
-        // Send to server
+        // Send to server first, then update local state only if successful
         api.removeBet(bet.id, creds)
           .then(() => {
+            // Update local state only after successful server deletion
+            set((s): any => {
+              let stateUpdate: any = {
+                bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
+                events: s.events.map(e => e.id === eventId ? {
+                  ...e,
+                  yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
+                  noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
+                } : e),
+              }
+              if (currentUser) {
+                stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+                stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+              } else if (anonUser) {
+                stateUpdate.users = s.users.map(u => u.id === userId ? { ...u, coins: newCoins } : u)
+              }
+              return stateUpdate
+            })
+
+            // Update user coins on server
             if (currentUser || anonUser) {
               api.updateUser(userId!, { coins: newCoins })
                 .catch(err => console.error('Failed to update coins:', err))
             }
           })
-          .catch(err => console.error('Failed to remove bet:', err))
-
-        // Update local state optimistically
-        set((s): any => {
-          let stateUpdate: any = {
-            bets: s.bets.filter(b => !(b.eventId === eventId && b.userId === userId)),
-            events: s.events.map(e => e.id === eventId ? {
-              ...e,
-              yesPool: bet.side === 'yes' ? Math.max(0, e.yesPool - bet.amount) : e.yesPool,
-              noPool:  bet.side === 'no'  ? Math.max(0, e.noPool  - bet.amount) : e.noPool,
-            } : e),
-          }
-          if (currentUser) {
-            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
-            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
-          } else if (anonUser) {
-            stateUpdate.users = s.users.map(u => u.id === userId ? { ...u, coins: newCoins } : u)
-          }
-          return stateUpdate
-        })
+          .catch(err => {
+            console.error('Failed to remove bet:', err)
+            // Revert would happen automatically because we didn't update the store yet
+          })
       },
 
       getUserBet: (eventId) => {
