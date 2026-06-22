@@ -173,8 +173,13 @@ export const api = {
     return response.json()
   },
 
-  removeBet: async (betId: string) => {
-    const response = await fetch(`${API_BASE}/api/bets/${betId}`, {
+  removeBet: async (betId: string, eventId?: string, userId?: string) => {
+    const params = new URLSearchParams()
+    if (eventId) params.append('eventId', eventId)
+    if (userId) params.append('userId', userId)
+    const query = params.toString() ? `?${params.toString()}` : ''
+
+    const response = await fetch(`${API_BASE}/api/bets/${betId}${query}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
     })

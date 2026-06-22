@@ -929,19 +929,25 @@ export const useStore = create<StoreState>()(
           }
         }
 
-        if (!bet || !userId) return
+        if (!bet || !userId) {
+          console.warn('[removeBet] Bet not found for eventId:', eventId)
+          return
+        }
+
+        console.log('[removeBet] Removing bet:', { betId: bet.id, eventId, userId, amount: bet.amount })
 
         const newCoins = Math.min((currentUser?.coins ?? anonUser?.coins ?? 0) + bet.amount, 999)
 
-        // Send to server
-        api.removeBet(bet.id)
+        // Send to server, passing eventId and userId as fallback in case the bet ID doesn't match server
+        api.removeBet(bet.id, eventId, userId!)
           .then(() => {
+            console.log('[removeBet] Server deletion successful')
             if (currentUser || anonUser) {
               api.updateUser(userId!, { coins: newCoins })
                 .catch(err => console.error('Failed to update coins:', err))
             }
           })
-          .catch(err => console.error('Failed to remove bet:', err))
+          .catch(err => console.error('[removeBet] Failed to remove bet from server:', err, 'betId:', bet.id))
 
         // Update local state optimistically
         set((s): any => {
