@@ -1029,7 +1029,7 @@ export const useStore = create<StoreState>()(
       },
 
       createEvent: async (data) => {
-        const { currentUser, guestCoins, placeBet, placeAnonymousVote } = get()
+        const { currentUser, guestCoins, placeBet, placeAnonymousVote, bets, events } = get()
         const { initialSide, ...eventData } = data as any
         const creatorId = currentUser?.id || 'anon'
         const creatorName = currentUser?.username || 'Guest'
@@ -1043,8 +1043,9 @@ export const useStore = create<StoreState>()(
           id: `evt-${uid()}`,
           creatorId,
           creatorName,
-          yesPool: 50,
-          noPool: 50,
+          // Adjust initial pools based on the creator's initial bet
+          yesPool: initialSide === 'yes' ? 60 : 50,
+          noPool: initialSide === 'no' ? 60 : 50,
           outcome: null,
           status: 'active',
           viewCount: 0,
@@ -1052,22 +1053,48 @@ export const useStore = create<StoreState>()(
           createdAt: new Date().toISOString(),
         }
 
-        set(s => ({ events: [event, ...s.events] }))
+        // Create the initial bet for the creator
+        const userId = currentUser?.id ?? 'guest'
+        const betId = `bet-${uid()}`
+        const initialBet: any = {
+          id: betId,
+          eventId: event.id,
+          userId,
+          side: initialSide || 'yes',
+          amount: costCoins,
+          createdAt: new Date().toISOString(),
+        }
+
+        // Update store with both event and bet
+        const newCoins = (currentUser?.coins ?? guestCoins) - costCoins
+        set((s): any => {
+          let stateUpdate: any = {
+            events: [event, ...s.events],
+            bets: [...s.bets, initialBet],
+          }
+
+          if (currentUser) {
+            stateUpdate.currentUser = { ...currentUser, coins: newCoins }
+            stateUpdate.users = s.users.map(u => u.id === currentUser.id ? { ...u, coins: newCoins } : u)
+          } else {
+            stateUpdate.guestCoins = Math.max(0, guestCoins - costCoins)
+          }
+
+          return stateUpdate
+        })
 
         // Persist to server
         try {
           await api.createEvent(event)
+          // Also persist the initial bet
+          if (currentUser) {
+            await api.placeBet({ eventId: event.id, userId: currentUser.id, side: initialSide || 'yes', amount: costCoins })
+            await api.updateUser(currentUser.id, { coins: newCoins })
+          }
         } catch (error) {
           console.error('Failed to persist event to server:', error)
         }
 
-        if (initialSide) {
-          if (currentUser) {
-            placeBet(event.id, initialSide, costCoins)
-          } else {
-            placeAnonymousVote(event.id, initialSide, costCoins)
-          }
-        }
         return event
       },
 
