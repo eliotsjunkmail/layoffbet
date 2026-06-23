@@ -406,20 +406,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                       >
                         <p className="text-sm">{msg.text}</p>
                       </div>
-                      {!isOwnMessage && !msg.reactions.some(r => r.type === 'thumbsup' && r.userIds.includes(myUserIdRef.current)) && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                          {(['thumbsup'] as ReactionType[]).map(reactionType => (
-                            <button
-                              key={reactionType}
-                              onClick={() => toggleReaction(msg.id, reactionType)}
-                              className="text-lg hover:scale-125 transition-transform cursor-pointer"
-                              title={reactionType}
-                            >
-                              {getReactionEmoji(reactionType)}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                       {msg.reactions.length > 0 && (
                         <div className="flex gap-1 items-center flex-wrap mt-2">
                           {msg.reactions.map(reaction => {
