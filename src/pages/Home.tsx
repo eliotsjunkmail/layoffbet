@@ -338,13 +338,11 @@ export const Home = () => {
     }
   }
 
-  // Get the top favorited company for chat FAB
+  // Get the top favorited company for chat FAB (first in displayed favorites)
   const topFavoritedCompany = useMemo(() => {
-    if (favoriteCompanyIds.length === 0) return null
-    // Get the first favorited company as the top one
-    const companyId = favoriteCompanyIds[0]
-    return companies.find(c => c.id === companyId) || null
-  }, [favoriteCompanyIds, companies])
+    if (favorites.length === 0) return null
+    return favorites[0]
+  }, [favorites])
 
   // Load chat display name when topFavoritedCompany changes
   useEffect(() => {
