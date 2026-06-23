@@ -406,7 +406,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                       >
                         <p className="text-sm">{msg.text}</p>
                       </div>
-                      {!isOwnMessage && !msg.reactions.some(r => r.type === 'thumbsup' && r.userIds.includes(myUserIdRef.current)) && (
+                      {!isOwnMessage && msg.reactions.length === 0 && (
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                           {(['thumbsup'] as ReactionType[]).map(reactionType => (
                             <button
