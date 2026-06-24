@@ -38,7 +38,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState('')
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
   const pendingReactionsRef = useRef<Set<string>>(new Set())
 
@@ -66,6 +68,44 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
     return () => stopPolling()
   }, [isOpen, companyId])
+
+  useEffect(() => {
+    if (!expiresAt) {
+      setTimeRemaining('')
+      if (timeRemainingIntervalRef.current) {
+        clearInterval(timeRemainingIntervalRef.current)
+        timeRemainingIntervalRef.current = null
+      }
+      return
+    }
+
+    const updateTimeRemaining = () => {
+      const now = new Date().getTime()
+      const expires = new Date(expiresAt).getTime()
+      const diff = expires - now
+      if (diff <= 0) {
+        setTimeRemaining('')
+        return
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m`)
+      } else {
+        setTimeRemaining(`${minutes}m`)
+      }
+    }
+
+    updateTimeRemaining()
+    timeRemainingIntervalRef.current = setInterval(updateTimeRemaining, 60000)
+
+    return () => {
+      if (timeRemainingIntervalRef.current) {
+        clearInterval(timeRemainingIntervalRef.current)
+        timeRemainingIntervalRef.current = null
+      }
+    }
+  }, [expiresAt])
 
   const loadChatSettings = async () => {
     try {
@@ -425,7 +465,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                   </button>
                 )}
               </div>
-              {expiresAt && <span className="text-xs text-blue-200">{getTimeRemaining()} left</span>}
+              {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
             </div>
           )}
           <button
