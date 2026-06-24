@@ -706,6 +706,16 @@ export const Home = () => {
             companyName={topFavoritedCompany.name}
             isOpen={chatOpen}
             onClose={() => setChatOpen(false)}
+            onTopicCreated={() => {
+              api.getChatSettings(topFavoritedCompany.id, topFavoritedCompany.name)
+                .then(settings => {
+                  if (settings.displayName) {
+                    setChatDisplayName(settings.displayName)
+                  }
+                  setChatExpiresAt(settings.expiresAt || null)
+                })
+                .catch(err => console.error('Failed to reload chat settings:', err))
+            }}
           />
         </>
       )}

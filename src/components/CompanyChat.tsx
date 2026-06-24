@@ -20,13 +20,18 @@ interface ChatMessage {
   reactions: Reaction[]
 }
 
-export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void }) => {
+export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [chatDisplayName, setChatDisplayName] = useState(companyName + ' Chat')
   const [editingName, setEditingName] = useState(false)
   const [editNameValue, setEditNameValue] = useState(companyName + ' Chat')
+  const [isLocked, setIsLocked] = useState(false)
+  const [expiresAt, setExpiresAt] = useState<string | null>(null)
+  const [showDurationPicker, setShowDurationPicker] = useState(false)
+  const [showLockedMessage, setShowLockedMessage] = useState(false)
+  const [selectedDuration, setSelectedDuration] = useState(2)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isAutoUpdating, setIsAutoUpdating] = useState(true)
@@ -69,6 +74,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         setChatDisplayName(settings.displayName)
         setEditNameValue(settings.displayName)
       }
+      setIsLocked(settings.isLocked || false)
+      setExpiresAt(settings.expiresAt || null)
     } catch (error) {
       console.error('Failed to load chat settings:', error)
     }
@@ -76,12 +83,80 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
   const handleSaveChatName = async () => {
     if (!editNameValue.trim()) return
+    if (!isLocked) {
+      setShowDurationPicker(true)
+    } else {
+      await confirmSaveChatName()
+    }
+  }
+
+  const confirmSaveChatName = async () => {
     try {
-      await api.updateChatSettings(companyId, { displayName: editNameValue.trim() })
+      const durationHours = showDurationPicker ? selectedDuration : 0
+      const response = await api.updateChatSettings(companyId, {
+        displayName: editNameValue.trim(),
+        durationHours,
+        userId: currentUser?.id || null,
+      })
       setChatDisplayName(editNameValue.trim())
       setEditingName(false)
+      setShowDurationPicker(false)
+      setIsLocked(durationHours > 0)
+      // Use server response for expiry time
+      if (response.expiresAt) {
+        setExpiresAt(response.expiresAt)
+      } else if (durationHours > 0) {
+        setExpiresAt(new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString())
+      }
+
+      // Add system message to chat
+      const now = new Date()
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      const systemMessage: ChatMessage = {
+        id: `system-${Date.now()}`,
+        companyId,
+        userId: 'system',
+        username: 'System',
+        text: `New Topic: "${editNameValue.trim()}" (${durationHours}h)\n${timeStr} • ${dateStr}`,
+        createdAt: new Date(),
+        reactions: []
+      }
+      setMessages(prev => [...prev, systemMessage])
+
+      // Save system message to server
+      try {
+        await api.addChatMessage(companyId, {
+          text: systemMessage.text,
+          username: 'System',
+        })
+      } catch (error) {
+        console.error('Failed to save system message:', error)
+      }
+
+      // Notify parent to reload chat settings
+      if (onTopicCreated) {
+        onTopicCreated()
+      }
     } catch (error) {
       console.error('Failed to update chat name:', error)
+    }
+  }
+
+  const resetChatName = async () => {
+    if (!currentUser?.isAdmin) return
+    try {
+      await api.updateChatSettings(companyId, {
+        displayName: '',
+        durationHours: 0,
+        userId: null,
+      })
+      setChatDisplayName(companyName + ' Chat')
+      setEditNameValue(companyName + ' Chat')
+      setIsLocked(false)
+      setExpiresAt(null)
+    } catch (error) {
+      console.error('Failed to reset chat name:', error)
     }
   }
 
@@ -121,10 +196,13 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
       const messagesWithDates = loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }))
 
-      // Merge loaded messages with existing messages to preserve reactions
+      // Merge loaded messages with existing messages to preserve reactions and system messages
       setMessages(prevMessages => {
         try {
-          return messagesWithDates.map((loaded: ChatMessage) => {
+          // Keep local system messages that might not be on the server yet
+          const localSystemMessages = prevMessages.filter(m => m.userId === 'system')
+
+          const mergedMessages = messagesWithDates.map((loaded: ChatMessage) => {
             const existing = prevMessages.find(p => p.id === loaded.id)
             if (!existing) return loaded
 
@@ -148,6 +226,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
             return { ...loaded, reactions: mergedReactions }
           })
+
+          // Add back system messages that are from this session but not on server yet
+          const systemMessagesOnServer = new Set(messagesWithDates.map(m => m.id))
+          localSystemMessages.forEach(sysMsg => {
+            if (!systemMessagesOnServer.has(sysMsg.id)) {
+              mergedMessages.push(sysMsg)
+            }
+          })
+
+          return mergedMessages
         } catch (err) {
           console.error('Error merging reactions:', err)
           return messagesWithDates
@@ -262,6 +350,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     }
   }
 
+  const getTimeRemaining = () => {
+    if (!expiresAt) return ''
+    const now = new Date().getTime()
+    const expires = new Date(expiresAt).getTime()
+    const diff = expires - now
+    if (diff <= 0) return 'now'
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
+  }
+
   const getReactionEmoji = (type: ReactionType) => {
     const emojis: Record<ReactionType, string> = {
       thumbsup: '👍',
@@ -294,7 +394,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
         <div className="flex items-center justify-between mb-1">
-          {editingName && currentUser?.isAdmin ? (
+          {editingName && !isLocked ? (
             <input
               type="text"
               value={editNameValue}
@@ -307,13 +407,20 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           ) : (
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
-              {currentUser?.isAdmin && (
+              <button
+                onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
+                className="p-1 hover:bg-blue-500 rounded transition-colors"
+                title="Start a new topic"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+              {currentUser?.isAdmin && isLocked && (
                 <button
-                  onClick={() => setEditingName(true)}
+                  onClick={resetChatName}
                   className="p-1 hover:bg-blue-500 rounded transition-colors"
-                  title="Edit chat name"
+                  title="Reset to default"
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -387,6 +494,20 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         ) : (
           messages.map(msg => {
             const isOwnMessage = msg.userId === myUserIdRef.current
+            const isSystemMessage = msg.userId === 'system'
+
+            if (isSystemMessage) {
+              const [topicLine, timestampLine] = msg.text.split('\n')
+              return (
+                <div key={msg.id} className="flex justify-center mb-3 mt-6">
+                  <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-lg px-3 py-2 max-w-xs">
+                    <div className="text-sm font-semibold">{topicLine}</div>
+                    {timestampLine && <div className="text-xs text-gray-400 dark:text-slate-600 mt-1">{timestampLine}</div>}
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group mb-2`}>
                 <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -406,6 +527,20 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                       >
                         <p className="text-sm">{msg.text}</p>
                       </div>
+                      {!isOwnMessage && msg.reactions.length === 0 && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          {(['thumbsup'] as ReactionType[]).map(reactionType => (
+                            <button
+                              key={reactionType}
+                              onClick={() => toggleReaction(msg.id, reactionType)}
+                              className="text-lg hover:scale-125 transition-transform cursor-pointer"
+                              title={reactionType}
+                            >
+                              {getReactionEmoji(reactionType)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {msg.reactions.length > 0 && (
                         <div className="flex gap-1 items-center flex-wrap mt-2">
                           {msg.reactions.map(reaction => {
@@ -492,6 +627,66 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {isClearing ? 'Clearing...' : 'Clear All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duration Picker Modal */}
+      {showDurationPicker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">New Topic</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">"{editNameValue.trim()}"</p>
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">How long should this topic stay active?</p>
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {[2, 4, 6, 12, 24].map(hours => (
+                <button
+                  key={hours}
+                  onClick={() => setSelectedDuration(hours)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedDuration === hours
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  {hours}h
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDurationPicker(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSaveChatName}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Start
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Locked Message Modal */}
+      {showLockedMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Chat name is temporarily locked</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
+              You can edit the chat name again in <span className="font-semibold">{getTimeRemaining()}</span>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLockedMessage(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Got it
               </button>
             </div>
           </div>
