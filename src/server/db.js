@@ -332,16 +332,39 @@ export const db = {
   async getChatSettings(companyId) {
     const { data, error } = await supabase.from('chat_settings').select('*').eq('company_id', companyId).maybeSingle()
     throwOnError(error, 'getChatSettings')
-    return data ? { displayName: data.display_name } : null
+    if (!data) return null
+
+    // Check if name has expired
+    const isExpired = data.name_expires_at && new Date(data.name_expires_at) < new Date()
+    const displayName = isExpired ? '' : (data.display_name || '')
+    const isLocked = !isExpired && data.name_expires_at && new Date(data.name_expires_at) > new Date()
+
+    return {
+      displayName,
+      isLocked: isLocked || false,
+      expiresAt: isLocked ? data.name_expires_at : null,
+      setBy: data.name_set_by
+    }
   },
 
   async updateChatSettings(companyId, settings) {
+    const expiresAt = settings.durationHours && settings.durationHours > 0
+      ? new Date(Date.now() + settings.durationHours * 60 * 60 * 1000).toISOString()
+      : null
+
     const { data, error } = await supabase.from('chat_settings').upsert({
       company_id: companyId,
-      display_name: settings.displayName,
+      display_name: settings.displayName || '',
+      name_set_by: settings.userId || null,
+      name_expires_at: expiresAt,
     }).select().single()
     throwOnError(error, 'updateChatSettings')
-    return { displayName: data.display_name }
+
+    return {
+      displayName: data.display_name,
+      isLocked: data.name_expires_at && new Date(data.name_expires_at) > new Date(),
+      expiresAt: data.name_expires_at
+    }
   },
 
   // ===== USER CHAT NAMES =====

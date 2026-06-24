@@ -27,6 +27,10 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [chatDisplayName, setChatDisplayName] = useState(companyName + ' Chat')
   const [editingName, setEditingName] = useState(false)
   const [editNameValue, setEditNameValue] = useState(companyName + ' Chat')
+  const [isLocked, setIsLocked] = useState(false)
+  const [expiresAt, setExpiresAt] = useState<string | null>(null)
+  const [showDurationPicker, setShowDurationPicker] = useState(false)
+  const [selectedDuration, setSelectedDuration] = useState(2)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isAutoUpdating, setIsAutoUpdating] = useState(true)
@@ -69,6 +73,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         setChatDisplayName(settings.displayName)
         setEditNameValue(settings.displayName)
       }
+      setIsLocked(settings.isLocked || false)
+      setExpiresAt(settings.expiresAt || null)
     } catch (error) {
       console.error('Failed to load chat settings:', error)
     }
@@ -76,12 +82,47 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
   const handleSaveChatName = async () => {
     if (!editNameValue.trim()) return
+    if (!isLocked) {
+      setShowDurationPicker(true)
+    } else {
+      await confirmSaveChatName()
+    }
+  }
+
+  const confirmSaveChatName = async () => {
     try {
-      await api.updateChatSettings(companyId, { displayName: editNameValue.trim() })
+      const durationHours = showDurationPicker ? selectedDuration : 0
+      await api.updateChatSettings(companyId, {
+        displayName: editNameValue.trim(),
+        durationHours,
+        userId: currentUser?.id || null,
+      })
       setChatDisplayName(editNameValue.trim())
       setEditingName(false)
+      setShowDurationPicker(false)
+      setIsLocked(durationHours > 0)
+      if (durationHours > 0) {
+        setExpiresAt(new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString())
+      }
     } catch (error) {
       console.error('Failed to update chat name:', error)
+    }
+  }
+
+  const resetChatName = async () => {
+    if (!currentUser?.isAdmin) return
+    try {
+      await api.updateChatSettings(companyId, {
+        displayName: '',
+        durationHours: 0,
+        userId: null,
+      })
+      setChatDisplayName(companyName + ' Chat')
+      setEditNameValue(companyName + ' Chat')
+      setIsLocked(false)
+      setExpiresAt(null)
+    } catch (error) {
+      console.error('Failed to reset chat name:', error)
     }
   }
 
@@ -294,7 +335,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
         <div className="flex items-center justify-between mb-1">
-          {editingName && currentUser?.isAdmin ? (
+          {editingName && !isLocked ? (
             <input
               type="text"
               value={editNameValue}
@@ -307,13 +348,25 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           ) : (
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
-              {currentUser?.isAdmin && (
+              {isLocked && (
+                <span className="text-xs bg-blue-500 px-2 py-1 rounded font-semibold">🔒 Locked</span>
+              )}
+              {!isLocked && (
                 <button
                   onClick={() => setEditingName(true)}
                   className="p-1 hover:bg-blue-500 rounded transition-colors"
                   title="Edit chat name"
                 >
                   <Edit2 className="w-4 h-4" />
+                </button>
+              )}
+              {currentUser?.isAdmin && isLocked && (
+                <button
+                  onClick={resetChatName}
+                  className="p-1 hover:bg-blue-500 rounded transition-colors"
+                  title="Reset to default"
+                >
+                  <RefreshCw className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -506,6 +559,44 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {isClearing ? 'Clearing...' : 'Clear All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duration Picker Modal */}
+      {showDurationPicker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">How long to keep this name?</h3>
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24].map(hours => (
+                <button
+                  key={hours}
+                  onClick={() => setSelectedDuration(hours)}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedDuration === hours
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  {hours}h
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDurationPicker(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSaveChatName}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Save ({selectedDuration}h)
               </button>
             </div>
           </div>
