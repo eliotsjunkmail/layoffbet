@@ -110,12 +110,15 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       }
 
       // Add system message to chat
+      const now = new Date()
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
       const systemMessage: ChatMessage = {
         id: `system-${Date.now()}`,
         companyId,
         userId: 'system',
         username: 'System',
-        text: `📌 New Topic: "${editNameValue.trim()}" (${durationHours}h)`,
+        text: `New Topic: "${editNameValue.trim()}" (${durationHours}h)\n${timeStr} • ${dateStr}`,
         createdAt: new Date(),
         reactions: []
       }
@@ -489,10 +492,12 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
             const isSystemMessage = msg.userId === 'system'
 
             if (isSystemMessage) {
+              const [topicLine, timestampLine] = msg.text.split('\n')
               return (
-                <div key={msg.id} className="flex justify-center mb-3">
-                  <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-full px-3 py-1 max-w-xs">
-                    {msg.text}
+                <div key={msg.id} className="flex justify-center mb-3 mt-6">
+                  <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-lg px-3 py-2 max-w-xs">
+                    <div className="text-sm font-semibold">{topicLine}</div>
+                    {timestampLine && <div className="text-xs text-gray-400 dark:text-slate-600 mt-1">{timestampLine}</div>}
                   </div>
                 </div>
               )
