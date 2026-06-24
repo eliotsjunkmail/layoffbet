@@ -463,7 +463,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                   className="px-2 py-1 border border-white hover:bg-white/20 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
                   title={isLocked ? 'Topic is locked' : 'Start a new topic'}
                 >
-                  + Headline
+                  + Topic
                 </button>
                 {currentUser?.isAdmin && isLocked && (
                   <button
@@ -486,9 +486,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           </button>
         </div>
 
-        {/* Second row: Subtext on left, status and user count on right */}
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-blue-100">Live blog meetings</p>
+        {/* Second row: Status and user count */}
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             {currentUser?.isAdmin && (
               <button
