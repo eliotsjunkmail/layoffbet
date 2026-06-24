@@ -445,15 +445,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               className="flex-1 px-2 py-1 rounded text-gray-900 text-sm font-semibold"
             />
           ) : (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2">
+            <>
+              <div className="flex flex-col gap-0.5 flex-1">
                 <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+                {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
+              </div>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
-                  className="p-1 hover:bg-blue-500 rounded transition-colors"
-                  title="Start a new topic"
+                  onClick={() => isLocked ? setShowLockedMessage(true) : setShowDurationPicker(true)}
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium text-white transition-colors"
+                  title={isLocked ? 'Topic is locked' : 'Start a new topic'}
                 >
-                  <Edit2 className="w-4 h-4" />
+                  + Topic
                 </button>
                 {currentUser?.isAdmin && isLocked && (
                   <button
@@ -465,8 +468,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                   </button>
                 )}
               </div>
-              {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
-            </div>
+            </>
           )}
           <button
             onClick={onClose}
@@ -680,9 +682,15 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       {showDurationPicker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">New Topic</h3>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">"{editNameValue.trim()}"</p>
-            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">How long should this topic stay active?</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">New Topic</h3>
+            <input
+              type="text"
+              value={editNameValue}
+              onChange={(e) => setEditNameValue(e.target.value)}
+              placeholder={companyName + ' Chat'}
+              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white mb-4 text-sm"
+            />
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">Duration</p>
             <div className="grid grid-cols-3 gap-2 mb-6">
               {[2, 4, 6, 12, 24].map(hours => (
                 <button
