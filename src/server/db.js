@@ -342,7 +342,7 @@ export const db = {
     return {
       displayName,
       isLocked: isLocked || false,
-      expiresAt: isLocked ? data.name_expires_at : null,
+      expiresAt: data.name_expires_at && !isExpired ? data.name_expires_at : null,
       setBy: data.name_set_by
     }
   },
