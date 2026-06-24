@@ -405,24 +405,27 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               className="flex-1 px-2 py-1 rounded text-gray-900 text-sm font-semibold"
             />
           ) : (
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
-              <button
-                onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
-                className="p-1 hover:bg-blue-500 rounded transition-colors"
-                title="Start a new topic"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-              {currentUser?.isAdmin && isLocked && (
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
                 <button
-                  onClick={resetChatName}
+                  onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
                   className="p-1 hover:bg-blue-500 rounded transition-colors"
-                  title="Reset to default"
+                  title="Start a new topic"
                 >
-                  <RefreshCw className="w-4 h-4" />
+                  <Edit2 className="w-4 h-4" />
                 </button>
-              )}
+                {currentUser?.isAdmin && isLocked && (
+                  <button
+                    onClick={resetChatName}
+                    className="p-1 hover:bg-blue-500 rounded transition-colors"
+                    title="Reset to default"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {expiresAt && <span className="text-xs text-blue-200">{getTimeRemaining()} left</span>}
             </div>
           )}
           <button
