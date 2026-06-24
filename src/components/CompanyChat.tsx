@@ -169,6 +169,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
         await api.addChatMessage(companyId, {
           text: systemMessage.text,
           username: 'System',
+          userId: 'system',
         })
       } catch (error) {
         console.error('Failed to save system message:', error)
