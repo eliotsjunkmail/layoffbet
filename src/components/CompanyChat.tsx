@@ -105,6 +105,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       if (durationHours > 0) {
         setExpiresAt(new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString())
       }
+
+      // Add system message to chat
+      const systemMessage: ChatMessage = {
+        id: `system-${Date.now()}`,
+        companyId,
+        userId: 'system',
+        username: 'System',
+        text: `📌 New Topic: "${editNameValue.trim()}" (${durationHours}h)`,
+        createdAt: new Date(),
+        reactions: []
+      }
+      setMessages(prev => [...prev, systemMessage])
     } catch (error) {
       console.error('Failed to update chat name:', error)
     }
@@ -364,7 +376,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
               <button
                 onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
                 className="p-1 hover:bg-blue-500 rounded transition-colors"
-                title="Edit chat name"
+                title="Start a new topic"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
@@ -448,6 +460,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         ) : (
           messages.map(msg => {
             const isOwnMessage = msg.userId === myUserIdRef.current
+            const isSystemMessage = msg.userId === 'system'
+
+            if (isSystemMessage) {
+              return (
+                <div key={msg.id} className="flex justify-center mb-3">
+                  <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-full px-3 py-1 max-w-xs">
+                    {msg.text}
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group mb-2`}>
                 <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -577,9 +601,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       {showDurationPicker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">How long to keep this name?</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">New Topic</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">"{editNameValue.trim()}"</p>
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">How long should this topic stay active?</p>
             <div className="grid grid-cols-3 gap-2 mb-6">
-              {[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24].map(hours => (
+              {[2, 4, 6, 12, 24].map(hours => (
                 <button
                   key={hours}
                   onClick={() => setSelectedDuration(hours)}
@@ -604,7 +630,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                 onClick={confirmSaveChatName}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                Save ({selectedDuration}h)
+                Start ({selectedDuration}h)
               </button>
             </div>
           </div>
