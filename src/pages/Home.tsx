@@ -78,6 +78,7 @@ export const Home = () => {
   const [hasPlacedFirstBet, setHasPlacedFirstBet] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [chatDisplayName, setChatDisplayName] = useState('')
+  const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -352,6 +353,7 @@ export const Home = () => {
           if (settings.displayName) {
             setChatDisplayName(settings.displayName)
           }
+          setChatExpiresAt(settings.expiresAt || null)
         })
         .catch(err => console.error('Failed to load chat settings:', err))
     }
@@ -365,6 +367,7 @@ export const Home = () => {
           if (settings.displayName) {
             setChatDisplayName(settings.displayName)
           }
+          setChatExpiresAt(settings.expiresAt || null)
         })
         .catch(err => console.error('Failed to load chat settings:', err))
     }
@@ -700,7 +703,7 @@ export const Home = () => {
 
       {topFavoritedCompany && (
         <>
-          <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} chatDisplayName={chatDisplayName} />
+          <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt || undefined} />
           <CompanyChat
             companyId={topFavoritedCompany.id}
             companyName={topFavoritedCompany.name}
