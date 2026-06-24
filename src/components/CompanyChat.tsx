@@ -93,7 +93,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const confirmSaveChatName = async () => {
     try {
       const durationHours = showDurationPicker ? selectedDuration : 0
-      await api.updateChatSettings(companyId, {
+      const response = await api.updateChatSettings(companyId, {
         displayName: editNameValue.trim(),
         durationHours,
         userId: currentUser?.id || null,
@@ -102,7 +102,10 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
       setEditingName(false)
       setShowDurationPicker(false)
       setIsLocked(durationHours > 0)
-      if (durationHours > 0) {
+      // Use server response for expiry time
+      if (response.expiresAt) {
+        setExpiresAt(response.expiresAt)
+      } else if (durationHours > 0) {
         setExpiresAt(new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString())
       }
 
