@@ -20,7 +20,7 @@ interface ChatMessage {
   reactions: Reaction[]
 }
 
-export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void }) => {
+export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -132,6 +132,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         })
       } catch (error) {
         console.error('Failed to save system message:', error)
+      }
+
+      // Notify parent to reload chat settings
+      if (onTopicCreated) {
+        onTopicCreated()
       }
     } catch (error) {
       console.error('Failed to update chat name:', error)
