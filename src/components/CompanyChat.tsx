@@ -117,6 +117,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
         reactions: []
       }
       setMessages(prev => [...prev, systemMessage])
+
+      // Save system message to server
+      try {
+        await api.addChatMessage(companyId, {
+          text: systemMessage.text,
+          username: 'System',
+        })
+      } catch (error) {
+        console.error('Failed to save system message:', error)
+      }
     } catch (error) {
       console.error('Failed to update chat name:', error)
     }
