@@ -35,7 +35,7 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
+      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
         <div className="max-w-2xl mx-auto px-4 py-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -118,7 +118,7 @@ const GuestSheet = ({ onClose }: { onClose: () => void }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
+      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200">
         <div className="max-w-2xl mx-auto px-4 py-5">
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-semibold text-gray-900 dark:text-white">Guest</div>
