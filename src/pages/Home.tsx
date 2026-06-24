@@ -703,11 +703,7 @@ export const Home = () => {
 
       {topFavoritedCompany && (
         <>
-<<<<<<< HEAD
-          <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt || undefined} />
-=======
           <ChatFAB companyName={topFavoritedCompany.name} onClick={() => setChatOpen(true)} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt} />
->>>>>>> e285e10 (Display time remaining on chat FAB for temporary topics)
           <CompanyChat
             companyId={topFavoritedCompany.id}
             companyName={topFavoritedCompany.name}
