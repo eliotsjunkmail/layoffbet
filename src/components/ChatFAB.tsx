@@ -1,7 +1,42 @@
 import { MessageCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
-export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, chatDisplayName }: { companyName: string; onClick: () => void; newMessageCount?: number; shouldShake?: boolean; chatDisplayName?: string }) => {
+export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, chatDisplayName, expiresAt }: { companyName: string; onClick: () => void; newMessageCount?: number; shouldShake?: boolean; chatDisplayName?: string; expiresAt?: string | null }) => {
   const displayText = chatDisplayName || `${companyName} Chat`
+  const isCustomName = chatDisplayName && chatDisplayName !== `${companyName} Chat`
+  const [timeRemaining, setTimeRemaining] = useState<string>('')
+
+  useEffect(() => {
+    if (!isCustomName || !expiresAt) {
+      setTimeRemaining('')
+      return
+    }
+
+    const updateTimeRemaining = () => {
+      const now = new Date()
+      const expiry = new Date(expiresAt)
+      const diff = expiry.getTime() - now.getTime()
+
+      if (diff <= 0) {
+        setTimeRemaining('')
+        return
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+      if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m left`)
+      } else {
+        setTimeRemaining(`${minutes}m left`)
+      }
+    }
+
+    updateTimeRemaining()
+    const interval = setInterval(updateTimeRemaining, 60000) // Update every minute
+
+    return () => clearInterval(interval)
+  }, [expiresAt, isCustomName])
   return (
     <>
       <style>{`
@@ -29,10 +64,13 @@ export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, ch
       <button
         onClick={onClick}
         className={`fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 font-medium text-sm hover:scale-105 active:scale-95 ${shouldShake ? 'fab-shake' : ''}`}
-        title={`${displayText}${newMessageCount ? ` (${newMessageCount} new ${newMessageCount === 1 ? 'message' : 'messages'})` : ''}`}
+        title={`${displayText}${timeRemaining ? ` (${timeRemaining})` : ''}${newMessageCount ? ` (${newMessageCount} new ${newMessageCount === 1 ? 'message' : 'messages'})` : ''}`}
       >
         <MessageCircle className="w-5 h-5" />
-        <span>{displayText}</span>
+        <div className="flex flex-col items-start">
+          <span>{displayText}</span>
+          {timeRemaining && <span className="text-xs text-blue-100">{timeRemaining}</span>}
+        </div>
         <span className="text-xs font-bold text-red-400">LIVE</span>
         {newMessageCount !== undefined && newMessageCount > 0 && (
           <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold ml-1 ${newMessageCount > 0 ? 'badge-pulse' : ''}`}>
