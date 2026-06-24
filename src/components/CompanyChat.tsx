@@ -188,10 +188,13 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
       const messagesWithDates = loadedMessages.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }))
 
-      // Merge loaded messages with existing messages to preserve reactions
+      // Merge loaded messages with existing messages to preserve reactions and system messages
       setMessages(prevMessages => {
         try {
-          return messagesWithDates.map((loaded: ChatMessage) => {
+          // Keep local system messages that might not be on the server yet
+          const localSystemMessages = prevMessages.filter(m => m.userId === 'system')
+
+          const mergedMessages = messagesWithDates.map((loaded: ChatMessage) => {
             const existing = prevMessages.find(p => p.id === loaded.id)
             if (!existing) return loaded
 
@@ -215,6 +218,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
 
             return { ...loaded, reactions: mergedReactions }
           })
+
+          // Add back system messages that are from this session but not on server yet
+          const systemMessagesOnServer = new Set(messagesWithDates.map(m => m.id))
+          localSystemMessages.forEach(sysMsg => {
+            if (!systemMessagesOnServer.has(sysMsg.id)) {
+              mergedMessages.push(sysMsg)
+            }
+          })
+
+          return mergedMessages
         } catch (err) {
           console.error('Error merging reactions:', err)
           return messagesWithDates
