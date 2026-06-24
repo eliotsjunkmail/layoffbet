@@ -453,7 +453,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                 </div>
                 <button
                   onClick={() => isLocked ? setShowLockedMessage(true) : setShowDurationPicker(true)}
-                  className="px-2 py-1 border border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded text-xs font-medium text-blue-600 dark:text-blue-400 transition-colors whitespace-nowrap"
+                  className="px-2 py-1 border border-white hover:bg-white/20 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
                   title={isLocked ? 'Topic is locked' : 'Start a new topic'}
                 >
                   + Headline
