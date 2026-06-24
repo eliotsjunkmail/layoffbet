@@ -687,10 +687,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               type="text"
               value={editNameValue}
               onChange={(e) => setEditNameValue(e.target.value)}
-              placeholder={companyName + ' Chat'}
-              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white mb-2 text-sm"
+              placeholder="e.g. Layoffs, Reorg, Town hall"
+              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white mb-4 text-sm"
             />
-            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">e.g. "Layoffs announced", "Reorg meeting", "Town hall"</p>
             <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">Duration</p>
             <div className="grid grid-cols-3 gap-2 mb-6">
               {[2, 4, 6, 12, 24].map(hours => (
