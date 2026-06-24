@@ -80,10 +80,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       return
     }
 
-    const updateTimeRemaining = () => {
+    const checkExpiry = () => {
       const now = new Date().getTime()
       const expires = new Date(expiresAt).getTime()
       const diff = expires - now
+
+      if (diff <= 0 && isLocked && chatDisplayName !== companyName + ' Chat') {
+        handleTopicExpired(chatDisplayName)
+        return
+      }
+
       if (diff <= 0) {
         setTimeRemaining('')
         return
@@ -97,8 +103,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       }
     }
 
-    updateTimeRemaining()
-    timeRemainingIntervalRef.current = setInterval(updateTimeRemaining, 60000)
+    checkExpiry()
+    timeRemainingIntervalRef.current = setInterval(checkExpiry, 60000)
 
     return () => {
       if (timeRemainingIntervalRef.current) {
@@ -106,7 +112,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
         timeRemainingIntervalRef.current = null
       }
     }
-  }, [expiresAt])
+  }, [expiresAt, isLocked, chatDisplayName, companyName])
 
   const loadChatSettings = async () => {
     try {
@@ -402,6 +408,40 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     if (hours > 0) return `${hours}h ${minutes}m`
     return `${minutes}m`
+  }
+
+  const handleTopicExpired = async (topicName: string) => {
+    // Reset chat name back to company name
+    setChatDisplayName(companyName + ' Chat')
+    setEditNameValue(companyName + ' Chat')
+    setIsLocked(false)
+    setExpiresAt(null)
+
+    // Add system message that topic ended
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    const systemMessage: ChatMessage = {
+      id: `system-${Date.now()}`,
+      companyId,
+      userId: 'system',
+      username: 'System',
+      text: `Topic "${topicName}" ended\n${timeStr} • ${dateStr}`,
+      createdAt: new Date(),
+      reactions: []
+    }
+    setMessages(prev => [...prev, systemMessage])
+
+    // Save system message to server
+    try {
+      await api.addChatMessage(companyId, {
+        text: systemMessage.text,
+        username: 'System',
+        userId: 'system',
+      })
+    } catch (error) {
+      console.error('Failed to save topic ended message:', error)
+    }
   }
 
   const getReactionEmoji = (type: ReactionType) => {
