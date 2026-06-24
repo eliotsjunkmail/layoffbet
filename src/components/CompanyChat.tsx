@@ -645,7 +645,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             onKeyPress={e => {
               if (e.key === 'Enter') handleSend()
             }}
-            placeholder="Share your thoughts..."
+            placeholder="Share your thoughts anonymously"
             className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
