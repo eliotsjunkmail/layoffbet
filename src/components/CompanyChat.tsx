@@ -39,6 +39,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState('')
+  const [topicCommentInputs, setTopicCommentInputs] = useState<Record<string, string>>({})
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
@@ -550,7 +551,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
             if (isSystemMessage) {
               const [topicLine, timestampLine] = msg.text.split('\n')
-              const [topicInput, setTopicInput] = require('react').useState('')
+              const topicInput = topicCommentInputs[msg.id] || ''
               const handleTopicComment = async () => {
                 if (!topicInput.trim()) return
                 const userId = myUserIdRef.current
@@ -562,7 +563,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                     text: topicInput.trim(),
                     reactions: [],
                   })
-                  setTopicInput('')
+                  setTopicCommentInputs(prev => ({ ...prev, [msg.id]: '' }))
                   await loadMessages()
                 } catch (error) {
                   console.error('Failed to add comment:', error)
@@ -578,7 +579,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                     <input
                       type="text"
                       value={topicInput}
-                      onChange={(e) => setTopicInput(e.target.value)}
+                      onChange={(e) => setTopicCommentInputs(prev => ({ ...prev, [msg.id]: e.target.value }))}
                       placeholder="Add a comment..."
                       onKeyPress={(e) => e.key === 'Enter' && handleTopicComment()}
                       className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
