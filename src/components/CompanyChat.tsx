@@ -30,6 +30,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
   const [isLocked, setIsLocked] = useState(false)
   const [expiresAt, setExpiresAt] = useState<string | null>(null)
   const [showDurationPicker, setShowDurationPicker] = useState(false)
+  const [showLockedMessage, setShowLockedMessage] = useState(false)
   const [selectedDuration, setSelectedDuration] = useState(2)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -303,6 +304,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
     }
   }
 
+  const getTimeRemaining = () => {
+    if (!expiresAt) return ''
+    const now = new Date().getTime()
+    const expires = new Date(expiresAt).getTime()
+    const diff = expires - now
+    if (diff <= 0) return 'now'
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
+  }
+
   const getReactionEmoji = (type: ReactionType) => {
     const emojis: Record<ReactionType, string> = {
       thumbsup: '👍',
@@ -348,18 +361,13 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
           ) : (
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
-              {isLocked && (
-                <span className="text-xs bg-blue-500 px-2 py-1 rounded font-semibold">🔒 Locked</span>
-              )}
-              {!isLocked && (
-                <button
-                  onClick={() => setEditingName(true)}
-                  className="p-1 hover:bg-blue-500 rounded transition-colors"
-                  title="Edit chat name"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
+                className="p-1 hover:bg-blue-500 rounded transition-colors"
+                title="Edit chat name"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
               {currentUser?.isAdmin && isLocked && (
                 <button
                   onClick={resetChatName}
@@ -597,6 +605,26 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose }: { compa
                 className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
                 Save ({selectedDuration}h)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Locked Message Modal */}
+      {showLockedMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Chat name is temporarily locked</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
+              You can edit the chat name again in <span className="font-semibold">{getTimeRemaining()}</span>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLockedMessage(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Got it
               </button>
             </div>
           </div>
