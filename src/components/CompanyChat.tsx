@@ -446,17 +446,17 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             />
           ) : (
             <>
-              <div className="flex flex-col gap-0.5 flex-1">
-                <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
-                {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
-              </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+                  {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
+                </div>
                 <button
                   onClick={() => isLocked ? setShowLockedMessage(true) : setShowDurationPicker(true)}
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium text-white transition-colors"
+                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
                   title={isLocked ? 'Topic is locked' : 'Start a new topic'}
                 >
-                  + Topic
+                  New headline
                 </button>
                 {currentUser?.isAdmin && isLocked && (
                   <button
