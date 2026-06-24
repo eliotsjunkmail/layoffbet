@@ -471,13 +471,13 @@ export const Home = () => {
           </div>
 
           {/* Search with typeahead */}
-          <div ref={searchRef} className="relative max-w-md mx-auto mb-2">
+          <div ref={searchRef} className="relative max-w-md mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="text"
               value={query}
               onChange={e => { setQuery(e.target.value); setShowDropdown(true) }}
-              onFocus={() => query && setShowDropdown(true)}
+              onFocus={() => setShowDropdown(true)}
               placeholder="Search for a company..."
               className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl pl-12 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm text-sm"
             />
@@ -488,13 +488,13 @@ export const Home = () => {
             )}
 
             {/* Dropdown */}
-            {showDropdown && typeaheadResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
-                <SearchResultsList results={typeaheadResults} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id); setShowDropdown(false); setQuery('') }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
+            {showDropdown && (typeaheadResults.length > 0 || !query) && (
+              <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 overflow-hidden">
+                <SearchResultsList results={typeaheadResults.length > 0 ? typeaheadResults : companies.filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name))} favoriteCompanyIds={favoriteCompanyIds} activeEventsByCompany={activeEventsByCompany} sentimentByCompany={sentimentByCompany} onSelect={c => { if (!favoriteCompanyIds.includes(c.id)) toggleFavoriteCompany(c.id); setShowDropdown(false); setQuery('') }} onStar={(e, c) => { handleStar(e, c); setShowDropdown(false); setQuery('') }} onSeeAll={() => { setShowDropdown(false); navigate('/search') }} />
               </div>
             )}
             {showDropdown && query && typeaheadResults.length === 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
+              <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
                 No companies found for "{query}"
               </div>
             )}
