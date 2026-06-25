@@ -206,11 +206,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         width: Math.random() * 16 + 42,
         height: Math.random() * 8 + 20,
         left: Math.random() * 90,
-        duration: Math.random() * 18 + 60,
+        duration: Math.random() * 36 + 120,
         delay: Math.random() * 60,
         opacity: 0.5 + Math.random() * 0.3,
-        sway: Math.random() * 28 + 22,
-        rot: Math.random() * 10 + 10,
+        sway: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 30 + 20),
+        rot: Math.random() * 15 + 8,
       })),
     []
   )
@@ -546,19 +546,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         }
         @keyframes confettiFall {
           0% {
-            transform: translateY(-12vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
-          }
-          5% {
-            transform: translateY(19vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
-          }
-          10% {
-            transform: translateY(50vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
-          }
-          15% {
-            transform: translateY(81vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
+            transform: translateY(-8vh) translateX(0px) rotate(calc(var(--rot, 12deg) * -1));
           }
           20%, 100% {
-            transform: translateY(112vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
+            transform: translateY(112vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
           }
         }
         .scrollbar-hide {
