@@ -197,7 +197,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
   // Compute confetti pieces once so they don't reset on every re-render (countdown ticks every second)
-  // One slip per company, starting above the screen and slowly drifting down like a feather
+  // One slip per company. Each cycle is mostly an off-screen "hold" with a short fall,
+  // so only a few are on screen at any time. Staggered delays spread them out.
   const confettiPieces = useMemo(
     () =>
       CONFETTI_TICKERS.map((ticker) => ({
@@ -205,8 +206,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         width: Math.random() * 16 + 42,
         height: Math.random() * 8 + 20,
         left: Math.random() * 90,
-        duration: Math.random() * 10 + 18,
-        delay: Math.random() * 12,
+        duration: Math.random() * 18 + 60,
+        delay: Math.random() * 60,
         opacity: 0.5 + Math.random() * 0.3,
         sway: Math.random() * 28 + 22,
         rot: Math.random() * 10 + 10,
@@ -355,7 +356,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               opacity: p.opacity,
               ['--sway' as string]: `${p.sway}px`,
               ['--rot' as string]: `${p.rot}deg`,
-              animation: `confettiFall ${p.duration}s ease-in-out ${p.delay}s infinite`,
+              animation: `confettiFall ${p.duration}s linear ${p.delay}s infinite both`,
             }}
           >
             <span className="text-[8px] font-bold tracking-wider text-pink-950/80">{p.ticker}</span>
@@ -547,16 +548,16 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           0% {
             transform: translateY(-12vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
           }
-          25% {
+          5% {
             transform: translateY(19vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
           }
-          50% {
+          10% {
             transform: translateY(50vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
           }
-          75% {
+          15% {
             transform: translateY(81vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
           }
-          100% {
+          20%, 100% {
             transform: translateY(112vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
           }
         }
