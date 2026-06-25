@@ -206,8 +206,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         width: Math.random() * 16 + 42,
         height: Math.random() * 8 + 20,
         left: Math.random() * 90,
-        duration: Math.random() * 36 + 120,
-        delay: Math.random() * 60,
+        duration: Math.random() * 15 + 40,
+        delay: Math.random() * 40,
         opacity: 0.5 + Math.random() * 0.3,
         sway: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 30 + 20),
         rot: Math.random() * 15 + 8,
@@ -392,7 +392,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     onChange={e => { setInput(e.target.value); setError(false) }}
                     placeholder="Enter invite code"
                     autoComplete="off"
-                    onFocus={e => e.currentTarget.blur()}
                     className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
                   />
                 </div>
@@ -548,7 +547,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           0% {
             transform: translateY(-8vh) translateX(0px) rotate(calc(var(--rot, 12deg) * -1));
           }
-          20%, 100% {
+          60%, 100% {
             transform: translateY(112vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
           }
         }
