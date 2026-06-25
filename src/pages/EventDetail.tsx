@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
 import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2, Check, Edit2 } from 'lucide-react'
-import { BetConfetti } from '../components/BetConfetti'
+import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { AuthModal } from '../components/AuthModal'
@@ -33,7 +33,6 @@ export const EventDetail = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [betAmount, setBetAmount] = useState(10)
   const [toast, setToast] = useState('')
-  const [showConfetti, setShowConfetti] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
@@ -100,7 +99,7 @@ export const EventDetail = () => {
             showToast(`Reduced your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
           }
         } else {
-          setShowConfetti(true)
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
         }
       } else {
@@ -120,7 +119,7 @@ export const EventDetail = () => {
           showToast(`Reduced your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
         }
       } else {
-        setShowConfetti(true)
+        confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
         showToast(`${side === 'yes' ? '✓ YES' : '✕ NO'} · ${betAmount} coins · ${movement}`)
       }
     } else {
@@ -208,7 +207,6 @@ export const EventDetail = () => {
 
   return (
     <Layout>
-      {showConfetti && <BetConfetti count={20} onComplete={() => setShowConfetti(false)} />}
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>

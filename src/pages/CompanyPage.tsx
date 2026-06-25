@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft } from 'lucide-react'
-import { BetConfetti } from '../components/BetConfetti'
+import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -64,7 +64,6 @@ export const CompanyPage = () => {
   })
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
   const [toast, setToast] = useState('')
-  const [showConfetti, setShowConfetti] = useState(false)
   const [toastExiting, setToastExiting] = useState(false)
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
@@ -309,7 +308,7 @@ export const CompanyPage = () => {
             showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
           }
         } else {
-          setShowConfetti(true)
+          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
         }
       } else {
@@ -333,7 +332,7 @@ export const CompanyPage = () => {
               showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
             }
           } else {
-            setShowConfetti(true)
+            confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
             showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
           }
         } else {
@@ -430,7 +429,6 @@ export const CompanyPage = () => {
 
   return (
     <>
-    {showConfetti && <BetConfetti count={20} onComplete={() => setShowConfetti(false)} />}
     <Layout>
       {/* 2-column layout on desktop */}
       <div className="sm:grid sm:grid-cols-[320px_1fr] sm:gap-8 sm:items-start">
