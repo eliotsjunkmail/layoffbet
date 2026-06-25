@@ -341,7 +341,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="fixed inset-0 bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Pink slip confetti drifting down from the top like feathers */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {confettiPieces.map((p, i) => (
