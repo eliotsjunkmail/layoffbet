@@ -102,8 +102,12 @@ export const AdBanner = () => {
   const ad = ADS[idx]
   const c = colorMap[ad.color] ?? colorMap.chatgpt
 
+  const handleCtaClick = () => {
+    window.open(ad.url, '_blank', 'noopener,noreferrer')
+  }
+
   return (
-    <a href={ad.url} target="_blank" rel="noopener noreferrer" className={`block my-4 relative rounded-2xl overflow-hidden border ${c.border} bg-gradient-to-br ${c.bg} shadow-sm hover:shadow-md transition-shadow`}>
+    <div className={`block my-4 relative rounded-2xl overflow-hidden border ${c.border} bg-gradient-to-br ${c.bg} shadow-sm transition-shadow`}>
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -117,8 +121,8 @@ export const AdBanner = () => {
         </div>
         <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug mb-1">{ad.tagline}</p>
         <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mb-3">{ad.body}</p>
-        <span className={`text-xs font-semibold ${c.cta} transition-colors inline-block`}>{ad.cta}</span>
+        <button onClick={handleCtaClick} className={`text-xs font-semibold ${c.cta} transition-colors inline-block hover:opacity-80 cursor-pointer border-none bg-none p-0`}>{ad.cta}</button>
       </div>
-    </a>
+    </div>
   )
 }
