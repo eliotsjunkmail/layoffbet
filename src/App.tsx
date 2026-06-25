@@ -115,7 +115,7 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
           key={c.id}
           data-company-pill
           onClick={() => handlePillClick(c.id)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none ${
             selectedCompanyId === c.id
               ? 'bg-blue-600 border-blue-500 text-white'
               : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
@@ -152,7 +152,7 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
               <button
                 key={c.id}
                 onClick={() => onSelectCompany?.(c.id)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none ${
                   selectedCompanyId === c.id
                     ? 'bg-blue-600 border-blue-500 text-white'
                     : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
@@ -350,6 +350,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     onChange={e => { setInput(e.target.value); setError(false) }}
                     placeholder="Enter invite code"
                     autoComplete="off"
+                    onFocus={e => e.currentTarget.blur()}
                     className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
                   />
                 </div>
