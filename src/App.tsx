@@ -16,6 +16,8 @@ const GATE_ADMIN_PASS = 'admin'
 const ANON_FAVORITE_COMPANY_KEY = 'lb-anon-favorite-company'
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 
+const CONFETTI_TICKERS = ['META', 'SNAP', 'JPM', 'GOOG', 'AMZN', 'TSLA', 'NFLX', 'UBER', 'INTC', 'AMD', 'MSFT', 'IBM', 'ORCL', 'CRM', 'PYPL', 'COIN', 'ABNB', 'LYFT', 'DIS', 'GS', 'SPOT', 'RBLX', 'SHOP', 'ZM']
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 const useCountdown = (targetDate: string) => {
@@ -197,13 +199,16 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   // Compute confetti pieces once so they don't reset on every re-render (countdown ticks every second)
   const confettiPieces = useMemo(
     () =>
-      Array.from({ length: 12 }).map(() => ({
-        width: Math.random() * 16 + 10,
-        height: Math.random() * 24 + 16,
-        left: Math.random() * 100,
-        duration: Math.random() * 12 + 18,
-        delay: Math.random() * 14,
-        opacity: 0.4 + Math.random() * 0.3,
+      Array.from({ length: 28 }).map(() => ({
+        ticker: CONFETTI_TICKERS[Math.floor(Math.random() * CONFETTI_TICKERS.length)],
+        width: Math.random() * 16 + 42,
+        height: Math.random() * 8 + 20,
+        left: Math.random() * 90,
+        bottom: Math.random() * 56,
+        duration: Math.random() * 5 + 7,
+        delay: Math.random() * 16,
+        opacity: 0.55 + Math.random() * 0.3,
+        rotate: Math.random() * 20 - 10,
       })),
     []
   )
@@ -335,21 +340,24 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Pink slip confetti falling */}
+      {/* Pink slip confetti falling and collecting at the bottom */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {confettiPieces.map((p, i) => (
           <div
             key={i}
-            className="absolute bg-pink-400/50 rounded-sm"
+            className="absolute bg-pink-400/60 rounded-sm flex items-center justify-center"
             style={{
               width: `${p.width}px`,
               height: `${p.height}px`,
               left: `${p.left}%`,
-              top: '-50px',
+              bottom: `${p.bottom}px`,
               opacity: p.opacity,
-              animation: `confettiFall ${p.duration}s linear ${p.delay}s infinite`,
+              ['--r' as string]: `${p.rotate}deg`,
+              animation: `confettiFall ${p.duration}s ease-in ${p.delay}s forwards`,
             }}
-          />
+          >
+            <span className="text-[8px] font-bold tracking-wider text-pink-950/80">{p.ticker}</span>
+          </div>
         ))}
       </div>
       <div className="w-full max-w-sm">
@@ -535,10 +543,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         }
         @keyframes confettiFall {
           0% {
-            transform: translateY(0);
+            transform: translateY(calc(-100vh - 80px)) rotate(var(--r, 0deg));
           }
           100% {
-            transform: translateY(calc(100vh + 60px));
+            transform: translateY(0) rotate(var(--r, 0deg));
           }
         }
         .scrollbar-hide {
