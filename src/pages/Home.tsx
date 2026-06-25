@@ -411,7 +411,7 @@ export const Home = () => {
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
         {(currentUser && userStats) || !currentUser ? (
-          <div className="pt-3 pb-0 -mx-4 px-4 mb-0">
+          <div className="pt-3 pb-0 -mx-4 px-4 mb-4">
             <div className="grid grid-cols-3 gap-3">
               <button onClick={async () => {
                 if (currentUser) {
@@ -673,7 +673,7 @@ export const Home = () => {
             .sort((a, b) => a.name.localeCompare(b.name))
 
           return companiesWithActiveBets.length > 0 ? (
-            <div className="mb-4">
+            <div className="mb-4 mt-4">
               <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
               <div className="flex flex-wrap gap-2">
                 {companiesWithActiveBets.map(c => (
