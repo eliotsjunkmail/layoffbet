@@ -320,7 +320,25 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Pink slip confetti falling */}
+      <div className="fixed inset-0 pointer-events-none">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-pink-400/60 rounded-sm"
+            style={{
+              width: `${Math.random() * 20 + 10}px`,
+              height: `${Math.random() * 30 + 15}px`,
+              left: `${Math.random() * 100}%`,
+              top: `-${Math.random() * 20}px`,
+              animation: `confettiFall ${Math.random() * 8 + 12}s linear ${Math.random() * 2}s infinite`,
+              opacity: 0.7 + Math.random() * 0.3,
+              transform: `rotate(${Math.random() * 360}deg)`,
+            }}
+          />
+        ))}
+      </div>
       <div className="w-full max-w-sm">
         {/* Tagline */}
         <div className="flex justify-center mb-6">
@@ -501,6 +519,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           40% { transform: translateX(6px); }
           60% { transform: translateX(-4px); }
           80% { transform: translateX(4px); }
+        }
+        @keyframes confettiFall {
+          to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+          }
         }
         .scrollbar-hide {
           -ms-overflow-style: none;
