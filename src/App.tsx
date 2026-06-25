@@ -323,18 +323,17 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Pink slip confetti falling */}
       <div className="fixed inset-0 pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
+        {Array.from({ length: 30 }).map((_, i) => (
           <div
             key={i}
-            className="absolute bg-pink-400/60 rounded-sm"
+            className="absolute bg-pink-400/50 rounded-sm"
             style={{
-              width: `${Math.random() * 20 + 10}px`,
-              height: `${Math.random() * 30 + 15}px`,
+              width: `${Math.random() * 20 + 8}px`,
+              height: `${Math.random() * 30 + 12}px`,
               left: `${Math.random() * 100}%`,
-              top: `-${Math.random() * 20}px`,
-              animation: `confettiFall ${Math.random() * 8 + 12}s linear ${Math.random() * 2}s infinite`,
-              opacity: 0.7 + Math.random() * 0.3,
-              transform: `rotate(${Math.random() * 360}deg)`,
+              top: `-50px`,
+              animation: `confettiFall ${Math.random() * 10 + 25}s linear ${Math.random() * 3}s infinite`,
+              opacity: 0.6 + Math.random() * 0.2,
             }}
           />
         ))}
