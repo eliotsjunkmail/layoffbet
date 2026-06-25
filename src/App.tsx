@@ -363,7 +363,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         ))}
       </div>
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm pt-20">
         {/* Tagline */}
         <div className="flex justify-center mb-6">
           <div className="text-center">
@@ -553,6 +553,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+        html, body {
+          background-color: rgb(15, 23, 42);
         }
       `}</style>
     </div>
