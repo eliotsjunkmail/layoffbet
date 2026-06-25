@@ -6,7 +6,7 @@ import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
-import confetti from 'canvas-confetti'
+import { BetConfetti } from '../components/BetConfetti'
 import { api } from '../services/api'
 
 const barProps = (yesPool: number, noPool: number) => {
@@ -34,6 +34,7 @@ export const Bets = () => {
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const [tab, setTab] = useState<'active' | 'completed'>('active')
   const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
   const [toast, setToast] = useState('')
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -106,7 +107,7 @@ export const Bets = () => {
             showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
           }
         } else {
-          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+          setShowConfetti(true)
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
         }
       } else {
@@ -130,7 +131,7 @@ export const Bets = () => {
               showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
             }
           } else {
-            confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+            setShowConfetti(true)
             showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
           }
         } else {
@@ -211,6 +212,7 @@ export const Bets = () => {
 
   return (
     <Layout>
+      {showConfetti && <BetConfetti count={20} onComplete={() => setShowConfetti(false)} />}
       <div className="flex items-center gap-2 mb-4">
         <button onClick={() => navigate('/')} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
           <ChevronLeft className="w-6 h-6" />

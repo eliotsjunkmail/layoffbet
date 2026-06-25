@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight } from 'lucide-react'
-import confetti from 'canvas-confetti'
+import { BetConfetti } from '../components/BetConfetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -59,6 +59,7 @@ export const Home = () => {
   const searchRef = useRef<HTMLDivElement>(null)
 
   const [toast, setToast] = useState('')
+  const [showConfetti, setShowConfetti] = useState(false)
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [showComments, setShowComments] = useState(() => {
@@ -311,7 +312,7 @@ export const Home = () => {
     // Use placeBet for both logged-in and anonymous users
     if (placeBet(eventId, side, betAmount)) {
       setHasPlacedFirstBet(true)
-      confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+      setShowConfetti(true)
     } else {
       if (!currentUser) {
         // For anonymous users, show if not enough coins
@@ -375,6 +376,7 @@ export const Home = () => {
 
   return (
     <>
+      {showConfetti && <BetConfetti count={20} onComplete={() => setShowConfetti(false)} />}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
