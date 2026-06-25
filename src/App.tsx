@@ -375,11 +375,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
-        {/* Company selection grid */}
-        <div className="mb-6">
-          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
-        </div>
-
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
           <form onSubmit={submit} className="space-y-3">
