@@ -197,18 +197,19 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
   // Compute confetti pieces once so they don't reset on every re-render (countdown ticks every second)
+  // One slip per company, starting above the screen and slowly drifting down like a feather
   const confettiPieces = useMemo(
     () =>
-      Array.from({ length: 28 }).map(() => ({
-        ticker: CONFETTI_TICKERS[Math.floor(Math.random() * CONFETTI_TICKERS.length)],
+      CONFETTI_TICKERS.map((ticker) => ({
+        ticker,
         width: Math.random() * 16 + 42,
         height: Math.random() * 8 + 20,
         left: Math.random() * 90,
-        bottom: Math.random() * 56,
-        duration: Math.random() * 5 + 7,
-        delay: Math.random() * 16,
-        opacity: 0.55 + Math.random() * 0.3,
-        rotate: Math.random() * 20 - 10,
+        duration: Math.random() * 10 + 18,
+        delay: Math.random() * 12,
+        opacity: 0.5 + Math.random() * 0.3,
+        sway: Math.random() * 28 + 22,
+        rot: Math.random() * 10 + 10,
       })),
     []
   )
@@ -340,7 +341,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Pink slip confetti falling and collecting at the bottom */}
+      {/* Pink slip confetti drifting down from the top like feathers */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {confettiPieces.map((p, i) => (
           <div
@@ -350,10 +351,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               width: `${p.width}px`,
               height: `${p.height}px`,
               left: `${p.left}%`,
-              bottom: `${p.bottom}px`,
+              top: '0',
               opacity: p.opacity,
-              ['--r' as string]: `${p.rotate}deg`,
-              animation: `confettiFall ${p.duration}s ease-in ${p.delay}s forwards`,
+              ['--sway' as string]: `${p.sway}px`,
+              ['--rot' as string]: `${p.rot}deg`,
+              animation: `confettiFall ${p.duration}s ease-in-out ${p.delay}s infinite`,
             }}
           >
             <span className="text-[8px] font-bold tracking-wider text-pink-950/80">{p.ticker}</span>
@@ -543,10 +545,19 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         }
         @keyframes confettiFall {
           0% {
-            transform: translateY(calc(-100vh - 80px)) rotate(var(--r, 0deg));
+            transform: translateY(-12vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
+          }
+          25% {
+            transform: translateY(19vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
+          }
+          50% {
+            transform: translateY(50vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
+          }
+          75% {
+            transform: translateY(81vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
           }
           100% {
-            transform: translateY(0) rotate(var(--r, 0deg));
+            transform: translateY(112vh) translateX(calc(var(--sway, 24px) * -1)) rotate(calc(var(--rot, 12deg) * -1));
           }
         }
         .scrollbar-hide {
