@@ -207,7 +207,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         height: Math.random() * 8 + 20,
         left: Math.random() * 90,
         duration: Math.random() * 15 + 40,
-        delay: Math.random() * 40,
+        delay: -(Math.random() * 40),
         opacity: 0.5 + Math.random() * 0.3,
         sway: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 30 + 20),
         rot: Math.random() * 15 + 8,
@@ -374,6 +374,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
           </div>
         </div>
+        <div className="mb-4" />
 
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
@@ -407,7 +408,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         </div>
 
-        <div className="text-center mt-6 space-y-3">
+        <div className="text-center mt-10 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
           <p className="text-xs text-slate-600">{APP_VERSION}</p>
           <div className="flex items-center justify-center gap-2 text-xs">
