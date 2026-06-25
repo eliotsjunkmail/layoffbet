@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
@@ -194,6 +194,20 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
+  // Compute confetti pieces once so they don't reset on every re-render (countdown ticks every second)
+  const confettiPieces = useMemo(
+    () =>
+      Array.from({ length: 12 }).map(() => ({
+        width: Math.random() * 16 + 10,
+        height: Math.random() * 24 + 16,
+        left: Math.random() * 100,
+        duration: Math.random() * 12 + 18,
+        delay: Math.random() * 14,
+        opacity: 0.4 + Math.random() * 0.3,
+      })),
+    []
+  )
+
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   // Fetch next anonymous username on mount
@@ -323,17 +337,17 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Pink slip confetti falling */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {Array.from({ length: 50 }).map((_, i) => (
+        {confettiPieces.map((p, i) => (
           <div
             key={i}
             className="absolute bg-pink-400/50 rounded-sm"
             style={{
-              width: `${Math.random() * 20 + 8}px`,
-              height: `${Math.random() * 30 + 12}px`,
-              left: `${Math.random() * 100}%`,
-              top: '0',
-              animation: `confettiFall ${40 + Math.random() * 20}s linear ${Math.random() * 5}s forwards`,
-              opacity: 0.5 + Math.random() * 0.3,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              left: `${p.left}%`,
+              top: '-50px',
+              opacity: p.opacity,
+              animation: `confettiFall ${p.duration}s linear ${p.delay}s infinite`,
             }}
           />
         ))}
@@ -522,11 +536,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         @keyframes confettiFall {
           0% {
             transform: translateY(0);
-            opacity: 0.5;
           }
           100% {
-            transform: translateY(100vh);
-            opacity: 0;
+            transform: translateY(calc(100vh + 60px));
           }
         }
         .scrollbar-hide {
