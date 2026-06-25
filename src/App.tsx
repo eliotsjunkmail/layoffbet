@@ -408,7 +408,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         </div>
 
-        <div className="text-center mt-10 space-y-3">
+        <div className="text-center mt-20 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
           <p className="text-xs text-slate-600">{APP_VERSION}</p>
           <div className="flex items-center justify-center gap-2 text-xs">
@@ -555,7 +555,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           display: none;
         }
         html, body {
-          background-color: rgb(15, 23, 42);
+          background-color: rgb(2, 8, 23);
         }
       `}</style>
     </div>
