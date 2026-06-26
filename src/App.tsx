@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
@@ -15,8 +15,6 @@ const GATE_ADMIN_USER = 'admin'
 const GATE_ADMIN_PASS = 'admin'
 const ANON_FAVORITE_COMPANY_KEY = 'lb-anon-favorite-company'
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
-
-const CONFETTI_TICKERS = ['META', 'SNAP', 'JPM', 'GOOG', 'AMZN', 'TSLA', 'NFLX', 'UBER', 'INTC', 'AMD', 'MSFT', 'IBM', 'ORCL', 'CRM', 'PYPL', 'COIN', 'ABNB', 'LYFT', 'DIS', 'GS', 'SPOT', 'RBLX', 'SHOP', 'ZM']
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -196,25 +194,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
-  // Compute confetti pieces once so they don't reset on every re-render (countdown ticks every second)
-  // One slip per company. Each cycle is mostly an off-screen "hold" with a short fall,
-  // so only a few are on screen at any time. Staggered delays spread them out.
-  const confettiPieces = useMemo(
-    () =>
-      CONFETTI_TICKERS.map((ticker) => ({
-        ticker,
-        width: Math.random() * 16 + 42,
-        height: Math.random() * 8 + 20,
-        left: Math.random() * 90,
-        duration: Math.random() * 15 + 40,
-        delay: -(Math.random() * 40),
-        opacity: 0.5 + Math.random() * 0.3,
-        sway: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 30 + 20),
-        rot: Math.random() * 15 + 8,
-      })),
-    []
-  )
-
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   // Fetch next anonymous username on mount
@@ -341,29 +320,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Pink slip confetti drifting down from the top like feathers */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {confettiPieces.map((p, i) => (
-          <div
-            key={i}
-            className="absolute bg-pink-400/60 rounded-sm flex items-center justify-center"
-            style={{
-              width: `${p.width}px`,
-              height: `${p.height}px`,
-              left: `${p.left}%`,
-              top: '0',
-              opacity: p.opacity,
-              ['--sway' as string]: `${p.sway}px`,
-              ['--rot' as string]: `${p.rot}deg`,
-              animation: `confettiFall ${p.duration}s linear ${p.delay}s infinite both`,
-            }}
-          >
-            <span className="text-[8px] font-bold tracking-wider text-pink-950/80">{p.ticker}</span>
-          </div>
-        ))}
-      </div>
-      <div className="w-full max-w-sm pt-20">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+      <div className="w-full max-w-sm">
         {/* Tagline */}
         <div className="flex justify-center mb-6">
           <div className="text-center">
@@ -374,7 +332,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
           </div>
         </div>
-        <div className="mb-4" />
+
+        {/* Company selection grid */}
+        <div className="mb-6">
+          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+        </div>
 
         {/* Challenge card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
@@ -408,7 +370,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         </div>
 
-        <div className="text-center mt-20 space-y-3">
+        <div className="text-center mt-6 space-y-3">
           <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
           <p className="text-xs text-slate-600">{APP_VERSION}</p>
           <div className="flex items-center justify-center gap-2 text-xs">
@@ -539,23 +501,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           60% { transform: translateX(-4px); }
           80% { transform: translateX(4px); }
         }
-        @keyframes confettiFall {
-          0% {
-            transform: translateY(-8vh) translateX(0px) rotate(calc(var(--rot, 12deg) * -1));
-          }
-          60%, 100% {
-            transform: translateY(112vh) translateX(var(--sway, 24px)) rotate(var(--rot, 12deg));
-          }
-        }
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
-        }
-        html, body {
-          background-color: rgb(2, 8, 23);
         }
       `}</style>
     </div>
