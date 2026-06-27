@@ -159,10 +159,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       const now = new Date()
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      const localId = `system-${Date.now()}`
       const systemMessage: ChatMessage = {
-        id: `system-${Date.now()}`,
+        id: localId,
         companyId,
-        userId: 'system',
+        userId: currentUser?.id || myUserIdRef.current,
         username: 'System',
         text: `New Topic: "${editNameValue.trim()}" (${durationHours}h)\n${timeStr} • ${dateStr}`,
         createdAt: new Date(),
@@ -170,13 +171,14 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       }
       setMessages(prev => [...prev, systemMessage])
 
-      // Save system message to server
+      // Save system message to server and replace local id with server id
       try {
-        await api.addChatMessage(companyId, {
+        const saved = await api.addChatMessage(companyId, {
           text: systemMessage.text,
           username: 'System',
-          userId: 'system',
+          userId: currentUser?.id || myUserIdRef.current,
         })
+        setMessages(prev => prev.map(m => m.id === localId ? { ...m, id: saved.id } : m))
       } catch (error) {
         console.error('Failed to save system message:', error)
       }
@@ -247,7 +249,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       setMessages(prevMessages => {
         try {
           // Keep local system messages that might not be on the server yet
-          const localSystemMessages = prevMessages.filter(m => m.userId === 'system')
+          const localSystemMessages = prevMessages.filter(m => m.username === 'System')
 
           const mergedMessages = messagesWithDates.map((loaded: ChatMessage) => {
             const existing = prevMessages.find(p => p.id === loaded.id)
@@ -274,11 +276,13 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             return { ...loaded, reactions: mergedReactions }
           })
 
-          // Add back system messages that are from this session but not on server yet
+          // Add back system messages not yet on server, inserted at chronological position
           const systemMessagesOnServer = new Set(messagesWithDates.map(m => m.id))
           localSystemMessages.forEach(sysMsg => {
             if (!systemMessagesOnServer.has(sysMsg.id)) {
-              mergedMessages.push(sysMsg)
+              const insertIdx = mergedMessages.findIndex(m => m.createdAt > sysMsg.createdAt)
+              if (insertIdx === -1) mergedMessages.push(sysMsg)
+              else mergedMessages.splice(insertIdx, 0, sysMsg)
             }
           })
 
@@ -420,10 +424,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     const now = new Date()
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    const endLocalId = `system-${Date.now()}`
     const systemMessage: ChatMessage = {
-      id: `system-${Date.now()}`,
+      id: endLocalId,
       companyId,
-      userId: 'system',
+      userId: currentUser?.id || myUserIdRef.current,
       username: 'System',
       text: `Topic "${topicName}" ended\n${timeStr} • ${dateStr}`,
       createdAt: new Date(),
@@ -431,13 +436,13 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
     setMessages(prev => [...prev, systemMessage])
 
-    // Save system message to server
     try {
-      await api.addChatMessage(companyId, {
+      const saved = await api.addChatMessage(companyId, {
         text: systemMessage.text,
         username: 'System',
-        userId: 'system',
+        userId: currentUser?.id || myUserIdRef.current,
       })
+      setMessages(prev => prev.map(m => m.id === endLocalId ? { ...m, id: saved.id } : m))
     } catch (error) {
       console.error('Failed to save topic ended message:', error)
     }
@@ -585,7 +590,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
         ) : (
           messages.map(msg => {
             const isOwnMessage = msg.userId === myUserIdRef.current
-            const isSystemMessage = msg.userId === 'system'
+            const isSystemMessage = msg.username === 'System'
 
             if (isSystemMessage) {
               const [topicLine, timestampLine] = msg.text.split('\n')
