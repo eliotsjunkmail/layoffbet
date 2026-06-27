@@ -276,6 +276,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
+  // Prevent code input from being auto-focused on mount
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+    })
+  }, [])
+
   // Fetch next anonymous username on mount
   useEffect(() => {
     const fetchAnonId = async () => {
@@ -360,10 +367,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         console.log('[Gate] Storing user in localStorage...')
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
 
-        if (selectedCompanyId) {
-          localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
-        }
-
         // Don't lock the gate permanently - allow others to enter
         // localStorage.setItem(GATE_KEY, '1')
 
@@ -372,8 +375,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         // Now set currentUser and navigate to home
         useStore.setState({ currentUser: user })
+        if (selectedCompanyId) {
+          localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
+          useStore.getState().toggleFavoriteCompany(selectedCompanyId)
+        } else {
+          setShowPickCompany(true)
+        }
         setUnlocked(true)
-        if (!selectedCompanyId) setShowPickCompany(true)
         window.scrollTo(0, 0)
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
