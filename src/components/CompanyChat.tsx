@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Trash, Edit2 } from 'lucide-react'
+import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -39,7 +39,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState('')
-  const [topicCommentInputs, setTopicCommentInputs] = useState<Record<string, string>>({})
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
@@ -534,10 +533,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             {currentUser?.isAdmin && (
               <button
                 onClick={() => setShowClearDialog(true)}
-                className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
-                title="Clear all chat history"
+                className="px-2 py-1 text-xs font-medium border border-white/30 hover:bg-white/20 rounded transition-colors"
               >
-                <Trash className="w-5 h-5" />
+                Clear
               </button>
             )}
             <div className="flex items-center gap-3">
@@ -591,46 +589,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
             if (isSystemMessage) {
               const [topicLine, timestampLine] = msg.text.split('\n')
-              const topicInput = topicCommentInputs[msg.id] || ''
-              const handleTopicComment = async () => {
-                if (!topicInput.trim()) return
-                const userId = myUserIdRef.current
-                try {
-                  const chatName = await api.getOrAssignChatName(companyId, userId)
-                  await api.addChatMessage(companyId, {
-                    userId,
-                    username: chatName.chatName,
-                    text: topicInput.trim(),
-                    reactions: [],
-                  })
-                  setTopicCommentInputs(prev => ({ ...prev, [msg.id]: '' }))
-                  await loadMessages()
-                } catch (error) {
-                  console.error('Failed to add comment:', error)
-                }
-              }
               return (
-                <div key={msg.id} className="flex flex-col items-center gap-2 mb-3 mt-6">
+                <div key={msg.id} className="flex justify-center my-4">
                   <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-lg px-3 py-2 max-w-xs">
                     <div className="text-sm font-semibold">{topicLine}</div>
                     {timestampLine && <div className="text-xs text-gray-400 dark:text-slate-600 mt-1">{timestampLine}</div>}
-                  </div>
-                  <div className="flex gap-2 w-full max-w-sm px-3">
-                    <input
-                      type="text"
-                      value={topicInput}
-                      onChange={(e) => setTopicCommentInputs(prev => ({ ...prev, [msg.id]: e.target.value }))}
-                      placeholder="Add a comment..."
-                      onKeyPress={(e) => e.key === 'Enter' && handleTopicComment()}
-                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
-                    />
-                    <button
-                      onClick={handleTopicComment}
-                      disabled={!topicInput.trim()}
-                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded-lg text-white text-sm font-medium transition-colors"
-                    >
-                      Comment
-                    </button>
                   </div>
                 </div>
               )
