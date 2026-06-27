@@ -168,7 +168,7 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
   )
 }
 
-const PickCompanyModal = ({ onSelect, onSkip }: { onSelect: (id: string) => void; onSkip: () => void }) => {
+const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
@@ -190,7 +190,7 @@ const PickCompanyModal = ({ onSelect, onSkip }: { onSelect: (id: string) => void
     : []
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center p-4 pt-6">
       <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Follow a company</h2>
         <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Pick one to see its predictions on your home feed.</p>
@@ -238,9 +238,10 @@ const PickCompanyModal = ({ onSelect, onSkip }: { onSelect: (id: string) => void
             ))}
           </div>
         )}
-        <button onClick={onSkip} className="mt-5 w-full text-sm text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors py-1">
-          Skip for now
-        </button>
+        <p className="mt-5 text-center text-xs text-gray-400 dark:text-slate-500">
+          Have an account?{' '}
+          <a href="/login?gate=1" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</a>
+        </p>
       </div>
     </div>
   )
@@ -320,7 +321,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             useStore.getState().toggleFavoriteCompany(companyId)
             setShowPickCompany(false)
           }}
-          onSkip={() => setShowPickCompany(false)}
         />
       )}
     </>
