@@ -5,7 +5,6 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Space Grotesk', '-apple-system', 'sans-serif'],
         mono: ['DM Mono', 'monospace'],
       },
       colors: {
