@@ -220,6 +220,15 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     }
   }, [unlocked])
 
+  // Force dark mode while gate is showing; lift it when user enters the app
+  useEffect(() => {
+    if (!unlocked) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [unlocked])
+
   // If user logs in, bypass the gate. Reset gate when user logs out.
   useEffect(() => {
     if (currentUser) {
@@ -541,9 +550,10 @@ const AdminOnly = ({ children }: { children: ReactNode }) => {
 }
 
 const ThemeEffect = () => {
+  const theme = useStore(s => s.theme)
   useEffect(() => {
-    document.documentElement.classList.add('dark')
-  }, [])
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
   return null
 }
 
