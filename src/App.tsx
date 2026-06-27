@@ -378,9 +378,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         if (selectedCompanyId) {
           localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, selectedCompanyId)
           useStore.getState().toggleFavoriteCompany(selectedCompanyId)
-        } else {
-          setShowPickCompany(true)
         }
+        // Always reset — SiteGate persists across sessions so stale true must be cleared
+        setShowPickCompany(!selectedCompanyId)
         setUnlocked(true)
         window.scrollTo(0, 0)
       } catch (err) {
