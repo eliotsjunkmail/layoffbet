@@ -60,26 +60,26 @@ export const Settings = () => {
 
   return (
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-5 text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors mb-5 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>
 
-      <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
+      <h1 className="text-xl font-bold text-slate-100 mb-6">Settings</h1>
 
       {/* Appearance */}
       <section className="mb-6">
-        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">Appearance</h2>
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Appearance</h2>
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4">
             <div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">Theme</div>
-              <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+              <div className="text-sm font-medium text-slate-100">Theme</div>
+              <div className="text-xs text-slate-400 mt-0.5">
                 {theme === 'light' ? 'Light mode' : 'Dark mode'} — tap to switch
               </div>
             </div>
             <button
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-              className={`relative w-14 h-7 rounded-full transition-colors ${theme === 'dark' ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-600'}`}
+              className={`relative w-14 h-7 rounded-full transition-colors ${theme === 'dark' ? 'bg-blue-600' : 'bg-slate-600'}`}
             >
               <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center ${theme === 'dark' ? 'translate-x-8' : 'translate-x-1'}`}>
                 {theme === 'dark'
@@ -93,13 +93,13 @@ export const Settings = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setTheme('light')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${theme === 'light' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${theme === 'light' ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500'}`}
               >
                 <Sun className="w-4 h-4" /> Light
               </button>
               <button
                 onClick={() => setTheme('dark')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${theme === 'dark' ? 'bg-blue-900/30 border-blue-600 text-blue-300' : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${theme === 'dark' ? 'bg-blue-900/30 border-blue-600 text-blue-300' : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-500'}`}
               >
                 <Moon className="w-4 h-4" /> Dark
               </button>
@@ -110,21 +110,21 @@ export const Settings = () => {
 
       {/* Preferences */}
       <section className="mb-6">
-        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">Preferences</h2>
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Preferences</h2>
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
-              <MessageSquare className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+              <MessageSquare className="w-5 h-5 text-slate-500 flex-shrink-0" />
               <div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">Show Comments</div>
-                <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Display comments on predictions</div>
+                <div className="text-sm font-medium text-slate-100">Show Comments</div>
+                <div className="text-xs text-slate-400 mt-0.5">Display comments on predictions</div>
               </div>
             </div>
             <button
               onClick={() => setShowComments(!showComments)}
-              className={`relative w-14 h-7 rounded-full transition-colors ${showComments ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-600'}`}
+              className={`relative w-14 h-7 rounded-full transition-colors ${showComments ? 'bg-blue-600' : 'bg-slate-600'}`}
             >
-              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center text-xs font-bold ${showComments ? 'translate-x-8 text-blue-600' : 'translate-x-1 text-gray-400'}`}>
+              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform flex items-center justify-center text-xs font-bold ${showComments ? 'translate-x-8 text-blue-600' : 'translate-x-1 text-slate-400'}`}>
                 {showComments ? '✓' : '✕'}
               </span>
             </button>
@@ -135,15 +135,15 @@ export const Settings = () => {
       {/* Account */}
       {currentUser && (
         <section className="mb-6">
-          <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">Account</h2>
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl divide-y divide-gray-100 dark:divide-slate-700">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Account</h2>
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl divide-y divide-slate-700">
             <div className="flex items-center justify-between px-5 py-4">
-              <div className="text-sm text-gray-500 dark:text-slate-400">Username</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">{currentUser.username}</div>
+              <div className="text-sm text-slate-400">Username</div>
+              <div className="text-sm font-medium text-slate-100">{currentUser.username}</div>
             </div>
             <div className="px-5 py-4">
               <div className="mb-2">
-                <label className="text-sm text-gray-500 dark:text-slate-400 block mb-2">Display Name</label>
+                <label className="text-sm text-slate-400 block mb-2">Display Name</label>
                 {isEditingDisplayName ? (
                   <div className="space-y-2">
                     <input
@@ -151,10 +151,10 @@ export const Settings = () => {
                       value={displayNameInput}
                       onChange={e => setDisplayNameInput(e.target.value)}
                       placeholder="Enter your display name"
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {displayNameError && (
-                      <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                      <div className="flex items-center gap-2 text-xs text-red-400">
                         <AlertCircle className="w-3 h-3" />
                         {displayNameError}
                       </div>
@@ -174,7 +174,7 @@ export const Settings = () => {
                           setDisplayNameInput(currentUser.displayName || '')
                           setDisplayNameError('')
                         }}
-                        className="flex-1 px-3 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
+                        className="flex-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 text-sm font-medium rounded-lg transition-colors"
                       >
                         Cancel
                       </button>
@@ -182,19 +182,19 @@ export const Settings = () => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    <div className="text-sm font-medium text-slate-100">
                       {currentUser.displayName || currentUser.username}
                     </div>
                     <button
                       onClick={() => setIsEditingDisplayName(true)}
-                      className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                      className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
                     >
                       Edit
                     </button>
                   </div>
                 )}
                 {displayNameSuccess && (
-                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 mt-2">
+                  <div className="flex items-center gap-2 text-xs text-green-400 mt-2">
                     <Check className="w-3 h-3" />
                     Display name updated
                   </div>
@@ -202,22 +202,22 @@ export const Settings = () => {
               </div>
             </div>
             <div className="flex items-center justify-between px-5 py-4">
-              <div className="text-sm text-gray-500 dark:text-slate-400">Daily Coins</div>
-              <div className="flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+              <div className="text-sm text-slate-400">Daily Coins</div>
+              <div className="flex items-center gap-1 text-sm font-medium text-blue-400">
                 <Coins className="w-4 h-4" /> 100 / day
               </div>
             </div>
             <div className="flex items-center justify-between px-5 py-4">
-              <div className="text-sm text-gray-500 dark:text-slate-400">Current Balance</div>
-              <div className="flex items-center gap-1 text-sm font-semibold text-gray-900 dark:text-white">
-                <Coins className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="text-sm text-slate-400">Current Balance</div>
+              <div className="flex items-center gap-1 text-sm font-semibold text-slate-100">
+                <Coins className="w-4 h-4 text-blue-400" />
                 {currentUser.coins.toLocaleString()}
               </div>
             </div>
             {currentUser.isAdmin && (
               <div className="flex items-center justify-between px-5 py-4">
-                <div className="text-sm text-gray-500 dark:text-slate-400">Role</div>
-                <div className="flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400">
+                <div className="text-sm text-slate-400">Role</div>
+                <div className="flex items-center gap-1.5 text-sm font-medium text-blue-400">
                   <Shield className="w-4 h-4" /> Administrator
                 </div>
               </div>
@@ -228,15 +228,15 @@ export const Settings = () => {
 
       {/* About */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">About</h2>
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl divide-y divide-gray-100 dark:divide-slate-700">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">About</h2>
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl divide-y divide-slate-700">
           <div className="flex items-center justify-between px-5 py-4">
-            <div className="text-sm text-gray-500 dark:text-slate-400">Version</div>
-            <div className="text-sm text-gray-900 dark:text-white">0.201</div>
+            <div className="text-sm text-slate-400">Version</div>
+            <div className="text-sm text-slate-100">0.201</div>
           </div>
           <div className="flex items-center justify-between px-5 py-4">
-            <div className="text-sm text-gray-500 dark:text-slate-400">Data stored</div>
-            <div className="text-sm text-gray-900 dark:text-white">Locally in browser</div>
+            <div className="text-sm text-slate-400">Data stored</div>
+            <div className="text-sm text-slate-100">Locally in browser</div>
           </div>
         </div>
       </section>

@@ -38,7 +38,10 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState('')
+  const [topicCommentInputs, setTopicCommentInputs] = useState<Record<string, string>>({})
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
   const pendingReactionsRef = useRef<Set<string>>(new Set())
 
@@ -66,6 +69,50 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
     return () => stopPolling()
   }, [isOpen, companyId])
+
+  useEffect(() => {
+    if (!expiresAt) {
+      setTimeRemaining('')
+      if (timeRemainingIntervalRef.current) {
+        clearInterval(timeRemainingIntervalRef.current)
+        timeRemainingIntervalRef.current = null
+      }
+      return
+    }
+
+    const checkExpiry = () => {
+      const now = new Date().getTime()
+      const expires = new Date(expiresAt).getTime()
+      const diff = expires - now
+
+      if (diff <= 0 && isLocked && chatDisplayName !== companyName + ' Chat') {
+        handleTopicExpired(chatDisplayName)
+        return
+      }
+
+      if (diff <= 0) {
+        setTimeRemaining('')
+        return
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m`)
+      } else {
+        setTimeRemaining(`${minutes}m`)
+      }
+    }
+
+    checkExpiry()
+    timeRemainingIntervalRef.current = setInterval(checkExpiry, 60000)
+
+    return () => {
+      if (timeRemainingIntervalRef.current) {
+        clearInterval(timeRemainingIntervalRef.current)
+        timeRemainingIntervalRef.current = null
+      }
+    }
+  }, [expiresAt, isLocked, chatDisplayName, companyName])
 
   const loadChatSettings = async () => {
     try {
@@ -129,6 +176,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
         await api.addChatMessage(companyId, {
           text: systemMessage.text,
           username: 'System',
+          userId: 'system',
         })
       } catch (error) {
         console.error('Failed to save system message:', error)
@@ -362,6 +410,38 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     return `${minutes}m`
   }
 
+  const handleTopicExpired = async (topicName: string) => {
+    setChatDisplayName(companyName + ' Chat')
+    setEditNameValue(companyName + ' Chat')
+    setIsLocked(false)
+    setExpiresAt(null)
+
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    const systemMessage: ChatMessage = {
+      id: `system-${Date.now()}`,
+      companyId,
+      userId: 'system',
+      username: 'System',
+      text: `Topic "${topicName}" ended\n${timeStr} • ${dateStr}`,
+      createdAt: new Date(),
+      reactions: []
+    }
+    setMessages(prev => [...prev, systemMessage])
+
+    try {
+      await api.addChatMessage(companyId, {
+        text: systemMessage.text,
+        username: 'System',
+        userId: 'system',
+      })
+    } catch (error) {
+      console.error('Failed to save topic ended message:', error)
+    }
+  }
+
+
   const getReactionEmoji = (type: ReactionType) => {
     const emojis: Record<ReactionType, string> = {
       thumbsup: '👍',
@@ -405,15 +485,25 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               className="flex-1 px-2 py-1 rounded text-gray-900 text-sm font-semibold"
             />
           ) : (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+            <>
+              <div className="flex items-center gap-2 flex-1">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+                  {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
+                </div>
                 <button
-                  onClick={() => isLocked ? setShowLockedMessage(true) : setEditingName(true)}
-                  className="p-1 hover:bg-blue-500 rounded transition-colors"
-                  title="Start a new topic"
+                  onClick={() => {
+                    if (isLocked) {
+                      setShowLockedMessage(true)
+                    } else {
+                      setEditNameValue('')
+                      setShowDurationPicker(true)
+                    }
+                  }}
+                  className="px-2 py-1 border border-white hover:bg-white/20 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
+                  title={isLocked ? 'Topic is locked' : 'Start a new topic'}
                 >
-                  <Edit2 className="w-4 h-4" />
+                  + Topic
                 </button>
                 {currentUser?.isAdmin && isLocked && (
                   <button
@@ -425,8 +515,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                   </button>
                 )}
               </div>
-              {expiresAt && <span className="text-xs text-blue-200">{getTimeRemaining()} left</span>}
-            </div>
+            </>
           )}
           <button
             onClick={onClose}
@@ -437,9 +526,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           </button>
         </div>
 
-        {/* Second row: Subtext on left, status and user count on right */}
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-blue-100">Live blog meetings</p>
+        {/* Second row: Status and user count */}
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             {currentUser?.isAdmin && (
               <button
@@ -501,11 +589,46 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
             if (isSystemMessage) {
               const [topicLine, timestampLine] = msg.text.split('\n')
+              const topicInput = topicCommentInputs[msg.id] || ''
+              const handleTopicComment = async () => {
+                if (!topicInput.trim()) return
+                const userId = myUserIdRef.current
+                try {
+                  const chatName = await api.getOrAssignChatName(companyId, userId)
+                  await api.addChatMessage(companyId, {
+                    userId,
+                    username: chatName.chatName,
+                    text: topicInput.trim(),
+                    reactions: [],
+                  })
+                  setTopicCommentInputs(prev => ({ ...prev, [msg.id]: '' }))
+                  await loadMessages()
+                } catch (error) {
+                  console.error('Failed to add comment:', error)
+                }
+              }
               return (
-                <div key={msg.id} className="flex justify-center mb-3 mt-6">
+                <div key={msg.id} className="flex flex-col items-center gap-2 mb-3 mt-6">
                   <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-lg px-3 py-2 max-w-xs">
                     <div className="text-sm font-semibold">{topicLine}</div>
                     {timestampLine && <div className="text-xs text-gray-400 dark:text-slate-600 mt-1">{timestampLine}</div>}
+                  </div>
+                  <div className="flex gap-2 w-full max-w-sm px-3">
+                    <input
+                      type="text"
+                      value={topicInput}
+                      onChange={(e) => setTopicCommentInputs(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                      placeholder="Add a comment..."
+                      onKeyPress={(e) => e.key === 'Enter' && handleTopicComment()}
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                    />
+                    <button
+                      onClick={handleTopicComment}
+                      disabled={!topicInput.trim()}
+                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded-lg text-white text-sm font-medium transition-colors"
+                    >
+                      Comment
+                    </button>
                   </div>
                 </div>
               )
@@ -597,7 +720,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             onKeyPress={e => {
               if (e.key === 'Enter') handleSend()
             }}
-            placeholder="Share your thoughts..."
+            placeholder="Share your thoughts anonymously"
             className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
@@ -640,9 +763,16 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       {showDurationPicker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">New Topic</h3>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">"{editNameValue.trim()}"</p>
-            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">How long should this topic stay active?</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">New Topic</h3>
+            <input
+              type="text"
+              value={editNameValue}
+              onChange={(e) => setEditNameValue(e.target.value)}
+              placeholder="e.g. Layoff today, Tom's FYI, Tech reorg"
+              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white mb-4 text-sm"
+              autoFocus
+            />
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">Duration</p>
             <div className="grid grid-cols-3 gap-2 mb-6">
               {[2, 4, 6, 12, 24].map(hours => (
                 <button

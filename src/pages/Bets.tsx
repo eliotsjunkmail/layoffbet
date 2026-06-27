@@ -407,7 +407,7 @@ export const Bets = () => {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-slate-100 px-5 py-2.5 rounded-md text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
         </div>
       )}

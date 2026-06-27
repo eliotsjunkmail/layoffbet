@@ -115,9 +115,9 @@ const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, on
           key={c.id}
           data-company-pill
           onClick={() => handlePillClick(c.id)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+          className={`flex-shrink-0 px-3 py-1.5 rounded-md text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none font-mono ${
             selectedCompanyId === c.id
-              ? 'bg-blue-600 border-blue-500 text-white'
+              ? 'bg-blue-600 border-blue-500 text-slate-950'
               : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
           }`}
         >
@@ -152,7 +152,7 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
               <button
                 key={c.id}
                 onClick={() => onSelectCompany?.(c.id)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none ${
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none ${
                   selectedCompanyId === c.id
                     ? 'bg-blue-600 border-blue-500 text-white'
                     : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
@@ -326,10 +326,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         <div className="flex justify-center mb-6">
           <div className="text-center">
             <div className="flex items-baseline justify-center gap-1 mb-2">
-              <span className="text-2xl font-semibold text-gray-600 dark:text-slate-300 tracking-tight">Layoff</span>
-              <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">Live</span>
+              <span className="text-2xl font-semibold text-slate-200 tracking-tight">Layoff</span>
+              <span className="text-2xl font-black text-blue-500 tracking-tight">Live</span>
             </div>
-            <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
+            <div className="text-sm text-slate-500 tracking-wide uppercase font-mono">See it coming</div>
           </div>
         </div>
 
@@ -339,7 +339,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* Challenge card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+        <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-2xl">
           <form onSubmit={submit} className="space-y-3">
             {codeRequired && (
               <>
@@ -350,32 +350,32 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     onChange={e => { setInput(e.target.value); setError(false) }}
                     placeholder="Enter invite code"
                     autoComplete="off"
-                    className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
+                    className={`w-full bg-slate-800 border ${error ? 'border-red-600' : 'border-slate-700 focus:border-blue-500'} rounded-md px-4 py-3 text-slate-100 placeholder-slate-600 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
                   />
                 </div>
                 {error && (
-                  <p className="text-xs text-rose-400 flex items-center gap-1.5">
-                    <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
+                  <p className="text-xs text-red-400 font-mono flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 bg-red-500 rounded-full" />
                     That's not right — try again
                   </p>
                 )}
               </>
             )}
-            <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-700 text-slate-950 font-semibold py-3 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
               {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
             </button>
             <p className="text-center mt-3">
-              <a href="/login?gate=1" className="text-xs text-slate-500 hover:text-slate-400 transition-colors">Have an account? Sign in</a>
+              <a href="/login?gate=1" className="text-xs text-slate-500 hover:text-slate-400 font-mono transition-colors">Have an account? Sign in</a>
             </p>
           </form>
         </div>
 
-        <div className="text-center mt-6 space-y-3">
-          <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
-          <p className="text-xs text-slate-600">{APP_VERSION}</p>
-          <div className="flex items-center justify-center gap-2 text-xs">
+        <div className="text-center mt-8 space-y-3">
+          <p className="text-xs text-slate-600 font-mono">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
+          <p className="text-xs text-slate-700 font-mono">{APP_VERSION}</p>
+          <div className="flex items-center justify-center gap-2 text-xs font-mono">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
-            <span className="text-slate-600">·</span>
+            <span className="text-slate-700">·</span>
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('privacy') }} className="text-slate-600 hover:text-slate-500 transition-colors">Privacy Policy</button>
           </div>
         </div>
@@ -384,24 +384,24 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
       {/* Admin modal */}
       {adminOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-6 z-50" onClick={() => setAdminOpen(false)}>
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-xs shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-xs shadow-2xl" onClick={e => e.stopPropagation()}>
             {adminStep === 'login' ? (
               <>
-                <p className="text-sm font-semibold text-white mb-4">Admin access</p>
+                <p className="text-sm font-semibold text-slate-100 mb-4">Admin access</p>
                 <form onSubmit={adminLogin} className="space-y-3">
-                  <input value={adminUser} onChange={e => { setAdminUser(e.target.value); setAdminErr(false) }} placeholder="Username" autoFocus className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors" />
-                  <input type="password" value={adminPass} onChange={e => { setAdminPass(e.target.value); setAdminErr(false) }} placeholder="Password" className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors" />
-                  {adminErr && <p className="text-xs text-rose-400">Incorrect credentials</p>}
-                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">Sign in</button>
+                  <input value={adminUser} onChange={e => { setAdminUser(e.target.value); setAdminErr(false) }} placeholder="Username" autoFocus className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 font-mono focus:outline-none focus:border-blue-500 transition-colors" />
+                  <input type="password" value={adminPass} onChange={e => { setAdminPass(e.target.value); setAdminErr(false) }} placeholder="Password" className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 font-mono focus:outline-none focus:border-blue-500 transition-colors" />
+                  {adminErr && <p className="text-xs text-red-400 font-mono">Incorrect credentials</p>}
+                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-slate-950 text-sm font-semibold py-2.5 rounded-md transition-colors">Sign in</button>
                 </form>
               </>
             ) : (
               <>
-                <p className="text-sm font-semibold text-white mb-1">Launch date</p>
-                <p className="text-xs text-slate-500 mb-4">Set the public launch date shown on the gate</p>
+                <p className="text-sm font-semibold text-slate-100 mb-1">Launch date</p>
+                <p className="text-xs text-slate-500 font-mono mb-4">Set the public launch date shown on the gate</p>
                 <form onSubmit={saveDate} className="space-y-3">
-                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" />
-                  <button type="submit" className={`w-full text-sm font-semibold py-2.5 rounded-xl transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}>
+                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-blue-500 transition-colors" />
+                  <button type="submit" className={`w-full text-sm font-semibold py-2.5 rounded-md transition-colors ${saved ? 'bg-blue-700 text-slate-950' : 'bg-blue-600 hover:bg-blue-700 text-slate-950'}`}>
                     {saved ? '✓ Saved' : 'Save date'}
                   </button>
                 </form>
@@ -414,30 +414,30 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
       {/* Policies Bottom Sheet with Tabs */}
       {showPolicies && (
         <>
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setShowPolicies(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-slate-800 max-h-[80vh] overflow-y-auto flex flex-col">
-            <div className="sticky top-0 bg-white dark:bg-slate-900 flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setShowPolicies(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 rounded-t-xl shadow-2xl border-t border-slate-700 max-h-[80vh] overflow-y-auto flex flex-col">
+            <div className="sticky top-0 bg-slate-900 flex items-center justify-between p-4 border-b border-slate-700">
               <div className="flex gap-4">
-                <button onClick={() => setPoliciesTab('guidelines')} className={`font-medium transition-colors ${policiesTab === 'guidelines' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-500'}`}>
+                <button onClick={() => setPoliciesTab('guidelines')} className={`font-medium transition-colors ${policiesTab === 'guidelines' ? 'text-slate-100' : 'text-slate-500'}`}>
                   Content Guidelines
                 </button>
-                <button onClick={() => setPoliciesTab('privacy')} className={`font-medium transition-colors ${policiesTab === 'privacy' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-500'}`}>
+                <button onClick={() => setPoliciesTab('privacy')} className={`font-medium transition-colors ${policiesTab === 'privacy' ? 'text-slate-100' : 'text-slate-500'}`}>
                   Privacy Policy
                 </button>
               </div>
-              <button onClick={() => setShowPolicies(false)} className="p-1 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+              <button onClick={() => setShowPolicies(false)} className="p-1 rounded text-slate-500 hover:text-slate-300 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 p-4 space-y-4 text-sm text-gray-700 dark:text-slate-300">
+            <div className="overflow-y-auto flex-1 p-4 space-y-4 text-sm text-slate-300">
               {policiesTab === 'guidelines' ? (
                 <>
-                  <p className="text-gray-600 dark:text-slate-400">
+                  <p className="text-slate-400">
                     Layoff Live is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
                   </p>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
-                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                    <h3 className="font-semibold text-slate-100 mb-2">Prohibited Content</h3>
+                    <ul className="space-y-1 text-slate-400">
                       <li>• Illegal content of any kind</li>
                       <li>• Harassment, threats, or targeted bullying</li>
                       <li>• Personal identifying information or confidential data</li>
@@ -447,8 +447,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     </ul>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Event Quality Standards</h3>
-                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                    <h3 className="font-semibold text-slate-100 mb-2">Event Quality Standards</h3>
+                    <ul className="space-y-1 text-slate-400">
                       <li>• Events must be specific and verifiable</li>
                       <li>• Events tied to real companies only</li>
                       <li>• No events designed to manipulate or spread misinformation</li>
@@ -459,17 +459,17 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               ) : (
                 <>
                   <div>
-                    <p className="text-gray-500 dark:text-slate-500 text-xs mb-2">Last updated: May 2026</p>
+                    <p className="text-slate-500 font-mono text-xs mb-2">Last updated: May 2026</p>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
-                    <p className="text-gray-600 dark:text-slate-400">
+                    <h3 className="font-semibold text-slate-100 mb-2">Our Commitment to Anonymity</h3>
+                    <p className="text-slate-400">
                       Layoff Live is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Collect</h3>
-                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                    <h3 className="font-semibold text-slate-100 mb-2">Data We Collect</h3>
+                    <ul className="space-y-1 text-slate-400">
                       <li>• IP address (fraud prevention)</li>
                       <li>• Browser cookies (session management)</li>
                       <li>• Usage data (events, bets, comments)</li>
@@ -477,8 +477,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     </ul>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Do Not Collect</h3>
-                    <ul className="space-y-1 text-gray-600 dark:text-slate-400">
+                    <h3 className="font-semibold text-slate-100 mb-2">Data We Do Not Collect</h3>
+                    <ul className="space-y-1 text-slate-400">
                       <li>• Real names or personal identifiers</li>
                       <li>• Email addresses</li>
                       <li>• Employer or employment status</li>
@@ -541,10 +541,9 @@ const AdminOnly = ({ children }: { children: ReactNode }) => {
 }
 
 const ThemeEffect = () => {
-  const theme = useStore(s => s.theme)
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-  }, [theme])
+    document.documentElement.classList.add('dark')
+  }, [])
   return null
 }
 

@@ -569,7 +569,7 @@ app.post('/api/companies/:companyId/chat-names/:userId', async (req, res) => {
 app.get('/api/companies/:companyId/chat-settings', async (req, res) => {
   try {
     const settings = await db.getChatSettings(req.params.companyId)
-    res.json(settings || { displayName: `${req.query.companyName || ''} Chat` })
+    res.json(settings || { displayName: `${req.query.companyName || ''} Chat`, expiresAt: null, isLocked: false })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
