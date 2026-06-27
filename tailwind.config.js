@@ -4,6 +4,24 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Space Grotesk', '-apple-system', 'sans-serif'],
+        mono: ['DM Mono', 'monospace'],
+      },
+      colors: {
+        blue: {
+          50:  '#e6f4f7',
+          100: '#c2e3ea',
+          200: '#9dd1dc',
+          300: '#72bcce',
+          400: '#4dabbe',
+          500: '#1E7A8C',
+          600: '#1E7A8C',
+          700: '#176370',
+          800: '#0f4d57',
+          900: '#08363d',
+        },
+      },
       keyframes: {
         'slide-up': {
           '0%': { transform: 'translateY(120px)', opacity: '0' },
