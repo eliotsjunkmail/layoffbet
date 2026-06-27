@@ -92,8 +92,10 @@ export const EventDetail = () => {
         setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
         if (isReducing) {
           if (!newVote) {
+            // Vote was deleted (reduced to zero)
             showToast(`Deleted your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet`)
           } else {
+            // Vote was just reduced
             showToast(`Reduced your ${anonVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
           }
         } else {
@@ -110,8 +112,10 @@ export const EventDetail = () => {
       const newBet = bets.find(b => b.eventId === id && b.userId === currentUser.id)
       if (isReducing) {
         if (!newBet) {
+          // Bet was deleted (reduced to zero)
           showToast(`Deleted your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet`)
         } else {
+          // Bet was just reduced
           showToast(`Reduced your ${userBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
         }
       } else {
@@ -195,21 +199,21 @@ export const EventDetail = () => {
   }
 
   const statusColors = {
-    active: 'bg-emerald-900/30 text-emerald-400 border-emerald-800',
-    expired: 'bg-amber-900/30 text-amber-400 border-amber-800',
-    resolved: 'bg-blue-900/30 text-blue-400 border-blue-800',
-    archived: 'bg-slate-700 text-slate-400 border-slate-600',
+    active: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+    expired: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    resolved: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+    archived: 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-600',
   }
 
   return (
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors mb-4 text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between mb-3">
-          <Link to={`/${companies.find(c => c.id === event.companyId)?.slug ?? event.companyId}`} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 transition-colors">
+          <Link to={`/${companies.find(c => c.id === event.companyId)?.slug ?? event.companyId}`} className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             <Building2 className="w-3.5 h-3.5" />
             {event.companyName}
           </Link>
@@ -217,7 +221,7 @@ export const EventDetail = () => {
             <button
               onClick={handleShare}
               title="Share this prediction"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-slate-500 hover:text-blue-400 hover:bg-blue-900/20 text-xs font-medium"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
             >
               {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
               <span>Share</span>
@@ -227,34 +231,34 @@ export const EventDetail = () => {
             </span>
           </div>
         </div>
-        <h1 className="text-slate-100 font-bold text-xl leading-snug mb-3">{event.title}</h1>
-        <p className="text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
-        <div className="flex items-center gap-4 text-xs text-slate-500">
+        <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">{event.title}</h1>
+        <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
+        <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-slate-500">
           <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {status === 'active' ? timeUntil(event.expiresAt) : `Expired ${formatDate(event.expiresAt)}`}</span>
           <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {bets.filter(b => b.eventId === id).length} bettors</span>
         </div>
       </div>
 
       {/* Odds */}
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
         <div className="flex justify-between items-end mb-2">
           <div>
-            <div className="text-3xl font-black text-emerald-400">{prob.yes}%</div>
-            <div className="text-xs text-slate-400">YES probability</div>
+            <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{prob.yes}%</div>
+            <div className="text-xs text-gray-400 dark:text-slate-400">YES probability</div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-black text-rose-400">{prob.no}%</div>
-            <div className="text-xs text-slate-400">NO probability</div>
+            <div className="text-3xl font-black text-rose-600 dark:text-rose-400">{prob.no}%</div>
+            <div className="text-xs text-gray-400 dark:text-slate-400">NO probability</div>
           </div>
         </div>
-        <div className="h-3 rounded-full bg-slate-700 overflow-hidden">
+        <div className="h-3 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
           <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${prob.yes}%` }} />
         </div>
-        <div className="mt-2 text-center text-xs text-slate-500">
-          Total pool: <span className="text-slate-300 font-medium">{totalPool} Coins</span>
+        <div className="mt-2 text-center text-xs text-gray-400 dark:text-slate-500">
+          Total pool: <span className="text-gray-700 dark:text-slate-300 font-medium">{totalPool} Coins</span>
         </div>
         {status === 'resolved' && event.outcome && (
-          <div className={`mt-3 flex items-center gap-2 justify-center rounded-xl py-2.5 ${event.outcome === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-rose-900/30 text-rose-300'}`}>
+          <div className={`mt-3 flex items-center gap-2 justify-center rounded-xl py-2.5 ${event.outcome === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
             <CheckCircle className="w-4 h-4" />
             <span className="font-semibold text-sm">Resolved: {event.outcome.toUpperCase()}</span>
           </div>
@@ -263,30 +267,30 @@ export const EventDetail = () => {
 
       {/* Betting */}
       {status === 'active' && (
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-4 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-4 shadow-sm dark:shadow-none">
           {userBet ? (
             <div>
-              <div className={`flex items-center gap-2 justify-center rounded-xl py-3 ${userBet.side === 'yes' ? 'bg-emerald-900/30 text-emerald-300' : 'bg-rose-900/30 text-rose-300'}`}>
+              <div className={`flex items-center gap-2 justify-center rounded-xl py-3 ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
                 <CheckCircle className="w-4 h-4" />
                 <span className="font-semibold text-sm">You bet {userBet.side.toUpperCase()} with {userBet.amount} Coins</span>
               </div>
               <button
                 onClick={() => { removeBet(id!); showToast(`Bet removed · ${userBet.amount} coins refunded`) }}
-                className="w-full mt-2 text-xs text-slate-600 hover:text-rose-400 transition-colors text-center py-1"
+                className="w-full mt-2 text-xs text-gray-400 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors text-center py-1"
               >
                 Remove bet
               </button>
             </div>
           ) : (
             <>
-              <div className="text-sm font-medium text-slate-300 mb-3">Place your bet</div>
+              <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">Place your bet</div>
               <div className="flex gap-2 mb-3">
                 {[5, 10, 25, 50].map(amt => (
                   <button
                     key={amt}
                     onClick={() => setBetAmount(amt)}
                     disabled={!currentUser && amt > remainingGuestCoins}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${betAmount === amt ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${betAmount === amt ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'} disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
                     {amt}
                   </button>
@@ -294,7 +298,7 @@ export const EventDetail = () => {
               </div>
 
               {!currentUser && (
-                <div className="text-xs text-slate-400 mb-3 text-center">
+                <div className="text-xs text-gray-500 dark:text-slate-400 mb-3 text-center">
                   {remainingGuestCoins} coins remaining
                 </div>
               )}
@@ -303,21 +307,21 @@ export const EventDetail = () => {
                 <button
                   onClick={() => handleBet('no')}
                   disabled={!canPlaceGuestBet && !currentUser}
-                  className="flex-1 py-3 bg-rose-900/20 hover:bg-rose-900/40 border border-rose-800 text-rose-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ✕ NO
                 </button>
                 <button
                   onClick={() => handleBet('yes')}
                   disabled={!canPlaceGuestBet && !currentUser}
-                  className="flex-1 py-3 bg-emerald-900/20 hover:bg-emerald-900/40 border border-emerald-800 text-emerald-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ✓ YES
                 </button>
               </div>
               {currentUser === null && remainingGuestCoins < betAmount && (
-                <p className="text-center text-xs text-slate-500 mt-2">
-                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-blue-400 hover:underline">Login</button> to get 100 coins daily.
+                <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-2">
+                  Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline">Login</button> to get 100 coins daily.
                 </p>
               )}
             </>
@@ -327,15 +331,15 @@ export const EventDetail = () => {
 
       {/* Admin / Creator resolve */}
       {(isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
-        <div className="bg-slate-800 border border-blue-800/50 rounded-2xl p-5 mb-4">
-          <div className="text-sm font-medium text-blue-300 mb-3">
+        <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5 mb-4">
+          <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-3">
             {isAdmin ? 'Admin: Resolve Event' : 'Resolve Your Event'}
           </div>
           <div className="flex gap-3">
-            <button onClick={() => { resolveEvent(id!, 'no'); showToast('Resolved as NO') }} className="flex-1 py-2.5 bg-rose-900/30 hover:bg-rose-900/50 border border-rose-800 text-rose-400 font-semibold rounded-xl transition-all text-sm">
+            <button onClick={() => { resolveEvent(id!, 'no'); showToast('Resolved as NO') }} className="flex-1 py-2.5 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-semibold rounded-xl transition-all text-sm">
               Resolve NO
             </button>
-            <button onClick={() => { resolveEvent(id!, 'yes'); showToast('Resolved as YES') }} className="flex-1 py-2.5 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-800 text-emerald-400 font-semibold rounded-xl transition-all text-sm">
+            <button onClick={() => { resolveEvent(id!, 'yes'); showToast('Resolved as YES') }} className="flex-1 py-2.5 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl transition-all text-sm">
               Resolve YES
             </button>
           </div>
@@ -343,23 +347,23 @@ export const EventDetail = () => {
       )}
 
       {/* Comments */}
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
-        <div className="text-sm font-medium text-slate-300 mb-4">Discussion ({eventComments.length})</div>
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm dark:shadow-none">
+        <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">Discussion ({eventComments.length})</div>
         <div className="space-y-3 mb-4">
           {eventComments.length === 0 && (
-            <p className="text-slate-500 text-sm text-center py-4">No comments yet. Be the first.</p>
+            <p className="text-gray-400 dark:text-slate-500 text-sm text-center py-4">No comments yet. Be the first.</p>
           )}
           {eventComments.map(c => (
-            <div key={c.id} className="bg-slate-900 rounded-xl p-3 group">
-              <p className="text-sm text-slate-200 leading-relaxed">{c.content}</p>
+            <div key={c.id} className="bg-gray-50 dark:bg-slate-900 rounded-xl p-3 group">
+              <p className="text-sm text-gray-700 dark:text-slate-200 leading-relaxed">{c.content}</p>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-xs text-slate-600">{new Date(c.createdAt).toLocaleString()}{c.editedAt && ' (edited)'}</span>
+                <span className="text-xs text-gray-400 dark:text-slate-600">{new Date(c.createdAt).toLocaleString()}{c.editedAt && ' (edited)'}</span>
                 {currentUser && (c.userId === currentUser.id || isAdmin) && (
                   <div className="flex gap-1">
-                    <button onClick={() => handleEditComment(c)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-blue-500 transition-all">
+                    <button onClick={() => handleEditComment(c)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-all">
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => deleteComment(c.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-500 transition-all">
+                    <button onClick={() => deleteComment(c.id)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 transition-all">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -386,7 +390,7 @@ export const EventDetail = () => {
             placeholder={currentUser ? (editingCommentId ? "Edit comment..." : "Add a comment...") : "Sign in to comment..."}
             maxLength={500}
             rows={3}
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none overflow-hidden"
+            className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none overflow-hidden"
             style={{ minHeight: editingCommentId ? '120px' : '60px' }}
           />
           {commentError && (
@@ -398,7 +402,7 @@ export const EventDetail = () => {
               {editingCommentId ? 'Update' : 'Comment'}
             </button>
             {editingCommentId && (
-              <button type="button" onClick={handleCancelEdit} className="bg-slate-700 hover:bg-slate-600 rounded-xl px-3 py-2 transition-colors text-slate-300 text-sm font-medium">
+              <button type="button" onClick={handleCancelEdit} className="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 rounded-xl px-3 py-2 transition-colors text-gray-700 dark:text-slate-300 text-sm font-medium">
                 Cancel
               </button>
             )}
@@ -408,7 +412,7 @@ export const EventDetail = () => {
 
       {showAuthModal && <AuthModal onClose={handleAuthClose} prompt="Sign in or create a free account to place your bet." />}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-100 text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50">
           {toast}
         </div>
       )}

@@ -52,45 +52,45 @@ export const Search = () => {
 
   return (
     <Layout>
-      <h1 className="text-xl font-bold text-slate-100 mb-4">Search</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Search</h1>
 
       <div className="relative mb-6">
-        <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
         <input
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search companies or events..."
-          className="w-full bg-slate-800 border border-slate-700 rounded-md pl-10 pr-4 py-3 text-slate-100 placeholder-slate-600 font-mono focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+          className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm"
           autoFocus
         />
       </div>
 
       <section className="mb-6">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono mb-3">Companies</h2>
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">Companies</h2>
         <div className="space-y-2">
           {matchedCompanies.slice(0, 8).map(c => {
             const companyEvents = events.filter(e => e.companyId === c.id && getEffectiveStatus(e) === 'active')
             return (
-              <Link key={c.id} to={`/${c.slug}`} className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-xl p-3.5 hover:border-blue-700 transition-all">
+              <Link key={c.id} to={`/${c.slug}`} className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
                 <CompanyLogo name={c.name} id={c.id} industry={c.industry} color={c.color} sentiment={sentimentByCompany[c.id]} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-slate-100">{c.name}</div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-mono mt-0.5">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
+                  <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                     <span>{c.industry}</span>
                     <span className="flex items-center gap-0.5"><Eye className="w-3 h-3" />{fmtViews(c.viewCount)}</span>
-                    {companyEvents.length > 0 && <span className="text-blue-400">{companyEvents.length} active</span>}
+                    {companyEvents.length > 0 && <span className="text-blue-600 dark:text-blue-400">{companyEvents.length} active</span>}
                   </div>
                 </div>
               </Link>
             )
           })}
-          {matchedCompanies.length === 0 && <p className="text-slate-500 text-sm">No companies found.</p>}
+          {matchedCompanies.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm">No companies found.</p>}
         </div>
       </section>
 
       <section>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono mb-3">
+        <h2 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3">
           {q ? 'Matching Predictions' : 'Active Predictions'}
         </h2>
         <div className="space-y-3">
@@ -98,26 +98,26 @@ export const Search = () => {
             const prob = getProbability(event.yesPool, event.noPool)
             const status = getEffectiveStatus(event)
             return (
-              <Link key={event.id} to={`/event/${event.id}`} className="block bg-slate-800 border border-slate-700 rounded-xl p-4 hover:border-blue-700 transition-all">
+              <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-slate-500 font-mono">{event.companyName}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-md font-mono ${status === 'active' ? 'text-blue-400 bg-blue-900/20' : 'text-slate-400 bg-slate-700'}`}>
+                  <span className="text-xs text-gray-400 dark:text-slate-500">{event.companyName}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${status === 'active' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-700'}`}>
                     {status}
                   </span>
                 </div>
-                <p className="text-sm text-slate-100 font-medium leading-snug mb-2 line-clamp-2">{event.title}</p>
-                <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden mb-1">
-                  <div className="h-full bg-blue-600 rounded-full" style={{ width: `${prob.yes}%` }} />
+                <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug mb-2 line-clamp-2">{event.title}</p>
+                <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
                 </div>
-                <div className="flex justify-between text-xs text-slate-500 font-mono">
-                  <span className="text-blue-400">YES {prob.yes}%</span>
+                <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500">
+                  <span className="text-emerald-600 dark:text-emerald-400">YES {prob.yes}%</span>
                   <span>{event.yesPool + event.noPool} wagered</span>
-                  <span className="text-slate-400">NO {prob.no}%</span>
+                  <span className="text-rose-600 dark:text-rose-400">NO {prob.no}%</span>
                 </div>
               </Link>
             )
           })}
-          {matchedEvents.length === 0 && <p className="text-slate-500 text-sm">No predictions found.</p>}
+          {matchedEvents.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm">No predictions found.</p>}
         </div>
       </section>
     </Layout>

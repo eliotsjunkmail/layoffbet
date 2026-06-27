@@ -38,15 +38,15 @@ export const AuthModal = ({ onClose, prompt, promptTitle, anonNote }: AuthModalP
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-700">
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl border border-gray-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
           <div className="flex items-center gap-2">
-            <Coins className="w-5 h-5 text-blue-400" />
-            <span className="font-semibold text-slate-100">
+            <Coins className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="font-semibold text-gray-900 dark:text-white">
               {mode === 'choose' ? (promptTitle ?? 'Join to place bets') : mode === 'register' ? 'Create account' : 'Sign in'}
             </span>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -54,9 +54,9 @@ export const AuthModal = ({ onClose, prompt, promptTitle, anonNote }: AuthModalP
         <div className="p-5">
           {mode === 'choose' && (
             <>
-              {prompt && <p className="text-sm text-slate-400 mb-4">{prompt}</p>}
-              <p className="text-sm text-slate-400 mb-5">
-                {anonNote ?? <>Create a free anonymous account — no email or identity required. You'll get <span className="font-semibold text-blue-400">100 Coins</span> daily to bet with.</>}
+              {prompt && <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">{prompt}</p>}
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
+                {anonNote ?? <>Create a free anonymous account — no email or identity required. You'll get <span className="font-semibold text-blue-600 dark:text-blue-400">100 Coins</span> daily to bet with.</>}
               </p>
               <button
                 onClick={() => setMode('register')}
@@ -66,13 +66,13 @@ export const AuthModal = ({ onClose, prompt, promptTitle, anonNote }: AuthModalP
               </button>
               <button
                 onClick={() => setMode('login')}
-                className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-3 rounded-xl transition-colors"
+                className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 font-semibold py-3 rounded-xl transition-colors"
               >
                 Sign In
               </button>
               <button
                 onClick={() => navigate('/login')}
-                className="w-full text-center text-xs text-slate-500 mt-3 hover:text-slate-300 transition-colors"
+                className="w-full text-center text-xs text-gray-400 dark:text-slate-500 mt-3 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
               >
                 Full sign-in page →
               </button>
@@ -82,35 +82,35 @@ export const AuthModal = ({ onClose, prompt, promptTitle, anonNote }: AuthModalP
           {(mode === 'register' || mode === 'login') && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Username</label>
+                <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Username</label>
                 <input
                   type="text"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   placeholder="anonymous_user"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Password</label>
+                <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                 />
               </div>
               {error && (
-                <div className="bg-rose-900/30 border border-rose-800 rounded-xl px-4 py-2.5 text-rose-300 text-sm">
+                <div className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-2.5 text-rose-600 dark:text-rose-300 text-sm">
                   {error}
                 </div>
               )}
               <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl transition-colors">
                 {mode === 'login' ? 'Sign In' : 'Create Account'}
               </button>
-              <button type="button" onClick={() => setMode('choose')} className="w-full text-center text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              <button type="button" onClick={() => setMode('choose')} className="w-full text-center text-xs text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
                 ← Back
               </button>
             </form>

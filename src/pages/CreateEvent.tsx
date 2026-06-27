@@ -47,53 +47,53 @@ export const CreateEvent = () => {
     navigate(`/${company.slug}`, { state: { newEventId: newEvent.id, showToast: true } })
   }
 
-  const inputCls = "w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+  const inputCls = "w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
 
   return (
     <Layout>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors mb-5 text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-5 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>
 
-      <h1 className="text-xl font-bold text-slate-100 mb-1">Create Prediction</h1>
-      <p className="text-slate-400 text-sm mb-6">Propose a verifiable prediction for the community to bet on.</p>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Create Prediction</h1>
+      <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">Propose a verifiable prediction for the community to bet on.</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm text-slate-400 mb-1.5">Company</label>
+          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Company</label>
           <select value={companyId} onChange={e => setCompanyId(e.target.value)} className={inputCls}>
             {sorted.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-1.5">Prediction Title</label>
+          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Prediction Title</label>
           <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={titlePlaceholder} maxLength={120} className={inputCls} />
-          <div className="text-right text-xs text-slate-600 mt-1">{title.length}/120</div>
+          <div className="text-right text-xs text-gray-400 dark:text-slate-600 mt-1">{title.length}/120</div>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-1.5">Description <span className="text-slate-500">(optional)</span></label>
+          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Description <span className="text-gray-400 dark:text-slate-500">(optional)</span></label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Provide context, sources, or reasoning..." rows={4} maxLength={500} className={`${inputCls} resize-none`} />
-          <div className="text-right text-xs text-slate-600 mt-1">{description.length}/500</div>
+          <div className="text-right text-xs text-gray-400 dark:text-slate-600 mt-1">{description.length}/500</div>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-1.5">Expiration Date</label>
+          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Expiration Date</label>
           <div className="relative">
             <input type="date" ref={dateInputRef} value={expiresAt} min={minDate} max={maxDate} onChange={e => setExpiresAt(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
             <div className={`${inputCls} flex items-center justify-between`}>
-              <span className={`${expiresAt ? 'text-slate-100' : 'text-slate-600'} pointer-events-none`}>
+              <span className={`${expiresAt ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-600'} pointer-events-none`}>
                 {expiresAt ? new Date(expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select a date'}
               </span>
-              <Calendar className="w-5 h-5 text-slate-500 flex-shrink-0 pointer-events-none" />
+              <Calendar className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-shrink-0 pointer-events-none" />
             </div>
           </div>
-          <div className="text-xs text-slate-500 mt-1">Max 2 years from today</div>
+          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 2 years from today</div>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-1.5">Your Prediction <span className="text-rose-500">*</span></label>
+          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Your Prediction <span className="text-rose-500">*</span></label>
           <div className="flex gap-3">
             <button
               type="button"
@@ -101,7 +101,7 @@ export const CreateEvent = () => {
               className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
                 side === 'yes'
                   ? 'bg-green-500 text-white border-green-600'
-                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-green-500'
+                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-green-500 dark:hover:border-green-500'
               }`}
             >
               YES - 10 coins
@@ -112,23 +112,23 @@ export const CreateEvent = () => {
               className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
                 side === 'no'
                   ? 'bg-red-500 text-white border-red-600'
-                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-red-500'
+                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500'
               }`}
             >
               NO - 10 coins
             </button>
           </div>
-          <div className="text-xs text-slate-500 mt-1">Creating a prediction costs 10 coins and places that bet</div>
+          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Creating a prediction costs 10 coins and places that bet</div>
         </div>
 
         {error && (
-          <div className="bg-rose-900/30 border border-rose-700 rounded-xl px-4 py-3 text-rose-300 text-sm">
+          <div className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 rounded-xl px-4 py-3 text-rose-600 dark:text-rose-300 text-sm">
             {error}
           </div>
         )}
 
-        <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 text-xs text-slate-400">
-          <p className="font-medium text-slate-300 mb-1">Before you submit:</p>
+        <div className="bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-xs text-gray-500 dark:text-slate-400">
+          <p className="font-medium text-gray-700 dark:text-slate-300 mb-1">Before you submit:</p>
           <ul className="space-y-1 list-disc list-inside">
             <li>No personal or confidential data</li>
             <li>No harassment or targeted content</li>
@@ -136,7 +136,7 @@ export const CreateEvent = () => {
           </ul>
         </div>
 
-        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-blue-900/30">
+        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-blue-200 dark:shadow-blue-900/30">
           Create Prediction
         </button>
       </form>

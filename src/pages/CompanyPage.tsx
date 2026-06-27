@@ -400,23 +400,23 @@ export const CompanyPage = () => {
   const PastEventsSection = () => past.length > 0 ? (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-300">Past Events</h2>
-        <span className="text-xs text-slate-500 bg-slate-700/60 px-2 py-0.5 rounded-full">{past.length}</span>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-300">Past Events</h2>
+        <span className="text-xs text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">{past.length}</span>
       </div>
       <div className="space-y-3">
         {past.map(event => {
           const prob = getProbability(event.yesPool, event.noPool)
           const s = getEffectiveStatus(event)
           return (
-            <Link key={event.id} to={`/event/${event.id}`} className="block bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-blue-300 transition-all">
+            <Link key={event.id} to={`/event/${event.id}`} className="block bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all">
               <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s === 'resolved' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s === 'resolved' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
                   {s === 'resolved' && event.outcome ? `Resolved ${event.outcome.toUpperCase()}` : 'Expired'}
                 </span>
-                <span className="text-xs text-slate-500">{formatDate(event.expiresAt)}</span>
+                <span className="text-xs text-gray-400 dark:text-slate-500">{formatDate(event.expiresAt)}</span>
               </div>
-              <p className="text-sm text-slate-300 leading-snug">{event.title}</p>
-              <div className="flex justify-between text-xs text-slate-600 mt-2">
+              <p className="text-sm text-gray-700 dark:text-slate-300 leading-snug">{event.title}</p>
+              <div className="flex justify-between text-xs text-gray-400 dark:text-slate-600 mt-2">
                 <span>YES {prob.yes}%</span>
                 <span>NO {prob.no}%</span>
               </div>
@@ -436,14 +436,14 @@ export const CompanyPage = () => {
         {/* LEFT COLUMN: title + description + past events */}
         <div className="sm:sticky sm:top-20">
           <div className="flex items-center gap-2 mb-2">
-            <button onClick={() => navigate(-1)} className="flex items-center text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0 p-1">
+            <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-lg font-bold text-slate-100">{company.name}</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{company.name}</h1>
             <div className="ml-auto flex items-center gap-1">
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-slate-500 hover:text-blue-600 hover:bg-blue-50 text-xs font-medium"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
                 title="Share this company"
               >
                 {shareCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
@@ -451,7 +451,7 @@ export const CompanyPage = () => {
               </button>
               <button
                 onClick={() => toggleFavoriteCompany(company.id)}
-                className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50' : 'text-slate-500 hover:text-amber-400 hover:bg-amber-50'}`}
+                className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-400 dark:text-slate-500 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 <Star className={`w-5 h-5 ${isFavorite ? 'fill-amber-400' : ''}`} />
@@ -460,16 +460,16 @@ export const CompanyPage = () => {
           </div>
 
           <div>
-            <div className="text-slate-300 text-sm leading-snug mb-5">
+            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
               {expandDescription ? (
                 <>
                   <p>{company.description}</p>
-                  <button onClick={() => setExpandDescription(false)} className="text-blue-600 hover:underline text-xs font-medium mt-2">Show less</button>
+                  <button onClick={() => setExpandDescription(false)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium mt-2">Show less</button>
                 </>
               ) : (
                 <div className="flex gap-1 items-baseline">
                   <span className="truncate sm:block">{company.description.split('.')[0]}.</span>
-                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 hover:underline text-xs font-medium whitespace-nowrap flex-shrink-0 sm:flex-shrink">More</button>
+                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium whitespace-nowrap flex-shrink-0 sm:flex-shrink">More</button>
                 </div>
               )}
             </div>
@@ -504,10 +504,10 @@ export const CompanyPage = () => {
                         disabled={exhausted}
                         onClick={() => navigate(`/event/${event.id}`)}
                         demoActive={false}
-                        cardClassName={`bg-slate-800 border rounded-xl p-4 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
-                          ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 bg-emerald-50' :
-                            flash && swipeFlash?.side === 'no' ? 'border-rose-400 bg-rose-50' :
-                            'border-blue-200'}`}
+                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
+                          ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
+                            flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
+                            'border-blue-200 dark:border-blue-800'}`}
                       >
                         {userBet && (
                           <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>
@@ -537,10 +537,10 @@ export const CompanyPage = () => {
                               type="text"
                               value={editEventTitle}
                               onChange={e => setEditEventTitle(e.target.value)}
-                              className="flex-1 text-sm bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-100"
+                              className="flex-1 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded px-2 py-1 text-gray-900 dark:text-white"
                             />
                           ) : (
-                            <p className="text-sm text-slate-100 font-medium leading-snug flex-1">{event.title}</p>
+                            <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
                           )}
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {currentUser && (event.creatorId === currentUser.id || currentUser.isAdmin) && (
@@ -549,14 +549,14 @@ export const CompanyPage = () => {
                                   <>
                                     <button
                                       onClick={(ev) => { ev.stopPropagation(); handleSaveEventEdit(event.id) }}
-                                      className="text-emerald-600 hover:text-emerald-700 transition-colors"
+                                      className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                                       title="Save changes"
                                     >
                                       <Check className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={(ev) => { ev.stopPropagation(); setEditingEventId(null) }}
-                                      className="text-slate-500 hover:text-slate-300 transition-colors"
+                                      className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
                                       title="Cancel"
                                     >
                                       <X className="w-4 h-4" />
@@ -566,14 +566,14 @@ export const CompanyPage = () => {
                                   <>
                                     <button
                                       onClick={(ev) => { ev.stopPropagation(); handleEditEvent(event) }}
-                                      className="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-blue-500 transition-all"
+                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-blue-500 transition-all"
                                       title="Edit prediction"
                                     >
                                       <Edit2 className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={(ev) => { ev.stopPropagation(); handleDeleteEvent(event.id) }}
-                                      className="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-rose-500 transition-all"
+                                      className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-all"
                                       title="Delete prediction"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -587,7 +587,7 @@ export const CompanyPage = () => {
                             )}
                           </div>
                         </div>
-                        <div className="relative h-1.5 rounded-full bg-slate-700/60 overflow-hidden mb-1.5">
+                        <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                           <div
                             className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
                             style={{ width: `${pct}%` }}
@@ -595,19 +595,19 @@ export const CompanyPage = () => {
                         </div>
                         <div className="flex justify-between text-xs">
                           {dominant === 'yes'
-                            ? <span className="text-emerald-600 font-semibold">YES {pct}%</span>
-                            : <span className="text-slate-700">·</span>
+                            ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                            : <span className="text-gray-300 dark:text-slate-700">·</span>
                           }
-                          <span className="text-slate-500">{timeUntil(event.expiresAt)}</span>
+                          <span className="text-gray-400 dark:text-slate-500">{timeUntil(event.expiresAt)}</span>
                           {dominant === 'no'
-                            ? <span className="text-rose-600 font-semibold">NO {pct}%</span>
-                            : <span className="text-slate-700">·</span>
+                            ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                            : <span className="text-gray-300 dark:text-slate-700">·</span>
                           }
                         </div>
                       </SwipeCard>
                       <div className="mt-2">
                         {eventComments.length > 0 && (
-                          <p className="text-xs font-semibold text-slate-400 mb-2">
+                          <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 mb-2">
                             Discussion ({eventComments.length})
                           </p>
                         )}
@@ -616,10 +616,10 @@ export const CompanyPage = () => {
                           const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                           const canEdit = currentUser && (cmt.userId === currentUser.id || currentUser.isAdmin)
                           return (
-                            <div key={cmt.id} className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 shadow-sm group">
-                              <p className="text-sm text-slate-200 leading-relaxed break-words">{cmt.content}</p>
+                            <div key={cmt.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5 shadow-sm group">
+                              <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed break-words">{cmt.content}</p>
                               <div className="flex items-center justify-between gap-2 mt-1">
-                                <p className="text-[11px] text-slate-500">
+                                <p className="text-[11px] text-gray-400 dark:text-slate-500">
                                   {new Date(cmt.createdAt).toLocaleDateString()}{cmt.editedAt && ' · edited'}
                                 </p>
                                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -627,13 +627,13 @@ export const CompanyPage = () => {
                                     <>
                                       <button
                                         onClick={ev => { ev.stopPropagation(); handleEditComment(cmt, event.id) }}
-                                        className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-blue-500 transition-all"
+                                        className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-blue-500 transition-all"
                                       >
                                         <Edit2 className="w-3 h-3" />
                                       </button>
                                       <button
                                         onClick={ev => { ev.stopPropagation(); deleteComment(cmt.id) }}
-                                        className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-500 transition-all"
+                                        className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-slate-600 hover:text-rose-500 transition-all"
                                       >
                                         <Trash2 className="w-3 h-3" />
                                       </button>
@@ -641,7 +641,7 @@ export const CompanyPage = () => {
                                   )}
                                   <button
                                     onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                                    className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600' : 'text-slate-600 hover:text-blue-500'}`}
+                                    className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
                                   >
                                     <ThumbsUp className="w-3 h-3" />
                                     {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
@@ -665,7 +665,7 @@ export const CompanyPage = () => {
                             onClick={ev => ev.stopPropagation()}
                             placeholder={editingCommentId ? "Edit comment..." : "Add a comment..."}
                             maxLength={500}
-                            className="flex-1 text-sm bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400 shadow-sm"
+                            className="flex-1 text-sm bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2 text-gray-700 dark:text-slate-300 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500 shadow-sm"
                           />
                           {focusedInput === event.id && (
                             <>
@@ -681,7 +681,7 @@ export const CompanyPage = () => {
                                 <button
                                   onMouseDown={ev => ev.preventDefault()}
                                   onClick={ev => { ev.stopPropagation(); handleCancelEdit(event.id) }}
-                                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-600 hover:bg-slate-500 text-slate-300 rounded-xl transition-colors text-xs font-medium"
+                                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500 text-gray-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-medium"
                                 >
                                   ✕
                                 </button>
@@ -696,19 +696,19 @@ export const CompanyPage = () => {
                 })}
 
                 {/* Add prediction CTA */}
-                <div className="bg-slate-800/50 rounded-xl p-4 flex flex-col items-center gap-3 mt-2">
-                  <span className="text-sm text-slate-400">Make your first prediction</span>
+                <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col items-center gap-3 mt-2">
+                  <span className="text-sm text-gray-600 dark:text-slate-400">Make your first prediction</span>
                   {currentUser ? (
                     <button
                       onClick={() => navigate('/create', { state: { companyId: company.id } })}
-                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                     >
                       + New bet
                     </button>
                   ) : (
                     <button
                       onClick={() => navigate('/create', { state: { companyId: company.id } })}
-                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
                     >
                       + Bet
                     </button>
@@ -725,7 +725,7 @@ export const CompanyPage = () => {
 
           {companyEvents.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-slate-500 text-sm mb-4">No predictions yet for this company.</p>
+              <p className="text-gray-400 dark:text-slate-500 text-sm mb-4">No predictions yet for this company.</p>
               <Link to="/create" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
                 <PlusCircle className="w-4 h-4" /> Create a Prediction
               </Link>
@@ -737,13 +737,13 @@ export const CompanyPage = () => {
 
       {/* Copied toast */}
       {shareCopied && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-100 text-slate-900 text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 animate-fade-in">
           <Check className="w-3.5 h-3.5 text-emerald-500" /> Link copied to clipboard
         </div>
       )}
 
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-100 text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[60] pointer-events-none ${toastExiting ? 'animate-slide-down' : 'animate-slide-up'}`}>
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[60] pointer-events-none ${toastExiting ? 'animate-slide-down' : 'animate-slide-up'}`}>
           {toast}
         </div>
       )}

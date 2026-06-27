@@ -411,11 +411,13 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   }
 
   const handleTopicExpired = async (topicName: string) => {
+    // Reset chat name back to company name
     setChatDisplayName(companyName + ' Chat')
     setEditNameValue(companyName + ' Chat')
     setIsLocked(false)
     setExpiresAt(null)
 
+    // Add system message that topic ended
     const now = new Date()
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
@@ -430,6 +432,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
     setMessages(prev => [...prev, systemMessage])
 
+    // Save system message to server
     try {
       await api.addChatMessage(companyId, {
         text: systemMessage.text,
@@ -440,7 +443,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       console.error('Failed to save topic ended message:', error)
     }
   }
-
 
   const getReactionEmoji = (type: ReactionType) => {
     const emojis: Record<ReactionType, string> = {
@@ -469,9 +471,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col">
       {/* Header */}
-      <div className="bg-slate-800 text-slate-100 px-3 py-2 sm:px-4 sm:py-3 border-b border-slate-700">
+      <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
         <div className="flex items-center justify-between mb-1">
           {editingName && !isLocked ? (
@@ -482,14 +484,14 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               onBlur={handleSaveChatName}
               onKeyPress={(e) => e.key === 'Enter' && handleSaveChatName()}
               autoFocus
-              className="flex-1 px-2 py-1 rounded bg-slate-700 text-slate-100 text-sm font-semibold"
+              className="flex-1 px-2 py-1 rounded text-gray-900 text-sm font-semibold"
             />
           ) : (
             <>
               <div className="flex items-center gap-2 flex-1">
                 <div className="flex flex-col gap-0.5">
                   <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
-                  {timeRemaining && <span className="text-xs text-slate-400">{timeRemaining} left</span>}
+                  {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
                 </div>
                 <button
                   onClick={() => {
@@ -500,7 +502,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                       setShowDurationPicker(true)
                     }
                   }}
-                  className="px-2 py-1 border border-slate-600 hover:bg-slate-700 rounded text-xs font-medium text-slate-300 transition-colors whitespace-nowrap"
+                  className="px-2 py-1 border border-white hover:bg-white/20 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
                   title={isLocked ? 'Topic is locked' : 'Start a new topic'}
                 >
                   + Topic
@@ -508,7 +510,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                 {currentUser?.isAdmin && isLocked && (
                   <button
                     onClick={resetChatName}
-                    className="p-1 hover:bg-slate-700 rounded transition-colors"
+                    className="p-1 hover:bg-blue-500 rounded transition-colors"
                     title="Reset to default"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -519,7 +521,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           )}
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
             title="Minimize chat"
           >
             <ChevronDown className="w-6 h-6" />
@@ -532,7 +534,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             {currentUser?.isAdmin && (
               <button
                 onClick={() => setShowClearDialog(true)}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
                 title="Clear all chat history"
               >
                 <Trash className="w-5 h-5" />
@@ -540,8 +542,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             )}
             <div className="flex items-center gap-3">
             {chatUserCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400">
-                <span className="w-5 h-5 rounded-full bg-slate-600 text-slate-200 flex items-center justify-center text-xs">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-100">
+                <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
                   {chatUserCount > 99 ? '99+' : chatUserCount}
                 </span>
                 <span>{chatUserCount === 1 ? 'participant' : 'participants'}</span>
@@ -550,18 +552,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             {isAutoUpdating ? (
               <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
                 <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                <span className="text-green-400">Connected</span>
+                <span className="text-green-100">Connected</span>
               </div>
             ) : (
               <>
                 <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
                   <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                  <span className="text-yellow-400">Offline</span>
+                  <span className="text-yellow-100">Offline</span>
                 </div>
                 <button
                   onClick={handleManualRefresh}
                   disabled={isRefreshing}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+                  className="p-2 hover:bg-blue-500 rounded-lg transition-colors disabled:opacity-50"
                   title="Refresh chat"
                 >
                   <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -576,7 +578,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500">
+          <div className="flex items-center justify-center h-full text-gray-400 dark:text-slate-500">
             <div className="text-center">
               <p className="mb-2">No messages yet</p>
               <p className="text-sm">Be the first to start the discussion!</p>
@@ -609,9 +611,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               }
               return (
                 <div key={msg.id} className="flex flex-col items-center gap-2 mb-3 mt-6">
-                  <div className="text-center text-xs text-slate-500 bg-slate-900/30 rounded-lg px-3 py-2 max-w-xs">
+                  <div className="text-center text-xs text-gray-500 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/30 rounded-lg px-3 py-2 max-w-xs">
                     <div className="text-sm font-semibold">{topicLine}</div>
-                    {timestampLine && <div className="text-xs text-slate-600 mt-1">{timestampLine}</div>}
+                    {timestampLine && <div className="text-xs text-gray-400 dark:text-slate-600 mt-1">{timestampLine}</div>}
                   </div>
                   <div className="flex gap-2 w-full max-w-sm px-3">
                     <input
@@ -620,12 +622,12 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                       onChange={(e) => setTopicCommentInputs(prev => ({ ...prev, [msg.id]: e.target.value }))}
                       placeholder="Add a comment..."
                       onKeyPress={(e) => e.key === 'Enter' && handleTopicComment()}
-                      className="flex-1 px-3 py-2 rounded-lg bg-slate-700 text-slate-100 text-sm"
+                      className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
                     />
                     <button
                       onClick={handleTopicComment}
                       disabled={!topicInput.trim()}
-                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 rounded-lg text-white text-sm font-medium transition-colors"
+                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded-lg text-white text-sm font-medium transition-colors"
                     >
                       Comment
                     </button>
@@ -638,7 +640,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group mb-2`}>
                 <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
                   {!isOwnMessage && (
-                    <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-semibold text-slate-200 flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-white flex-shrink-0">
                       {msg.username?.charAt(0).toUpperCase() || '?'}
                     </div>
                   )}
@@ -648,7 +650,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                         className={`rounded-2xl px-4 py-2.5 break-words ${
                           isOwnMessage
                             ? 'bg-blue-600 text-white rounded-br-none'
-                            : 'bg-slate-600 text-slate-100 rounded-bl-none'
+                            : 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-bl-none'
                         }`}
                       >
                         <p className="text-sm">{msg.text}</p>
@@ -677,8 +679,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                                 onClick={() => toggleReaction(msg.id, reaction.type)}
                                 className={`px-2 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap ${
                                   hasUserReacted
-                                    ? 'bg-blue-900/30 text-blue-300'
-                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                    : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
                                 }`}
                                 title={`${hasUserReacted ? 'Remove' : 'Add'} ${reaction.type} reaction`}
                               >
@@ -695,7 +697,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                       <button
                         onClick={() => deleteMessage(msg.id)}
-                        className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         title="Delete message"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -711,7 +713,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       </div>
 
       {/* Input */}
-      <div className="border-t border-slate-700 bg-slate-900 px-4 py-4 sm:px-6">
+      <div className="border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
         <div className="flex gap-2">
           <input
             type="text"
@@ -721,7 +723,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               if (e.key === 'Enter') handleSend()
             }}
             placeholder="Share your thoughts anonymously"
-            className="flex-1 px-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={handleSend}
@@ -735,15 +737,15 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       {/* Clear Chat Dialog */}
       {showClearDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">Clear Chat & Reset?</h3>
-            <p className="text-sm text-slate-400 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Clear Chat & Reset?</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               This will permanently delete all messages and reset all chat names and user assignments. This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowClearDialog(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
               >
                 Cancel
               </button>
@@ -762,17 +764,17 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       {/* Duration Picker Modal */}
       {showDurationPicker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-slate-100 mb-4">New Topic</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">New Topic</h3>
             <input
               type="text"
               value={editNameValue}
               onChange={(e) => setEditNameValue(e.target.value)}
               placeholder="e.g. Layoff today, Tom's FYI, Tech reorg"
-              className="w-full px-3 py-2 rounded-lg bg-slate-700 text-slate-100 mb-4 text-sm"
+              className="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white mb-4 text-sm"
               autoFocus
             />
-            <p className="text-xs text-slate-500 mb-4">Duration</p>
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">Duration</p>
             <div className="grid grid-cols-3 gap-2 mb-6">
               {[2, 4, 6, 12, 24].map(hours => (
                 <button
@@ -781,7 +783,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                   className={`py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedDuration === hours
                       ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'
                   }`}
                 >
                   {hours}h
@@ -791,7 +793,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowDurationPicker(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
               >
                 Cancel
               </button>
@@ -809,9 +811,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       {/* Locked Message Modal */}
       {showLockedMessage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">Chat name is temporarily locked</h3>
-            <p className="text-sm text-slate-400 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Chat name is temporarily locked</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
               You can edit the chat name again in <span className="font-semibold">{getTimeRemaining()}</span>
             </p>
             <div className="flex gap-3 justify-end">

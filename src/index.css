@@ -2,36 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Backgrounds */
-  --bg-base:       #08090C;
-  --bg-surface:    #0D0F14;
-  --bg-elevated:   #111419;
-
-  /* Borders */
-  --border:        #1A1D24;
-
-  /* Text */
-  --text-primary:  #D8DDE6;
-  --text-body:     #9AA3B0;
-  --text-muted:    #3A4050;
-
-  /* Accent — Teal */
-  --accent:        #1E7A8C;
-  --accent-dim:    #124E5A;
-  --accent-subtle: rgba(30, 122, 140, 0.12);
-
-  /* Alert — Red */
-  --alert:         #8C2E2E;
-  --alert-dim:     rgba(140, 46, 46, 0.20);
-
-  /* Semantic */
-  --color-yes:     var(--accent);
-  --color-no:      var(--text-muted);
-  --color-live:    var(--alert);
-  --color-settled: var(--alert);
-}
-
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;
@@ -42,18 +12,16 @@
   }
 
   body {
-    @apply bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100;
-    font-family: 'Space Grotesk', -apple-system, sans-serif;
+    @apply bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-white;
     overscroll-behavior: none;
   }
 
   input[type="date"]::-webkit-calendar-picker-indicator {
-    @apply opacity-50 invert;
+    @apply dark:invert opacity-50;
   }
 
   select option {
-    background-color: var(--bg-elevated);
-    color: var(--text-primary);
+    @apply bg-white dark:bg-slate-800;
   }
 }
 

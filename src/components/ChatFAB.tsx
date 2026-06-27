@@ -50,30 +50,30 @@ export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, ch
         }
         @keyframes badgePulse {
           0%, 100% {
-            background-color: rgb(107, 32, 32);
-            box-shadow: 0 0 0 0 rgba(140, 46, 46, 0.5);
+            background-color: rgb(239, 68, 68);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
           }
           50% {
-            box-shadow: 0 0 0 5px rgba(140, 46, 46, 0);
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
           }
         }
         .badge-pulse {
-          animation: badgePulse 2.5s infinite;
+          animation: badgePulse 2s infinite;
         }
       `}</style>
       <button
         onClick={onClick}
-        className={`fixed bottom-6 right-6 z-50 bg-slate-900 hover:bg-slate-800 text-slate-100 border border-blue-600 hover:border-blue-400 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 font-medium text-sm hover:scale-105 active:scale-95 ${shouldShake ? 'fab-shake' : ''}`}
+        className={`fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 px-4 py-3 sm:px-5 sm:py-3.5 font-medium text-sm hover:scale-105 active:scale-95 ${shouldShake ? 'fab-shake' : ''}`}
         title={`${displayText}${timeRemaining ? ` (${timeRemaining})` : ''}${newMessageCount ? ` (${newMessageCount} new ${newMessageCount === 1 ? 'message' : 'messages'})` : ''}`}
       >
-        <MessageCircle className="w-5 h-5 text-blue-400" />
+        <MessageCircle className="w-5 h-5" />
         <div className="flex flex-col items-start">
           <span>{displayText}</span>
-          {timeRemaining && <span className="text-xs text-slate-400 font-mono">{timeRemaining}</span>}
+          {timeRemaining && <span className="text-xs text-blue-100">{timeRemaining}</span>}
         </div>
-        <span className="text-xs font-bold font-mono text-red-500">LIVE</span>
+        <span className="text-xs font-bold text-red-400">LIVE</span>
         {newMessageCount !== undefined && newMessageCount > 0 && (
-          <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-red-700 text-slate-100 text-xs font-bold font-mono ml-1 ${newMessageCount > 0 ? 'badge-pulse' : ''}`}>
+          <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold ml-1 ${newMessageCount > 0 ? 'badge-pulse' : ''}`}>
             {newMessageCount > 99 ? '99+' : newMessageCount}
           </span>
         )}
