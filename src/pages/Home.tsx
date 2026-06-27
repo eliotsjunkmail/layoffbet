@@ -680,7 +680,7 @@ export const Home = () => {
                   <button
                     key={c.id}
                     onClick={() => navigate(`/${c.slug}`)}
-                    className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium text-sm rounded-full hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors cursor-pointer"
+                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
                   >
                     {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
                   </button>
