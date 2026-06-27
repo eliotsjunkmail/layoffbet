@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
-import { X } from 'lucide-react'
+import { X, Search as SearchIcon } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import type { ReactNode } from 'react'
 
@@ -168,6 +168,84 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
   )
 }
 
+const PickCompanyModal = ({ onSelect, onSkip }: { onSelect: (id: string) => void; onSkip: () => void }) => {
+  const companies = useStore(s => s.companies)
+  const events = useStore(s => s.events)
+  const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
+  const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const [search, setSearch] = useState('')
+
+  const activeByCompany = useMemo(() => {
+    const map: Record<string, number> = {}
+    events.forEach(e => {
+      if (getEffectiveStatus(e) === 'active') map[e.companyId] = (map[e.companyId] ?? 0) + 1
+    })
+    return map
+  }, [events, getEffectiveStatus])
+
+  const visible = companies.filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name))
+  const withActiveBets = visible.filter(c => (activeByCompany[c.id] ?? 0) > 0)
+  const searchResults = search.trim()
+    ? visible.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    : []
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Follow a company</h2>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Pick one to see its predictions on your home feed.</p>
+        <div className="relative mb-4">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            autoFocus
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search for a company..."
+            className="w-full pl-9 pr-3 py-2.5 bg-gray-100 dark:bg-slate-800 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          />
+        </div>
+        {search.trim() ? (
+          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+            {searchResults.length === 0
+              ? <p className="text-sm text-gray-400 dark:text-slate-500">No companies found.</p>
+              : searchResults.map(c => (
+                  <button key={c.id} onClick={() => onSelect(c.id)}
+                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
+                    {c.name}
+                  </button>
+                ))
+            }
+          </div>
+        ) : withActiveBets.length > 0 ? (
+          <>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+            <div className="flex flex-wrap gap-2">
+              {withActiveBets.map(c => (
+                <button key={c.id} onClick={() => onSelect(c.id)}
+                  className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
+                  {c.name} <span className="font-semibold">({activeByCompany[c.id]})</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {visible.slice(0, 12).map(c => (
+              <button key={c.id} onClick={() => onSelect(c.id)}
+                className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-medium text-sm rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <button onClick={onSkip} className="mt-5 w-full text-sm text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors py-1">
+          Skip for now
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
@@ -181,6 +259,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [loadingAnonId, setLoadingAnonId] = useState(true)
   const [showPolicies, setShowPolicies] = useState(false)
   const [policiesTab, setPoliciesTab] = useState<'guidelines' | 'privacy'>('guidelines')
+  const [showPickCompany, setShowPickCompany] = useState(false)
 
   // Gate admin state
   const [adminOpen, setAdminOpen] = useState(false)
@@ -231,7 +310,21 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     }
   }, [currentUser])
 
-  if (unlocked || window.location.pathname === '/login') return <>{children}</>
+  if (unlocked || window.location.pathname === '/login') return (
+    <>
+      {children}
+      {showPickCompany && (
+        <PickCompanyModal
+          onSelect={(companyId) => {
+            localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, companyId)
+            useStore.getState().toggleFavoriteCompany(companyId)
+            setShowPickCompany(false)
+          }}
+          onSkip={() => setShowPickCompany(false)}
+        />
+      )}
+    </>
+  )
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -280,6 +373,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         // Now set currentUser and navigate to home
         useStore.setState({ currentUser: user })
         setUnlocked(true)
+        if (!selectedCompanyId) setShowPickCompany(true)
         window.scrollTo(0, 0)
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
@@ -335,7 +429,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* Company selection grid */}
         <div className="mb-6">
-          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={setSelectedCompanyId} />
+          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={(id) => setSelectedCompanyId(prev => prev === id ? undefined : id)} />
         </div>
 
         {/* Challenge card */}
