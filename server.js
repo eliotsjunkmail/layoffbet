@@ -62,6 +62,63 @@ app.post('/api/admin/clear-seeded-data', async (req, res) => {
   }
 })
 
+app.post('/api/admin/import', async (req, res) => {
+  try {
+    const { username, password, items } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const adminUser = await db.getUserByUsername(username)
+    if (!adminUser || adminUser.password !== password || !adminUser.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'No items to import' })
+
+    const companies = await db.getCompanies()
+    const errors = []
+    let created = 0
+    let currentEventId = null
+
+    for (const item of items) {
+      if (item.type === 'event') {
+        currentEventId = null
+        if (!item.company || !item.title) { errors.push(`Skipped event: missing company or title`); continue }
+        const company = companies.find(c => c.name.toLowerCase() === (item.company || '').toLowerCase())
+        if (!company) { errors.push(`Company not found: "${item.company}"`); continue }
+        const expiresAt = new Date(Date.now() + (item.expiresDays || 30) * 24 * 60 * 60 * 1000).toISOString()
+        const event = await db.createEvent({
+          id: 'evt-' + crypto.randomBytes(8).toString('hex'),
+          companyId: company.id,
+          companyName: company.name,
+          title: item.title.trim(),
+          description: (item.description || '').trim(),
+          expiresAt,
+          status: 'active',
+          creatorId: adminUser.id,
+          creatorName: adminUser.username,
+          yesPool: 0,
+          noPool: 0,
+          createdAt: new Date().toISOString(),
+        })
+        currentEventId = event.id
+        created++
+      } else if (item.type === 'comment') {
+        if (!currentEventId) { errors.push(`Skipped comment: no preceding event`); continue }
+        if (!item.comment?.trim()) continue
+        await db.createComment({
+          id: 'cmt-' + crypto.randomBytes(8).toString('hex'),
+          eventId: currentEventId,
+          userId: adminUser.id,
+          content: item.comment.trim(),
+          displayName: adminUser.username,
+          createdAt: new Date().toISOString(),
+          upvotes: 0,
+        })
+      }
+    }
+
+    res.json({ created, errors })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/admin/delete-excess-bets', async (req, res) => {
   try {
     const { username, password, keepCount } = req.body
