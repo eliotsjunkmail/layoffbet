@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight, Share } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
@@ -523,16 +523,21 @@ export const Home = () => {
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors flex-shrink-0" />
-                  {chatUsersByCompany[c.id] > 0 && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-slate-400">
-                      <span className="w-4 h-4 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
-                        {chatUsersByCompany[c.id] > 99 ? '99+' : chatUsersByCompany[c.id]}
-                      </span>
-                      <span>{chatUsersByCompany[c.id] === 1 ? 'participant' : 'participants'}</span>
-                    </span>
-                  )}
                 </Link>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/${c.slug}`
+                      if (navigator.share) {
+                        navigator.share({ title: c.name, url }).catch(() => {})
+                      } else {
+                        navigator.clipboard.writeText(url).catch(() => {})
+                      }
+                    }}
+                    className="p-1.5 rounded-lg transition-colors flex-shrink-0 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  >
+                    <Share className="w-5 h-5" />
+                  </button>
                   <button
                     onClick={e => handleStar(e, c.id)}
                     className="p-1.5 rounded-lg transition-colors flex-shrink-0 hover:bg-amber-50 dark:hover:bg-amber-900/20"
