@@ -4,6 +4,7 @@ import { useStore } from './store/useStore'
 import { api } from './services/api'
 import { X, Search as SearchIcon } from 'lucide-react'
 import { APP_VERSION } from './constants'
+import { CompanyLogo } from './components/CompanyLogo'
 import type { ReactNode } from 'react'
 
 const API_BASE = ''
@@ -170,12 +171,15 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
   )
 }
 
+const PICK_LIMIT = 4
+
 const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const [search, setSearch] = useState('')
+  const [showAll, setShowAll] = useState(false)
 
   const activeByCompany = useMemo(() => {
     const map: Record<string, number> = {}
@@ -185,62 +189,72 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
     return map
   }, [events, getEffectiveStatus])
 
-  const visible = companies.filter(c => !hiddenCompanyIds.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name))
-  const withActiveBets = visible.filter(c => (activeByCompany[c.id] ?? 0) > 0)
-  const searchResults = search.trim()
+  const visible = useMemo(() =>
+    companies
+      .filter(c => !hiddenCompanyIds.includes(c.id))
+      .sort((a, b) => {
+        const diff = (activeByCompany[b.id] ?? 0) - (activeByCompany[a.id] ?? 0)
+        return diff !== 0 ? diff : a.name.localeCompare(b.name)
+      }),
+    [companies, hiddenCompanyIds, activeByCompany]
+  )
+
+  const filtered = search.trim()
     ? visible.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-    : []
+    : visible
+
+  const displayed = showAll || search.trim() ? filtered : filtered.slice(0, PICK_LIMIT)
+  const hasMore = !search.trim() && !showAll && filtered.length > PICK_LIMIT
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center p-4 pt-6">
       <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Follow a company</h2>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Pick one to see its predictions on your home feed.</p>
-        <div className="relative mb-4">
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-3">Pick one to see its predictions on your home feed.</p>
+
+        <div className="relative mb-3">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             autoFocus
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setShowAll(false) }}
             placeholder="Search for a company..."
-            className="w-full pl-9 pr-3 py-2.5 bg-gray-100 dark:bg-slate-800 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
           />
         </div>
-        {search.trim() ? (
-          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
-            {searchResults.length === 0
-              ? <p className="text-sm text-gray-400 dark:text-slate-500">No companies found.</p>
-              : searchResults.map(c => (
-                  <button key={c.id} onClick={() => onSelect(c.id)}
-                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
-                    {c.name}
-                  </button>
-                ))
-            }
-          </div>
-        ) : withActiveBets.length > 0 ? (
-          <>
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
-            <div className="flex flex-wrap gap-2">
-              {withActiveBets.map(c => (
-                <button key={c.id} onClick={() => onSelect(c.id)}
-                  className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
-                  {c.name} <span className="font-semibold">({activeByCompany[c.id]})</span>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {visible.slice(0, 12).map(c => (
-              <button key={c.id} onClick={() => onSelect(c.id)}
-                className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-medium text-sm rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
-                {c.name}
+
+        <div className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+          {displayed.length === 0 ? (
+            <p className="text-sm text-gray-400 dark:text-slate-500 px-4 py-3">No companies found.</p>
+          ) : displayed.map((c, i) => {
+            const activeCount = activeByCompany[c.id] ?? 0
+            return (
+              <button
+                key={c.id}
+                onClick={() => onSelect(c.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-left ${i > 0 ? 'border-t border-gray-100 dark:border-slate-800' : ''}`}
+              >
+                <CompanyLogo name={c.name} id={c.id} industry={c.industry} color={c.color} size="md" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{c.name}</div>
+                  {activeCount > 0 && (
+                    <div className="text-xs text-blue-600 dark:text-blue-400">{activeCount} active</div>
+                  )}
+                </div>
               </button>
-            ))}
-          </div>
-        )}
-        <p className="mt-5 text-center text-xs text-gray-400 dark:text-slate-500">
+            )
+          })}
+          {hasMore && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="w-full px-4 py-3 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors border-t border-gray-100 dark:border-slate-800 text-left"
+            >
+              all results →
+            </button>
+          )}
+        </div>
+
+        <p className="mt-4 text-center text-xs text-gray-400 dark:text-slate-500">
           Have an account?{' '}
           <a href="/login?gate=1" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</a>
         </p>
