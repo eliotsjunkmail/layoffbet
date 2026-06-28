@@ -77,6 +77,7 @@ export const CompanyPage = () => {
   const [editEventTitle, setEditEventTitle] = useState('')
   const [editEventDesc, setEditEventDesc] = useState('')
   const [chatDisplayName, setChatDisplayName] = useState('')
+  const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
   const prevMessageCountRef = useRef(0)
   const prevNewMessagesRef = useRef(0)
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
@@ -86,26 +87,23 @@ export const CompanyPage = () => {
 
   const company = companies.find(c => c.slug === slug)
 
+  const reloadChatSettings = (id: string, name: string) => {
+    api.getChatSettings(id, name)
+      .then(settings => {
+        if (settings.displayName) setChatDisplayName(settings.displayName)
+        setChatExpiresAt(settings.expiresAt || null)
+      })
+      .catch(() => {})
+  }
+
   // Load chat display name when company changes
   useEffect(() => {
-    if (company) {
-      api.getChatSettings(company.id, company.name)
-        .then(settings => {
-          if (settings.displayName) setChatDisplayName(settings.displayName)
-        })
-        .catch(() => {})
-    }
+    if (company) reloadChatSettings(company.id, company.name)
   }, [company?.id])
 
   // Reload chat display name when chat closes (picks up changes made in chat)
   useEffect(() => {
-    if (!chatOpen && company) {
-      api.getChatSettings(company.id, company.name)
-        .then(settings => {
-          if (settings.displayName) setChatDisplayName(settings.displayName)
-        })
-        .catch(() => {})
-    }
+    if (!chatOpen && company) reloadChatSettings(company.id, company.name)
   }, [chatOpen, company?.id])
 
   // Handle scrolling to newly created event
@@ -758,8 +756,8 @@ export const CompanyPage = () => {
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
     {company && (
       <>
-        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} />
-        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+        <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt} />
+        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} />
       </>
     )}
     </>
