@@ -4,6 +4,7 @@ import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload } from 'lucide-react'
 
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
+const ADS_ENABLED_KEY = 'lb-ads-enabled'
 
 type Tab = 'users' | 'bets' | 'comments' | 'companies' | 'events' | 'settings'
 
@@ -32,6 +33,7 @@ export const Admin = () => {
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ name: '', description: '', industry: '' })
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
+  const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [editEventForm, setEditEventForm] = useState({ title: '', description: '', expiresAt: '' })
   const [showAddEventForm, setShowAddEventForm] = useState(false)
@@ -152,6 +154,12 @@ export const Admin = () => {
     const next = !codeRequired
     setCodeRequired(next)
     localStorage.setItem(GATE_CODE_REQUIRED_KEY, next ? 'true' : 'false')
+  }
+
+  const toggleAds = () => {
+    const next = !adsEnabled
+    setAdsEnabled(next)
+    localStorage.setItem(ADS_ENABLED_KEY, next ? 'true' : 'false')
   }
 
   const parseCSVLine = (line: string): string[] => {
@@ -944,6 +952,19 @@ export const Admin = () => {
                 <span className="text-sm font-medium">{codeRequired ? 'Code required' : 'Open entry (no code needed)'}</span>
                 <div className={`relative w-11 h-6 rounded-full transition-colors ${codeRequired ? 'bg-blue-600' : 'bg-gray-300 dark:bg-slate-600'}`}>
                   <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${codeRequired ? 'translate-x-5' : ''}`} />
+                </div>
+              </button>
+            </div>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Ads</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Show or hide ad banners across the site.</p>
+              <button
+                onClick={toggleAds}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${adsEnabled ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300' : 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white'}`}
+              >
+                <span className="text-sm font-medium">{adsEnabled ? 'Ads visible' : 'Ads hidden'}</span>
+                <div className={`relative w-11 h-6 rounded-full transition-colors ${adsEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${adsEnabled ? 'translate-x-5' : ''}`} />
                 </div>
               </button>
             </div>

@@ -654,9 +654,10 @@ export const Home = () => {
                 </div>
               ) : null}
               {activeEvents.length === 0 && (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-4 text-center shadow-sm">
-                  <p className="text-sm text-gray-400 dark:text-slate-500">No active predictions for {c.name}</p>
-                </div>
+                <Link to={`/${c.slug}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl px-4 py-4 text-center shadow-sm transition-colors group">
+                  <p className="text-sm text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">No active predictions for {c.name}</p>
+                  <p className="text-xs text-blue-500 dark:text-blue-400 font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity">View company →</p>
+                </Link>
               )}
             </section>
           )

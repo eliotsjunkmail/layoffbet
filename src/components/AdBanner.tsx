@@ -93,11 +93,16 @@ const colorMap: Record<string, { border: string; bg: string; label: string; bran
   },
 }
 
+const ADS_ENABLED_KEY = 'lb-ads-enabled'
+
+export const adsEnabled = () => localStorage.getItem(ADS_ENABLED_KEY) !== 'false'
+
 export const AdBanner = () => {
   const [dismissed, setDismissed] = useState(false)
   const [idx] = useState(() => Math.floor(Math.random() * ADS.length))
 
   if (dismissed) return null
+  if (!adsEnabled()) return null
 
   const ad = ADS[idx]
   const c = colorMap[ad.color] ?? colorMap.chatgpt
