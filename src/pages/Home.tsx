@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight, Share } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight, Share2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
@@ -534,9 +534,10 @@ export const Home = () => {
                         navigator.clipboard.writeText(url).catch(() => {})
                       }
                     }}
-                    className="p-1.5 rounded-lg transition-colors flex-shrink-0 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors flex-shrink-0 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
                   >
-                    <Share className="w-5 h-5" />
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
                   </button>
                   <button
                     onClick={e => handleStar(e, c.id)}
