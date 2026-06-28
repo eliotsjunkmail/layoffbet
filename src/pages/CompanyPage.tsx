@@ -8,7 +8,7 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { SwipeCard } from '../components/SwipeCard'
 import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
-import { getProbability, timeUntil, formatDate, betMovementStr } from '../utils/odds'
+import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 import { api } from '../services/api'
 
@@ -610,7 +610,7 @@ export const CompanyPage = () => {
                           </p>
                         )}
                         <div className="space-y-1.5">
-                        {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
+                        {[...eventComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(cmt => {
                           const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                           const canEdit = currentUser && (cmt.userId === currentUser.id || currentUser.isAdmin)
                           return (
@@ -618,7 +618,7 @@ export const CompanyPage = () => {
                               <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed break-words">{cmt.content}</p>
                               <div className="flex items-center justify-between gap-2 mt-1">
                                 <p className="text-[11px] text-gray-400 dark:text-slate-500">
-                                  {new Date(cmt.createdAt).toLocaleDateString()}{cmt.editedAt && ' · edited'}
+                                  {timeAgo(cmt.createdAt)}{cmt.editedAt && ' · edited'}
                                 </p>
                                 <div className="flex items-center gap-1 flex-shrink-0">
                                   {canEdit && (

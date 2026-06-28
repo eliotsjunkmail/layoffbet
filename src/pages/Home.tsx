@@ -617,7 +617,7 @@ export const Home = () => {
                         </SwipeCard>
                         {(showComments || hidingComments) && (
                         <div className={`mt-1.5 ml-2 space-y-1.5 ${hidingComments ? 'comments-exit' : 'comments-enter'}`} onClick={ev => ev.stopPropagation()}>
-                          {[...eventComments].sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0)).map(cmt => {
+                          {[...eventComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(cmt => {
                             const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                             return (
                               <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2 flex items-start gap-2">
