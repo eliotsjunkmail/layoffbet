@@ -311,7 +311,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentUser) {
       setUnlocked(true)
-      window.scrollTo(0, 0)
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0)
+        document.documentElement.scrollTop = 0
+        document.body.scrollTop = 0
+      })
     } else {
       // When user logs out, always reset gate to locked so next user must enter password
       setUnlocked(false)
@@ -382,7 +386,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         // Always reset — SiteGate persists across sessions so stale true must be cleared
         setShowPickCompany(!selectedCompanyId)
         setUnlocked(true)
-        window.scrollTo(0, 0)
+        requestAnimationFrame(() => {
+          window.scrollTo(0, 0)
+          document.documentElement.scrollTop = 0
+          document.body.scrollTop = 0
+        })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
         console.error('[Gate] ERROR during anonymous user creation:', errorMsg, err)
