@@ -879,6 +879,7 @@ export const useStore = create<StoreState>()(
           comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: (c.upvotes ?? 0) + 1 } : c),
           upvotedCommentIds: [...s.upvotedCommentIds, commentId],
         }))
+        api.upvoteComment(commentId).catch(() => {})
       },
 
       recordShare: (eventId) => {
