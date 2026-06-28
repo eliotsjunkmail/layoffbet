@@ -251,6 +251,7 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
 
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
+  const companies = useStore(s => s.companies)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
@@ -287,6 +288,15 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
       }
     }
   }, [])
+
+  // Auto-select referral company pill once companies load
+  useEffect(() => {
+    if (unlocked || !companies.length) return
+    const slug = sessionStorage.getItem(REFERRAL_SLUG_KEY)
+    if (!slug) return
+    const company = companies.find(c => c.slug === slug)
+    if (company) setSelectedCompanyId(company.id)
+  }, [companies, unlocked])
 
   // Prevent code input from being auto-focused on mount
   useEffect(() => {
