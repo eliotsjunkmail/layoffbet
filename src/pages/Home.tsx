@@ -528,10 +528,11 @@ export const Home = () => {
                   <button
                     onClick={() => {
                       const url = `${window.location.origin}/${c.slug}`
+                      const text = `What's really happening at ${c.name}? Insiders are betting on it.`
                       if (navigator.share) {
-                        navigator.share({ title: c.name, url }).catch(() => {})
+                        navigator.share({ title: `${c.name} on Layoff Live`, text, url }).catch(() => {})
                       } else {
-                        navigator.clipboard.writeText(url).catch(() => {})
+                        navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {})
                       }
                     }}
                     className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors flex-shrink-0 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-xs font-medium"
