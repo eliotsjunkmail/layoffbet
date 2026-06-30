@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2, Share2 } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2, Share2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -30,7 +30,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [isLocked, setIsLocked] = useState(false)
   const [expiresAt, setExpiresAt] = useState<string | null>(null)
   const [showDurationPicker, setShowDurationPicker] = useState(false)
-  const [showLockedMessage, setShowLockedMessage] = useState(false)
   const [selectedDuration, setSelectedDuration] = useState(2)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -43,11 +42,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
   const pendingReactionsRef = useRef<Set<string>>(new Set())
-
-  const chatUserCount = useMemo(() => {
-    const uniqueUserIds = new Set(messages.map(m => m.userId))
-    return uniqueUserIds.size
-  }, [messages])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -192,8 +186,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
   }
 
-  const resetChatName = async () => {
+  const endTopic = async () => {
     if (!currentUser?.isAdmin) return
+    const topicName = chatDisplayName
     try {
       await api.updateChatSettings(companyId, {
         displayName: '',
@@ -204,8 +199,34 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       setEditNameValue(companyName + ' Chat')
       setIsLocked(false)
       setExpiresAt(null)
+
+      const now = new Date()
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      const endLocalId = `system-${Date.now()}`
+      const systemMessage: ChatMessage = {
+        id: endLocalId,
+        companyId,
+        userId: currentUser?.id || myUserIdRef.current,
+        username: 'System',
+        text: `Topic "${topicName}" ended\n${timeStr} • ${dateStr}`,
+        createdAt: new Date(),
+        reactions: []
+      }
+      setMessages(prev => [...prev, systemMessage])
+
+      try {
+        const saved = await api.addChatMessage(companyId, {
+          text: systemMessage.text,
+          username: 'System',
+          userId: currentUser?.id || myUserIdRef.current,
+        })
+        setMessages(prev => prev.map(m => m.id === endLocalId ? { ...m, id: saved.id } : m))
+      } catch (error) {
+        console.error('Failed to save topic ended message:', error)
+      }
     } catch (error) {
-      console.error('Failed to reset chat name:', error)
+      console.error('Failed to end topic:', error)
     }
   }
 
@@ -401,18 +422,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
   }
 
-  const getTimeRemaining = () => {
-    if (!expiresAt) return ''
-    const now = new Date().getTime()
-    const expires = new Date(expiresAt).getTime()
-    const diff = expires - now
-    if (diff <= 0) return 'now'
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    if (hours > 0) return `${hours}h ${minutes}m`
-    return `${minutes}m`
-  }
-
   const handleTopicExpired = async (topicName: string) => {
     // Reset chat name back to company name
     setChatDisplayName(companyName + ' Chat')
@@ -475,7 +484,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/40 flex flex-col">
+      <div className="flex-1 mt-6 sm:mt-10 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
@@ -494,30 +504,19 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             <>
               <div className="flex items-center gap-2 flex-1">
                 <div className="flex flex-col gap-0.5">
-                  <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+                  <div className="flex items-center gap-2">
+                    {isAutoUpdating && <span className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></span>}
+                    <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
+                  </div>
                   {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
                 </div>
-                <button
-                  onClick={() => {
-                    if (isLocked) {
-                      setShowLockedMessage(true)
-                    } else {
-                      setEditNameValue('')
-                      setShowDurationPicker(true)
-                    }
-                  }}
-                  className="px-2 py-1 border border-white hover:bg-white/20 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
-                  title={isLocked ? 'Topic is locked' : 'Start a new topic'}
-                >
-                  + Topic
-                </button>
                 {currentUser?.isAdmin && isLocked && (
                   <button
-                    onClick={resetChatName}
-                    className="p-1 hover:bg-blue-500 rounded transition-colors"
-                    title="Reset to default"
+                    onClick={endTopic}
+                    className="px-2 py-1 border border-white hover:bg-white/20 rounded text-xs font-medium text-white transition-colors whitespace-nowrap"
+                    title="End this topic"
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    End Topic
                   </button>
                 )}
               </div>
@@ -527,49 +526,35 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             {onShare && (
               <button
                 onClick={onShare}
-                className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-2 py-1.5 hover:bg-blue-500 rounded-lg transition-colors"
                 title="Share this chat"
               >
                 <Share2 className="w-5 h-5" />
+                <span className="text-sm font-medium">Share</span>
               </button>
             )}
             <button
               onClick={onClose}
               className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
-              title="Minimize chat"
+              title="Close chat"
             >
-              <ChevronDown className="w-6 h-6" />
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        {/* Second row: Status and user count */}
-        <div className="flex items-center justify-end">
-          <div className="flex items-center gap-2">
-            {currentUser?.isAdmin && (
+        {(currentUser?.isAdmin || !isAutoUpdating) && (
+          <div className="flex items-center justify-between">
+            {currentUser?.isAdmin ? (
               <button
                 onClick={() => setShowClearDialog(true)}
                 className="px-2 py-1 text-xs font-medium border border-white/30 hover:bg-white/20 rounded transition-colors"
               >
                 Clear
               </button>
-            )}
-            <div className="flex items-center gap-3">
-            {chatUserCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-100">
-                <span className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">
-                  {chatUserCount > 99 ? '99+' : chatUserCount}
-                </span>
-                <span>{chatUserCount === 1 ? 'participant' : 'participants'}</span>
-              </span>
-            )}
-            {isAutoUpdating ? (
-              <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
-                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                <span className="text-green-100">Connected</span>
-              </div>
-            ) : (
-              <>
+            ) : <div />}
+            {!isAutoUpdating && (
+              <div className="flex items-center gap-1">
                 <div className="flex items-center gap-1 px-2 py-1 rounded text-xs">
                   <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
                   <span className="text-yellow-100">Offline</span>
@@ -582,15 +567,28 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                 >
                   <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
-              </>
+              </div>
             )}
-            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
+        {!isLocked && (
+          <div className="flex justify-center pb-1">
+            <button
+              onClick={() => {
+                setEditNameValue('')
+                setShowDurationPicker(true)
+              }}
+              className="px-3 py-1.5 border border-gray-300 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 transition-colors"
+              title="Start a new topic"
+            >
+              + Topic
+            </button>
+          </div>
+        )}
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-400 dark:text-slate-500">
             <div className="text-center">
@@ -786,26 +784,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           </div>
         </div>
       )}
-
-      {/* Locked Message Modal */}
-      {showLockedMessage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg max-w-sm w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Chat name is temporarily locked</h3>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
-              You can edit the chat name again in <span className="font-semibold">{getTimeRemaining()}</span>
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowLockedMessage(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
