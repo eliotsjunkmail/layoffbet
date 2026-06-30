@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { AuthModal } from '../components/AuthModal'
 import { EmptyState } from '../components/EmptyState'
-import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug } from '../utils/odds'
+import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug, timeAgo } from '../utils/odds'
 
 export const EventDetail = () => {
   const { id, slug } = useParams<{ id?: string; slug?: string }>()
@@ -237,11 +237,13 @@ export const EventDetail = () => {
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColors[status]}`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
-            </div>
+            {status !== 'active' && (
+              <div className="flex items-center justify-between mb-3">
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColors[status]}`}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+              </div>
+            )}
             <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">{event.title}</h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
             <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-slate-500">
@@ -354,7 +356,7 @@ export const EventDetail = () => {
                 <div key={c.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 group">
                   <p className="text-sm text-gray-700 dark:text-slate-200 leading-relaxed">{c.content}</p>
                   <div className="flex items-center justify-between mt-1.5">
-                    <span className="text-xs text-gray-400 dark:text-slate-600">{new Date(c.createdAt).toLocaleString()}{c.editedAt && ' (edited)'}</span>
+                    <span className="text-xs text-gray-400 dark:text-slate-600">{timeAgo(c.createdAt)}{c.editedAt && ' (edited)'}</span>
                     {currentUser && (c.userId === currentUser.id || isAdmin) && (
                       <div className="flex gap-1">
                         <button onClick={() => handleEditComment(c)} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 transition-all">
