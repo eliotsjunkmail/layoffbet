@@ -407,13 +407,14 @@ export const CompanyPage = () => {
     }
   }
 
-  const handleShareChat = async () => {
+  const handleShareChat = async (liveTopicName?: string | null) => {
     const url = `${window.location.origin}/${company.slug}?chat=open`
-    const hasTopic = !!chatExpiresAt && !!chatDisplayName && chatDisplayName !== `${company.name} Chat`
+    const topicName = liveTopicName !== undefined ? liveTopicName : (chatExpiresAt && chatDisplayName !== `${company.name} Chat` ? chatDisplayName : null)
+    const hasTopic = !!topicName
     const text = hasTopic
-      ? `Join the "${chatDisplayName}" discussion on ${company.name} — Layoff Live`
+      ? `Join the "${topicName}" discussion on ${company.name} — Layoff Live`
       : `Join the live discussion on ${company.name} — Layoff Live`
-    const shareData = { title: hasTopic ? `"${chatDisplayName}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
+    const shareData = { title: hasTopic ? `"${topicName}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
     } else {

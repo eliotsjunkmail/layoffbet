@@ -49,7 +49,7 @@ const countWordMentions = (msgs: { text: string; username: string }[], word: str
   }, 0)
 }
 
-export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: () => void }) => {
+export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: (topicName: string | null) => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -719,7 +719,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           <div className="flex items-center gap-1">
             {onShare && (
               <button
-                onClick={onShare}
+                onClick={() => onShare(isLocked && chatDisplayName !== companyName + ' Chat' ? chatDisplayName : null)}
                 className="flex items-center gap-1 px-2 py-1.5 hover:bg-blue-500 rounded-lg transition-colors"
                 title="Share this chat"
               >
