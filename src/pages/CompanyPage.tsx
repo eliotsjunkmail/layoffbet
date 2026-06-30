@@ -409,8 +409,11 @@ export const CompanyPage = () => {
 
   const handleShareChat = async () => {
     const url = `${window.location.origin}/${company.slug}?chat=open`
-    const text = `Join the live discussion on ${company.name} — Layoff Live`
-    const shareData = { title: `${company.name} Chat on Layoff Live`, text, url }
+    const hasTopic = !!chatExpiresAt && !!chatDisplayName && chatDisplayName !== `${company.name} Chat`
+    const text = hasTopic
+      ? `Join the "${chatDisplayName}" discussion on ${company.name} — Layoff Live`
+      : `Join the live discussion on ${company.name} — Layoff Live`
+    const shareData = { title: hasTopic ? `"${chatDisplayName}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
     } else {
