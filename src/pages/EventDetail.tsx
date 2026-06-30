@@ -31,7 +31,7 @@ export const EventDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentError, setCommentError] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [betAmount, setBetAmount] = useState(10)
+  const betAmount = 10
   const [toast, setToast] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
@@ -276,6 +276,56 @@ export const EventDetail = () => {
             )}
           </div>
 
+          {/* Place bet */}
+          {status === 'active' && (
+            <div>
+              {userBet ? (
+                <div>
+                  <div className={`flex items-center gap-2 justify-center rounded-xl py-3 ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="font-semibold text-sm">You bet {userBet.side.toUpperCase()} with {userBet.amount} Coins</span>
+                  </div>
+                  <button
+                    onClick={() => { removeBet(id!); showToast(`Bet removed · ${userBet.amount} coins refunded`) }}
+                    className="w-full mt-2 text-xs text-gray-400 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors text-center py-1"
+                  >
+                    Remove bet
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {!currentUser && (
+                    <div className="text-xs text-gray-500 dark:text-slate-400 mb-3 text-center">
+                      {remainingGuestCoins} coins remaining
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleBet('no')}
+                      disabled={!canPlaceGuestBet && !currentUser}
+                      className="flex-1 py-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ✕ NO {betAmount}
+                    </button>
+                    <button
+                      onClick={() => handleBet('yes')}
+                      disabled={!canPlaceGuestBet && !currentUser}
+                      className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ✓ YES {betAmount}
+                    </button>
+                  </div>
+                  {currentUser === null && remainingGuestCoins < betAmount && (
+                    <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-2">
+                      Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline">Login</button> to get 100 coins daily.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Admin / Creator resolve */}
           {(isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
             <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5">
@@ -357,69 +407,6 @@ export const EventDetail = () => {
             </form>
           </div>
         </div>
-
-        {/* Sticky bet bar */}
-        {status === 'active' && (
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
-            {userBet ? (
-              <div>
-                <div className={`flex items-center gap-2 justify-center rounded-xl py-3 ${userBet.side === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="font-semibold text-sm">You bet {userBet.side.toUpperCase()} with {userBet.amount} Coins</span>
-                </div>
-                <button
-                  onClick={() => { removeBet(id!); showToast(`Bet removed · ${userBet.amount} coins refunded`) }}
-                  className="w-full mt-2 text-xs text-gray-400 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors text-center py-1"
-                >
-                  Remove bet
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex gap-2 mb-3">
-                  {[5, 10, 25, 50].map(amt => (
-                    <button
-                      key={amt}
-                      onClick={() => setBetAmount(amt)}
-                      disabled={!currentUser && amt > remainingGuestCoins}
-                      className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${betAmount === amt ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'} disabled:opacity-40 disabled:cursor-not-allowed`}
-                    >
-                      {amt}
-                    </button>
-                  ))}
-                </div>
-
-                {!currentUser && (
-                  <div className="text-xs text-gray-500 dark:text-slate-400 mb-3 text-center">
-                    {remainingGuestCoins} coins remaining
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleBet('no')}
-                    disabled={!canPlaceGuestBet && !currentUser}
-                    className="flex-1 py-3 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ✕ NO
-                  </button>
-                  <button
-                    onClick={() => handleBet('yes')}
-                    disabled={!canPlaceGuestBet && !currentUser}
-                    className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ✓ YES
-                  </button>
-                </div>
-                {currentUser === null && remainingGuestCoins < betAmount && (
-                  <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-2">
-                    Not enough coins. <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline">Login</button> to get 100 coins daily.
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {showAuthModal && <AuthModal onClose={handleAuthClose} prompt="Sign in or create a free account to place your bet." />}
