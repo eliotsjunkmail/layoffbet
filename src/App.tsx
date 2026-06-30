@@ -17,6 +17,7 @@ const GATE_ADMIN_PASS = 'admin'
 const ANON_FAVORITE_COMPANY_KEY = 'lb-anon-favorite-company'
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const REFERRAL_SLUG_KEY = 'lb-referral-slug'
+const REFERRAL_PATH_KEY = 'lb-referral-path'
 const GATE_SKIP_PATHS = new Set(['', 'login', 'create', 'search', 'bets', 'profile', 'admin', 'settings', 'feedback', 'content-guidelines', 'privacy-policy'])
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -293,12 +294,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   const launchLabel = new Date(launchDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
-  // Capture referral slug from URL before showing gate
+  // Capture referral slug + full deep-link path from URL before showing gate
   useEffect(() => {
     if (!unlocked) {
       const slug = window.location.pathname.replace(/^\//, '').split('/')[0]
       if (slug && !GATE_SKIP_PATHS.has(slug)) {
         sessionStorage.setItem(REFERRAL_SLUG_KEY, slug)
+        sessionStorage.setItem(REFERRAL_PATH_KEY, window.location.pathname + window.location.search)
       }
     }
   }, [])
@@ -419,23 +421,27 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         // Resolve effective company: gate selection OR referral slug from URL
         let effectiveCompanyId = selectedCompanyId
         const referralSlug = sessionStorage.getItem(REFERRAL_SLUG_KEY)
+        const referralPath = sessionStorage.getItem(REFERRAL_PATH_KEY)
         if (!effectiveCompanyId && referralSlug) {
           const referred = useStore.getState().companies.find(c => c.slug === referralSlug)
           if (referred) effectiveCompanyId = referred.id
         }
         sessionStorage.removeItem(REFERRAL_SLUG_KEY)
-
-        // If came from a company URL, redirect to home before unlocking
-        if (referralSlug) {
-          window.history.pushState({}, '', '/')
-        }
+        sessionStorage.removeItem(REFERRAL_PATH_KEY)
 
         if (effectiveCompanyId) {
           localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, effectiveCompanyId)
           useStore.getState().toggleFavoriteCompany(effectiveCompanyId)
         }
-        // Always reset — SiteGate persists across sessions so stale true must be cleared
-        setShowPickCompany(!effectiveCompanyId)
+
+        if (referralPath) {
+          // Shared company/bet/chat link — take the user straight to that screen
+          window.history.pushState({}, '', referralPath)
+          setShowPickCompany(false)
+        } else {
+          // Always reset — SiteGate persists across sessions so stale true must be cleared
+          setShowPickCompany(!effectiveCompanyId)
+        }
         setUnlocked(true)
         requestAnimationFrame(() => {
           window.scrollTo(0, 0)

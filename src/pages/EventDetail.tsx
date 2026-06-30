@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
+import { useParams, useNavigate, Link, Navigate, useSearchParams } from 'react-router-dom'
 import { Building2, Clock, Users, ChevronLeft, Send, Trash2, CheckCircle, Share2, Check, Edit2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { AuthModal } from '../components/AuthModal'
+import { ChatFAB } from '../components/ChatFAB'
+import { CompanyChat } from '../components/CompanyChat'
+import { api } from '../services/api'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug } from '../utils/odds'
 
 export const EventDetail = () => {
@@ -45,6 +48,10 @@ export const EventDetail = () => {
     return stored ? parseInt(stored) : 0
   })
   const recordShare = useStore(s => s.recordShare)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatDisplayName, setChatDisplayName] = useState('')
+  const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -55,11 +62,41 @@ export const EventDetail = () => {
   }, [anonCoinsSpent])
 
   const event = events.find(e => e.id === id)
+  const eventCompany = companies.find(c => c.id === event?.companyId)
 
   useEffect(() => {
-    if (event) document.title = `${event.companyName} | Layoff Live`
+    if (!event) return
+    document.title = chatOpen
+      ? `${event.companyName} Live Chat | Layoff Live`
+      : `${event.title} | ${event.companyName} | Layoff Live`
     return () => { document.title = 'Layoff Live' }
-  }, [event])
+  }, [event, chatOpen])
+
+  const reloadChatSettings = (companyId: string, companyName: string) => {
+    api.getChatSettings(companyId, companyName)
+      .then(settings => {
+        if (settings.displayName) setChatDisplayName(settings.displayName)
+        setChatExpiresAt(settings.expiresAt || null)
+      })
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    if (eventCompany) reloadChatSettings(eventCompany.id, eventCompany.name)
+  }, [eventCompany?.id])
+
+  useEffect(() => {
+    if (!chatOpen && eventCompany) reloadChatSettings(eventCompany.id, eventCompany.name)
+  }, [chatOpen, eventCompany?.id])
+
+  // Open chat directly when arriving via a shared chat link
+  useEffect(() => {
+    if (eventCompany && searchParams.get('chat') === 'open') {
+      setChatOpen(true)
+      searchParams.delete('chat')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [eventCompany?.id])
 
   if (!event || hiddenCompanyIds.includes(event.companyId)) return <Navigate to="/" replace />
 
@@ -198,6 +235,19 @@ export const EventDetail = () => {
     }
   }
 
+  const handleShareChat = async () => {
+    if (!eventCompany) return
+    const url = `${window.location.origin}/${eventCompany.slug}?chat=open`
+    const text = `Join the live discussion on ${eventCompany.name} — Layoff Live`
+    const shareData = { title: `${eventCompany.name} Chat on Layoff Live`, text, url }
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Chat link copied to clipboard')
+    }
+  }
+
   const statusColors = {
     active: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
     expired: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
@@ -206,6 +256,7 @@ export const EventDetail = () => {
   }
 
   return (
+    <>
     <Layout>
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors mb-4 text-sm">
         <ChevronLeft className="w-4 h-4" /> Back
@@ -417,5 +468,21 @@ export const EventDetail = () => {
         </div>
       )}
     </Layout>
+
+    {/* Community Chat - positioned outside Layout for correct fixed positioning */}
+    {eventCompany && (
+      <>
+        <ChatFAB companyName={eventCompany.name} onClick={() => setChatOpen(true)} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt} />
+        <CompanyChat
+          companyId={eventCompany.id}
+          companyName={eventCompany.name}
+          isOpen={chatOpen}
+          onClose={() => setChatOpen(false)}
+          onTopicCreated={() => reloadChatSettings(eventCompany.id, eventCompany.name)}
+          onShare={handleShareChat}
+        />
+      </>
+    )}
+    </>
   )
 }

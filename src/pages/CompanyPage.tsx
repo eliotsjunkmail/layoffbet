@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useParams, Link, useNavigate, Navigate, useLocation } from 'react-router-dom'
+import { useParams, Link, useNavigate, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
@@ -84,8 +84,18 @@ export const CompanyPage = () => {
   const shakeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const scrollTargetRef = useRef<HTMLDivElement>(null)
   const { state } = useLocation() as { state?: { newEventId?: string; showToast?: boolean } | null }
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const company = companies.find(c => c.slug === slug)
+
+  // Open chat directly when arriving via a shared chat link
+  useEffect(() => {
+    if (company && searchParams.get('chat') === 'open') {
+      setChatOpen(true)
+      searchParams.delete('chat')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [company?.id])
 
   const reloadChatSettings = (id: string, name: string) => {
     api.getChatSettings(id, name)
@@ -352,9 +362,10 @@ export const CompanyPage = () => {
   const prevVisitTimeRef = useRef<string | undefined>(company ? companyLastVisit[company.id] : undefined)
 
   useEffect(() => {
-    if (company) document.title = `${company.name} | Layoff Live`
+    if (!company) return
+    document.title = chatOpen ? `${company.name} Live Chat | Layoff Live` : `${company.name} | Layoff Live`
     return () => { document.title = 'Layoff Live' }
-  }, [company])
+  }, [company, chatOpen])
 
   useEffect(() => {
     if (company) markCompanyVisited(company.id)
@@ -392,6 +403,18 @@ export const CompanyPage = () => {
       await navigator.clipboard.writeText(`${shareData.text}\n${url}`)
       setShareCopied(true)
       setTimeout(() => setShareCopied(false), 2500)
+    }
+  }
+
+  const handleShareChat = async () => {
+    const url = `${window.location.origin}/${company.slug}?chat=open`
+    const text = `Join the live discussion on ${company.name} — Layoff Live`
+    const shareData = { title: `${company.name} Chat on Layoff Live`, text, url }
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Chat link copied to clipboard')
     }
   }
 
@@ -757,7 +780,7 @@ export const CompanyPage = () => {
     {company && (
       <>
         <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt} />
-        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} />
+        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} onShare={handleShareChat} />
       </>
     )}
     </>

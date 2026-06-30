@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2 } from 'lucide-react'
+import { ChevronDown, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2, Share2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -20,7 +20,7 @@ interface ChatMessage {
   reactions: Reaction[]
 }
 
-export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void }) => {
+export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: () => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -523,13 +523,24 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               </div>
             </>
           )}
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
-            title="Minimize chat"
-          >
-            <ChevronDown className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-1">
+            {onShare && (
+              <button
+                onClick={onShare}
+                className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+                title="Share this chat"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+              title="Minimize chat"
+            >
+              <ChevronDown className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Second row: Status and user count */}
