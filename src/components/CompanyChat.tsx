@@ -42,6 +42,30 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
   const pendingReactionsRef = useRef<Set<string>>(new Set())
+  const [shouldRender, setShouldRender] = useState(isOpen)
+  const [isVisible, setIsVisible] = useState(false)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
+      }
+      setShouldRender(true)
+      const raf = requestAnimationFrame(() => setIsVisible(true))
+      return () => cancelAnimationFrame(raf)
+    } else {
+      setIsVisible(false)
+      closeTimeoutRef.current = setTimeout(() => setShouldRender(false), 200)
+      return () => {
+        if (closeTimeoutRef.current) {
+          clearTimeout(closeTimeoutRef.current)
+          closeTimeoutRef.current = null
+        }
+      }
+    }
+  }, [isOpen])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -481,11 +505,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
   }
 
-  if (!isOpen) return null
+  if (!shouldRender) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex flex-col">
-      <div className="flex-1 mt-6 sm:mt-10 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div className={`fixed inset-0 z-50 bg-black/40 flex flex-col transition-opacity duration-200 ease-out ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`flex-1 mt-6 sm:mt-10 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden transition-transform duration-200 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
       {/* Header */}
       <div className="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 border-b border-blue-700">
         {/* First row: Title and minimize button */}
