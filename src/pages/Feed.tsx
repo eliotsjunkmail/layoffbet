@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, Clock, Star, PlusCircle, ChevronDown } from 'lucide-react'
+import { TrendingUp, Clock, Star, PlusCircle, ChevronDown, SearchX } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
+import { EmptyState } from '../components/EmptyState'
 import { getProbability, timeUntil } from '../utils/odds'
 
 export const Feed = () => {
@@ -93,16 +94,17 @@ export const Feed = () => {
       </div>
 
       {sorted.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="text-5xl mb-4">🔍</div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No predictions here</h3>
-          <p className="text-gray-400 dark:text-slate-400 text-sm mb-6">
-            {showFavoritesOnly ? 'No active predictions for your favorite companies.' : 'No active predictions for this company yet.'}
-          </p>
-          <Link to="/create" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors text-sm">
-            <PlusCircle className="w-4 h-4" /> Create a Prediction
-          </Link>
-        </div>
+        <EmptyState
+          icon={SearchX}
+          title="No predictions here"
+          description={showFavoritesOnly ? 'No active predictions for your favorite companies.' : 'No active predictions for this company yet.'}
+          action={
+            <Link to="/create" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors text-sm">
+              <PlusCircle className="w-4 h-4" /> Create a Prediction
+            </Link>
+          }
+          className="py-20"
+        />
       ) : (
         <div className="space-y-3">
           {sorted.map(event => {

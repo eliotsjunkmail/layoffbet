@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate, useLocation, useSearchParams } from 'react-router-dom'
-import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft } from 'lucide-react'
+import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft, TrendingUp } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { SwipeCard } from '../components/SwipeCard'
+import { EmptyState } from '../components/EmptyState'
 import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
 import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
@@ -745,12 +746,15 @@ export const CompanyPage = () => {
           </div>
 
           {companyEvents.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-400 dark:text-slate-500 text-sm mb-4">No predictions yet for this company.</p>
-              <Link to="/create" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
-                <PlusCircle className="w-4 h-4" /> Create a Prediction
-              </Link>
-            </div>
+            <EmptyState
+              icon={TrendingUp}
+              description="No predictions yet for this company."
+              action={
+                <Link to="/create" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors">
+                  <PlusCircle className="w-4 h-4" /> Create a Prediction
+                </Link>
+              }
+            />
           )}
         </div>
 

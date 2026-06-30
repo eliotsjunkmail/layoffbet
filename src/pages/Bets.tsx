@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { CheckCircle, Clock, ChevronRight, ChevronLeft, X } from 'lucide-react'
+import { CheckCircle, Clock, ChevronRight, ChevronLeft, X, Dices, ClipboardList } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
+import { EmptyState } from '../components/EmptyState'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 import confetti from 'canvas-confetti'
@@ -278,15 +279,13 @@ export const Bets = () => {
       </div>
 
       {totalShown === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-4xl mb-3">{tab === 'active' ? '🎲' : '📋'}</div>
-          <p className="text-gray-500 dark:text-slate-400 text-sm mb-3">
-            {tab === 'active' ? 'No active bets or pinned predictions.' : 'No completed bets yet.'}
-          </p>
-          {tab === 'active' && (
+        <EmptyState
+          icon={tab === 'active' ? Dices : ClipboardList}
+          description={tab === 'active' ? 'No active bets or pinned predictions.' : 'No completed bets yet.'}
+          action={tab === 'active' && (
             <button onClick={() => navigate('/')} className="text-violet-600 dark:text-violet-400 text-sm hover:underline">Browse predictions →</button>
           )}
-        </div>
+        />
       ) : (
         <div className="space-y-6">
           {shown.map(({ companyName, slug, items }) => (

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
-import { Building2, Clock, Users, X, Send, Trash2, CheckCircle, Share2, Check, Edit2 } from 'lucide-react'
+import { Building2, Clock, Users, X, Send, Trash2, CheckCircle, Share2, Check, Edit2, MessageSquare } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { AuthModal } from '../components/AuthModal'
+import { EmptyState } from '../components/EmptyState'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug } from '../utils/odds'
 
 export const EventDetail = () => {
@@ -297,7 +298,7 @@ export const EventDetail = () => {
             <div className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">Discussion ({eventComments.length})</div>
             <div className="space-y-3 mb-4">
               {eventComments.length === 0 && (
-                <p className="text-gray-400 dark:text-slate-500 text-sm text-center py-4">No comments yet. Be the first.</p>
+                <EmptyState icon={MessageSquare} description="No comments yet. Be the first." size="sm" />
               )}
               {eventComments.map(c => (
                 <div key={c.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 group">

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search as SearchIcon, Eye } from 'lucide-react'
+import { Search as SearchIcon, Eye, SearchX, Building2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
+import { EmptyState } from '../components/EmptyState'
 import { getProbability } from '../utils/odds'
 
 const fmtViews = (n: number) => {
@@ -85,7 +86,7 @@ export const Search = () => {
               </Link>
             )
           })}
-          {matchedCompanies.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm">No companies found.</p>}
+          {matchedCompanies.length === 0 && <EmptyState icon={Building2} description="No companies found." size="sm" />}
         </div>
       </section>
 
@@ -117,7 +118,7 @@ export const Search = () => {
               </Link>
             )
           })}
-          {matchedEvents.length === 0 && <p className="text-gray-400 dark:text-slate-500 text-sm">No predictions found.</p>}
+          {matchedEvents.length === 0 && <EmptyState icon={SearchX} description="No predictions found." size="sm" />}
         </div>
       </section>
     </Layout>
