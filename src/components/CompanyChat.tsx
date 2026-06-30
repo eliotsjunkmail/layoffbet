@@ -71,6 +71,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const timeRemainingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const myUserIdRef = useRef<string>(currentUser?.id || `anon-${Date.now()}`)
   const pendingReactionsRef = useRef<Set<string>>(new Set())
+  const [typingUsers, setTypingUsers] = useState<{ userId: string; username: string }[]>([])
+  const myChatNameRef = useRef<string | null>(null)
+  const lastTypingPingRef = useRef(0)
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(false)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -293,7 +296,34 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
     pollingIntervalRef.current = setInterval(() => {
       loadMessages()
+      loadTypingUsers()
     }, 3000) // Poll every 3 seconds
+  }
+
+  const loadTypingUsers = async () => {
+    try {
+      const typers = await api.getTypingUsers(companyId, myUserIdRef.current)
+      if (Array.isArray(typers)) setTypingUsers(typers)
+    } catch (error) {
+      console.error('Failed to load typing users:', error)
+    }
+  }
+
+  const notifyTyping = async () => {
+    const now = Date.now()
+    if (now - lastTypingPingRef.current < 1500) return
+    lastTypingPingRef.current = now
+
+    const userId = myUserIdRef.current
+    try {
+      if (!myChatNameRef.current) {
+        const nameResponse = await api.getOrAssignChatName(companyId, userId)
+        myChatNameRef.current = nameResponse.chatName
+      }
+      await api.setTyping(companyId, userId, myChatNameRef.current || 'Someone')
+    } catch (error) {
+      console.error('Failed to send typing status:', error)
+    }
   }
 
   const stopPolling = () => {
@@ -899,6 +929,19 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
         <div ref={messagesEndRef} />
       </div>
 
+      {typingUsers.length > 0 && (
+        <div className="px-4 sm:px-6 pb-1 flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500 italic">
+          <span className="flex gap-0.5">
+            <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-slate-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-slate-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-slate-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+          </span>
+          {typingUsers.length === 1
+            ? `${typingUsers[0].username} is typing...`
+            : `${typingUsers.length} people are typing...`}
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
         {showPollComposer ? (
@@ -988,7 +1031,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           <input
             type="text"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => { setInput(e.target.value); notifyTyping() }}
             onKeyPress={e => {
               if (e.key === 'Enter') handleSend()
             }}

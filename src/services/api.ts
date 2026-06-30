@@ -290,6 +290,26 @@ export const api = {
     return response.json()
   },
 
+  setTyping: async (companyId: string, userId: string, username: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat/typing`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, username }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to send typing status')
+    }
+    return response.json()
+  },
+
+  getTypingUsers: async (companyId: string, userId: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat/typing?userId=${encodeURIComponent(userId)}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch typing users')
+    }
+    return response.json()
+  },
+
   // Chat user names endpoints
   getOrAssignChatName: async (companyId: string, userId: string) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat-names/${userId}`, {

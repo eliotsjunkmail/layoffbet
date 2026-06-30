@@ -547,6 +547,35 @@ app.put('/api/companies/:companyId/chat/:messageId/text', async (req, res) => {
   }
 })
 
+// ===== CHAT TYPING INDICATOR (ephemeral, in-memory) =====
+const TYPING_TTL_MS = 4000
+const typingByCompany = new Map() // companyId -> Map(userId -> { username, updatedAt })
+
+app.post('/api/companies/:companyId/chat/typing', (req, res) => {
+  const { userId, username } = req.body
+  if (!userId) return res.status(400).json({ error: 'userId required' })
+  if (!typingByCompany.has(req.params.companyId)) typingByCompany.set(req.params.companyId, new Map())
+  typingByCompany.get(req.params.companyId).set(userId, { username: username || 'Someone', updatedAt: Date.now() })
+  res.json({ ok: true })
+})
+
+app.get('/api/companies/:companyId/chat/typing', (req, res) => {
+  const typers = typingByCompany.get(req.params.companyId)
+  const now = Date.now()
+  const result = []
+  if (typers) {
+    for (const [userId, info] of typers.entries()) {
+      if (now - info.updatedAt > TYPING_TTL_MS) {
+        typers.delete(userId)
+        continue
+      }
+      if (userId === req.query.userId) continue
+      result.push({ userId, username: info.username })
+    }
+  }
+  res.json(result)
+})
+
 // ===== COMPANIES =====
 app.get('/api/companies', async (req, res) => {
   try {
