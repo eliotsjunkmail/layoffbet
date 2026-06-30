@@ -182,16 +182,12 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
   }
 
-  const handleShareClick = async () => {
+  const handleShareClick = () => {
     if (!onShare) return
-    try {
-      const settings = await api.getChatSettings(companyId, companyName)
-      const hasTopic = !!settings.isLocked && !!settings.displayName && settings.displayName !== companyName + ' Chat'
-      onShare(hasTopic ? settings.displayName : null)
-    } catch (error) {
-      console.error('Failed to load chat settings for share:', error)
-      onShare(isLocked && chatDisplayName !== companyName + ' Chat' ? chatDisplayName : null)
-    }
+    const activeTopic = expiresAt && new Date(expiresAt) > new Date() && chatDisplayName !== companyName + ' Chat'
+      ? chatDisplayName
+      : null
+    onShare(activeTopic)
   }
 
   const handleSaveChatName = async () => {
