@@ -69,7 +69,7 @@ export const Feed = () => {
             </button>
           )}
         </div>
-        <Link to="/create" className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full font-medium transition-colors">
+        <Link to="/create" state={selectedCompanyId ? { companyId: selectedCompanyId } : undefined} className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full font-medium transition-colors">
           <PlusCircle className="w-3.5 h-3.5" /> New
         </Link>
       </div>
@@ -99,7 +99,7 @@ export const Feed = () => {
           title="No predictions here"
           description={showFavoritesOnly ? 'No active predictions for your favorite companies.' : 'No active predictions for this company yet.'}
           action={
-            <Link to="/create" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors text-sm">
+            <Link to="/create" state={selectedCompanyId ? { companyId: selectedCompanyId } : undefined} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors text-sm">
               <PlusCircle className="w-4 h-4" /> Create a Prediction
             </Link>
           }
