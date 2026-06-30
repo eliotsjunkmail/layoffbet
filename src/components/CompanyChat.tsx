@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2, Share2 } from 'lucide-react'
+import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCircle, Edit2, Share2, Plus, MessageSquarePlus, BarChart3 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
@@ -10,6 +10,11 @@ interface Reaction {
   userIds: string[]
 }
 
+interface PollVotes {
+  poll: true
+  votes: Record<number, string[]>
+}
+
 interface ChatMessage {
   id: string
   companyId: string
@@ -17,7 +22,31 @@ interface ChatMessage {
   username: string
   text: string
   createdAt: Date
-  reactions: Reaction[]
+  reactions: Reaction[] | PollVotes
+}
+
+const POLL_PREFIX = 'POLL::'
+
+const isPollMessage = (msg: { text: string }) => msg.text.startsWith(POLL_PREFIX)
+
+const parsePoll = (text: string): { options: string[] } | null => {
+  if (!text.startsWith(POLL_PREFIX)) return null
+  try {
+    return JSON.parse(text.slice(POLL_PREFIX.length))
+  } catch {
+    return null
+  }
+}
+
+const TRACKED_WORD = 'AI'
+
+const countWordMentions = (msgs: { text: string; username: string }[], word: string) => {
+  const regex = new RegExp(`\\b${word}\\b`, 'gi')
+  return msgs.reduce((count, m) => {
+    if (m.username === 'System' || isPollMessage(m)) return count
+    const matches = m.text.match(regex)
+    return count + (matches ? matches.length : 0)
+  }, 0)
 }
 
 export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: () => void }) => {
@@ -45,6 +74,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [shouldRender, setShouldRender] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(false)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const [showPollComposer, setShowPollComposer] = useState(false)
+  const [pollChoices, setPollChoices] = useState<string[]>(['', ''])
 
   useEffect(() => {
     if (isOpen) {
@@ -300,9 +332,12 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             const existing = prevMessages.find(p => p.id === loaded.id)
             if (!existing) return loaded
 
+            // Poll votes are trusted straight from the server (not array-shaped reactions)
+            if (isPollMessage(loaded)) return loaded
+
             // Always preserve existing reactions and merge with server data
             // This prevents reactions from disappearing during polling
-            const mergedReactions = [...(loaded.reactions || [])]
+            const mergedReactions = [...(Array.isArray(loaded.reactions) ? loaded.reactions : [])]
 
             // Add any local reactions that might not be on the server yet (pending)
             if (existing.reactions && Array.isArray(existing.reactions)) {
@@ -381,7 +416,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
     const updatedMessages = messages.map(msg => {
       if (msg.id === messageId) {
-        const reactions = [...msg.reactions]
+        const reactions = [...(msg.reactions as Reaction[])]
         const reactionIndex = reactions.findIndex(r => r.type === reactionType)
 
         if (reactionIndex >= 0) {
@@ -415,6 +450,75 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       } finally {
         pendingReactionsRef.current.delete(key)
       }
+    }
+  }
+
+  const toggleVote = async (messageId: string, optionIndex: number) => {
+    const userId = myUserIdRef.current
+    const msg = messages.find(m => m.id === messageId)
+    if (!msg) return
+    const current = msg.reactions as PollVotes
+    const votes: Record<number, string[]> = {}
+    Object.entries(current.votes || {}).forEach(([k, ids]) => {
+      const remaining = ids.filter(id => id !== userId)
+      if (remaining.length > 0) votes[Number(k)] = remaining
+    })
+    const alreadyVoted = (current.votes?.[optionIndex] || []).includes(userId)
+    if (!alreadyVoted) {
+      votes[optionIndex] = [...(votes[optionIndex] || []), userId]
+    }
+    const updated: PollVotes = { poll: true, votes }
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions: updated } : m))
+    try {
+      await api.updateChatMessageReactions(companyId, messageId, updated)
+    } catch (error) {
+      console.error('Failed to save vote:', error)
+    }
+  }
+
+  const updatePollChoice = (index: number, value: string) => {
+    setPollChoices(prev => {
+      const next = [...prev]
+      next[index] = value
+      if (index === next.length - 1 && value.trim() !== '' && next.length < 8) {
+        next.push('')
+      }
+      return next
+    })
+  }
+
+  const closePollComposer = () => {
+    setShowPollComposer(false)
+    setPollChoices(['', ''])
+  }
+
+  const handleSendPoll = async () => {
+    const options = pollChoices.map(c => c.trim()).filter(Boolean)
+    if (options.length < 2) return
+
+    const userId = myUserIdRef.current
+    try {
+      const nameResponse = await api.getOrAssignChatName(companyId, userId)
+      const chatName = nameResponse.chatName
+
+      const pollReactions: PollVotes = { poll: true, votes: {} }
+      const messageData = {
+        userId,
+        username: chatName,
+        text: POLL_PREFIX + JSON.stringify({ options }),
+        reactions: pollReactions,
+      }
+
+      const savedMessage = await api.addChatMessage(companyId, messageData)
+      const newMessage: ChatMessage = {
+        ...savedMessage,
+        createdAt: new Date(savedMessage.createdAt),
+        reactions: pollReactions,
+      }
+      setMessages(prev => [...prev, newMessage])
+      closePollComposer()
+    } catch (error) {
+      console.error('Failed to send poll:', error)
     }
   }
 
@@ -507,6 +611,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
   if (!shouldRender) return null
 
+  const aiMentionCount = countWordMentions(messages, TRACKED_WORD)
+
   return (
     <div className={`fixed inset-0 z-50 bg-black/40 flex flex-col transition-opacity duration-200 ease-out ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className={`flex-1 mt-6 sm:mt-10 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden transition-transform duration-200 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
@@ -532,7 +638,17 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                     {isAutoUpdating && <span className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></span>}
                     <h2 className="font-semibold text-lg">{chatDisplayName}</h2>
                   </div>
-                  {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
+                  <div className="flex items-center gap-1.5">
+                    {timeRemaining && <span className="text-xs text-blue-200">{timeRemaining} left</span>}
+                    {aiMentionCount > 0 && (
+                      <span
+                        className="px-1.5 py-0.5 bg-white/15 rounded-full text-[10px] font-medium text-blue-100"
+                        title={`"${TRACKED_WORD}" mentioned ${aiMentionCount} time${aiMentionCount === 1 ? '' : 's'} in this chat`}
+                      >
+                        🤖 {TRACKED_WORD} ×{aiMentionCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {currentUser?.isAdmin && isLocked && (
                   <button
@@ -599,20 +715,6 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
-        {!isLocked && (
-          <div className="flex justify-center pb-1">
-            <button
-              onClick={() => {
-                setEditNameValue('')
-                setShowDurationPicker(true)
-              }}
-              className="px-3 py-1.5 border border-gray-300 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-xs font-medium text-gray-600 dark:text-slate-300 transition-colors"
-              title="Start a new topic"
-            >
-              + Topic
-            </button>
-          </div>
-        )}
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-400 dark:text-slate-500">
             <div className="text-center">
@@ -637,6 +739,52 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               )
             }
 
+            const pollData = parsePoll(msg.text)
+            if (pollData) {
+              const votes = (msg.reactions as PollVotes)?.votes || {}
+              const totalVotes = Object.values(votes).reduce((sum, ids) => sum + (ids?.length || 0), 0)
+              return (
+                <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`}>
+                  <div className="max-w-xs w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-gray-500 dark:text-slate-400">
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>{msg.username} started a poll</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {pollData.options.map((option, idx) => {
+                        const optionVotes = votes[idx]?.length || 0
+                        const pct = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0
+                        const hasVoted = (votes[idx] || []).includes(myUserIdRef.current)
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => toggleVote(msg.id, idx)}
+                            className={`relative w-full text-left px-3 py-2 rounded-lg border overflow-hidden transition-colors ${
+                              hasVoted
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-700'
+                            }`}
+                          >
+                            <div
+                              className="absolute inset-y-0 left-0 bg-blue-100 dark:bg-blue-900/30 transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                            <div className="relative flex items-center justify-between gap-2 text-sm">
+                              <span className="text-gray-900 dark:text-white">{option}</span>
+                              <span className="text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{pct}% ({optionVotes})</span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">{totalVotes} vote{totalVotes === 1 ? '' : 's'}</p>
+                  </div>
+                </div>
+              )
+            }
+
+            const reactions = msg.reactions as Reaction[]
+
             return (
               <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} group mb-2`}>
                 <div className={`flex items-end gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -656,7 +804,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                       >
                         <p className="text-sm">{msg.text}</p>
                       </div>
-                      {!isOwnMessage && msg.reactions.length === 0 && (
+                      {!isOwnMessage && reactions.length === 0 && (
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                           {(['thumbsup'] as ReactionType[]).map(reactionType => (
                             <button
@@ -670,9 +818,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                           ))}
                         </div>
                       )}
-                      {msg.reactions.length > 0 && (
+                      {reactions.length > 0 && (
                         <div className="flex gap-1 items-center flex-wrap mt-2">
-                          {msg.reactions.map(reaction => {
+                          {reactions.map(reaction => {
                             const hasUserReacted = reaction.userIds.includes(myUserIdRef.current)
                             return (
                               <button
@@ -715,19 +863,86 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
+        {showPollComposer && (
+          <div className="relative bg-gray-100 dark:bg-slate-800 rounded-2xl mb-2 px-3 py-2">
+            <button
+              onClick={closePollComposer}
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500 rounded-full text-gray-700 dark:text-slate-200 transition-colors"
+              title="Cancel poll"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 pr-8 mb-1">New Poll</p>
+            <div className="divide-y divide-gray-200 dark:divide-slate-600">
+              {pollChoices.map((choice, idx) => (
+                <input
+                  key={idx}
+                  type="text"
+                  value={choice}
+                  onChange={e => updatePollChoice(idx, e.target.value)}
+                  onKeyPress={e => {
+                    if (e.key === 'Enter') handleSendPoll()
+                  }}
+                  placeholder={`Choice ${idx + 1}`}
+                  autoFocus={idx === 0}
+                  className="w-full bg-transparent py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none"
+                />
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex gap-2">
+          <div className="relative">
+            <button
+              onClick={() => setShowActionsMenu(prev => !prev)}
+              className="p-2 sm:p-2.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              title="More options"
+            >
+              <Plus className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform ${showActionsMenu ? 'rotate-45' : ''}`} />
+            </button>
+            {showActionsMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowActionsMenu(false)} />
+                <div className="absolute bottom-full left-0 mb-2 w-44 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden z-20">
+                  {!isLocked && (
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false)
+                        setEditNameValue('')
+                        setShowDurationPicker(true)
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      <MessageSquarePlus className="w-4 h-4" />
+                      Add Topic
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowActionsMenu(false)
+                      setShowPollComposer(true)
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Create Poll
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyPress={e => {
-              if (e.key === 'Enter') handleSend()
+              if (e.key === 'Enter') showPollComposer ? handleSendPoll() : handleSend()
             }}
-            placeholder="Share your thoughts anonymously"
+            placeholder={showPollComposer ? 'Add comment or Send' : 'Share your thoughts anonymously'}
             className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
-            onClick={handleSend}
+            onClick={showPollComposer ? handleSendPoll : handleSend}
             className="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:p-2.5 rounded-lg transition-colors"
           >
             <Send className="w-4 h-4 sm:w-5 sm:h-5" />
