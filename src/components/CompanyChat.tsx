@@ -182,6 +182,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
   }
 
+  const handleShareClick = async () => {
+    if (!onShare) return
+    try {
+      const settings = await api.getChatSettings(companyId, companyName)
+      const hasTopic = !!settings.isLocked && !!settings.displayName && settings.displayName !== companyName + ' Chat'
+      onShare(hasTopic ? settings.displayName : null)
+    } catch (error) {
+      console.error('Failed to load chat settings for share:', error)
+      onShare(isLocked && chatDisplayName !== companyName + ' Chat' ? chatDisplayName : null)
+    }
+  }
+
   const handleSaveChatName = async () => {
     if (!editNameValue.trim()) return
     if (!isLocked) {
@@ -719,7 +731,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
           <div className="flex items-center gap-1">
             {onShare && (
               <button
-                onClick={() => onShare(isLocked && chatDisplayName !== companyName + ' Chat' ? chatDisplayName : null)}
+                onClick={handleShareClick}
                 className="flex items-center gap-1 px-2 py-1.5 hover:bg-blue-500 rounded-lg transition-colors"
                 title="Share this chat"
               >
