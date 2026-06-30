@@ -294,6 +294,12 @@ export const db = {
     return fromDb(data)
   },
 
+  async updateMessageText(messageId, companyId, text) {
+    const { data, error } = await supabase.from('chat_messages').update({ text }).eq('id', messageId).eq('company_id', companyId).select().maybeSingle()
+    throwOnError(error, 'updateMessageText')
+    return fromDb(data)
+  },
+
   // ===== FAVORITES =====
   async getFavorites(userId) {
     const { data, error } = await supabase.from('favorites').select('company_id').eq('user_id', userId)

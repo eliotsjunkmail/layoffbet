@@ -537,6 +537,16 @@ app.put('/api/companies/:companyId/chat/:messageId/reactions', async (req, res) 
   }
 })
 
+app.put('/api/companies/:companyId/chat/:messageId/text', async (req, res) => {
+  try {
+    const message = await db.updateMessageText(req.params.messageId, req.params.companyId, req.body.text)
+    if (!message) return res.status(404).json({ error: 'Message not found' })
+    res.json(message)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== COMPANIES =====
 app.get('/api/companies', async (req, res) => {
   try {

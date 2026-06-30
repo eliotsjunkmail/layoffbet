@@ -29,7 +29,7 @@ const POLL_PREFIX = 'POLL::'
 
 const isPollMessage = (msg: { text: string }) => msg.text.startsWith(POLL_PREFIX)
 
-const parsePoll = (text: string): { options: string[] } | null => {
+const parsePoll = (text: string): { question?: string; options: string[] } | null => {
   if (!text.startsWith(POLL_PREFIX)) return null
   try {
     return JSON.parse(text.slice(POLL_PREFIX.length))
@@ -76,7 +76,9 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [showPollComposer, setShowPollComposer] = useState(false)
+  const [pollQuestion, setPollQuestion] = useState('')
   const [pollChoices, setPollChoices] = useState<string[]>(['', ''])
+  const [editingPollId, setEditingPollId] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -489,12 +491,34 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
   const closePollComposer = () => {
     setShowPollComposer(false)
+    setPollQuestion('')
     setPollChoices(['', ''])
+    setEditingPollId(null)
   }
 
-  const handleSendPoll = async () => {
+  const startEditPoll = (msg: ChatMessage, pollData: { question?: string; options: string[] }) => {
+    setEditingPollId(msg.id)
+    setPollQuestion(pollData.question || '')
+    setPollChoices([...pollData.options, ''])
+    setShowPollComposer(true)
+  }
+
+  const handleSavePoll = async () => {
     const options = pollChoices.map(c => c.trim()).filter(Boolean)
     if (options.length < 2) return
+    const question = pollQuestion.trim()
+
+    if (editingPollId) {
+      const newText = POLL_PREFIX + JSON.stringify({ question: question || undefined, options })
+      try {
+        await api.updateChatMessageText(companyId, editingPollId, newText)
+        setMessages(prev => prev.map(m => m.id === editingPollId ? { ...m, text: newText } : m))
+        closePollComposer()
+      } catch (error) {
+        console.error('Failed to update poll:', error)
+      }
+      return
+    }
 
     const userId = myUserIdRef.current
     try {
@@ -505,7 +529,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
       const messageData = {
         userId,
         username: chatName,
-        text: POLL_PREFIX + JSON.stringify({ options }),
+        text: POLL_PREFIX + JSON.stringify({ question: question || undefined, options }),
         reactions: pollReactions,
       }
 
@@ -746,10 +770,24 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
               return (
                 <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`}>
                   <div className="max-w-xs w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-2xl p-3">
-                    <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-gray-500 dark:text-slate-400">
-                      <BarChart3 className="w-3.5 h-3.5" />
-                      <span>{msg.username} started a poll</span>
+                    <div className="flex items-center justify-between gap-1.5 mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-slate-400">
+                        <BarChart3 className="w-3.5 h-3.5" />
+                        <span>{msg.username} started a poll</span>
+                      </div>
+                      {isOwnMessage && (
+                        <button
+                          onClick={() => startEditPoll(msg, pollData)}
+                          className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          title="Edit poll"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
+                    {pollData.question && (
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{pollData.question}</p>
+                    )}
                     <div className="space-y-1.5">
                       {pollData.options.map((option, idx) => {
                         const optionVotes = votes[idx]?.length || 0
@@ -863,8 +901,8 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
 
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
-        {showPollComposer && (
-          <div className="relative bg-gray-100 dark:bg-slate-800 rounded-2xl mb-2 px-3 py-2">
+        {showPollComposer ? (
+          <div className="relative bg-gray-100 dark:bg-slate-800 rounded-2xl px-3 py-2">
             <button
               onClick={closePollComposer}
               className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500 rounded-full text-gray-700 dark:text-slate-200 transition-colors"
@@ -872,7 +910,14 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             >
               <X className="w-3.5 h-3.5" />
             </button>
-            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 pr-8 mb-1">New Poll</p>
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 pr-8 mb-1">{editingPollId ? 'Edit Poll' : 'New Poll'}</p>
+            <input
+              type="text"
+              value={pollQuestion}
+              onChange={e => setPollQuestion(e.target.value)}
+              placeholder="Question (optional)"
+              className="w-full bg-transparent py-2 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none border-b border-gray-200 dark:border-slate-600"
+            />
             <div className="divide-y divide-gray-200 dark:divide-slate-600">
               {pollChoices.map((choice, idx) => (
                 <input
@@ -881,7 +926,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                   value={choice}
                   onChange={e => updatePollChoice(idx, e.target.value)}
                   onKeyPress={e => {
-                    if (e.key === 'Enter') handleSendPoll()
+                    if (e.key === 'Enter') handleSavePoll()
                   }}
                   placeholder={`Choice ${idx + 1}`}
                   autoFocus={idx === 0}
@@ -889,8 +934,17 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                 />
               ))}
             </div>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={handleSavePoll}
+                disabled={pollChoices.filter(c => c.trim()).length < 2}
+                className="px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Save
+              </button>
+            </div>
           </div>
-        )}
+        ) : (
         <div className="flex gap-2">
           <div className="relative">
             <button
@@ -936,18 +990,19 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyPress={e => {
-              if (e.key === 'Enter') showPollComposer ? handleSendPoll() : handleSend()
+              if (e.key === 'Enter') handleSend()
             }}
-            placeholder={showPollComposer ? 'Add comment or Send' : 'Share your thoughts anonymously'}
+            placeholder="Share your thoughts anonymously"
             className="flex-1 px-4 py-2 sm:py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
-            onClick={showPollComposer ? handleSendPoll : handleSend}
+            onClick={handleSend}
             className="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:p-2.5 rounded-lg transition-colors"
           >
             <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
+        )}
       </div>
 
       {/* Clear Chat Dialog */}

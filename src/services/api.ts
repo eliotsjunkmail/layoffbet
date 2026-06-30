@@ -278,6 +278,18 @@ export const api = {
     return response.json()
   },
 
+  updateChatMessageText: async (companyId: string, messageId: string, text: string) => {
+    const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat/${messageId}/text`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update chat message text')
+    }
+    return response.json()
+  },
+
   // Chat user names endpoints
   getOrAssignChatName: async (companyId: string, userId: string) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat-names/${userId}`, {
