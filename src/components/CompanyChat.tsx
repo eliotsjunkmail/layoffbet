@@ -817,10 +817,11 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                         {onSharePoll && (
                           <button
                             onClick={() => onSharePoll(pollData.question || null)}
-                            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            className="flex items-center gap-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                             title="Share poll"
                           >
                             <Share2 className="w-3.5 h-3.5" />
+                            <span className="text-xs font-medium">Share</span>
                           </button>
                         )}
                         {isOwnMessage && (
