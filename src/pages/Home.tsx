@@ -727,10 +727,13 @@ export const Home = () => {
                 })
                 .catch(err => console.error('Failed to reload chat settings:', err))
             }}
-            onShare={async () => {
+            onShare={async (liveTopicName) => {
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
-              const text = `Join the live discussion on ${topFavoritedCompany.name} — Layoff Live`
-              const shareData = { title: `${topFavoritedCompany.name} Chat on Layoff Live`, text, url }
+              const hasTopic = !!liveTopicName
+              const text = hasTopic
+                ? `Join the "${liveTopicName}" discussion on ${topFavoritedCompany.name} — Layoff Live`
+                : `Join the live discussion on ${topFavoritedCompany.name} — Layoff Live`
+              const shareData = { title: hasTopic ? `"${liveTopicName}" — ${topFavoritedCompany.name} Chat on Layoff Live` : `${topFavoritedCompany.name} Chat on Layoff Live`, text, url }
               if (navigator.share) {
                 try { await navigator.share(shareData) } catch {}
               } else {
