@@ -49,7 +49,7 @@ const countWordMentions = (msgs: { text: string; username: string }[], word: str
   }, 0)
 }
 
-export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: (topicName: string | null) => void }) => {
+export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare, onSharePoll }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: (topicName: string | null) => void; onSharePoll?: (pollQuestion: string | null) => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -813,15 +813,26 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
                         <BarChart3 className="w-3.5 h-3.5" />
                         <span>{msg.username} started a poll</span>
                       </div>
-                      {isOwnMessage && (
-                        <button
-                          onClick={() => startEditPoll(msg, pollData)}
-                          className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                          title="Edit poll"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {onSharePoll && (
+                          <button
+                            onClick={() => onSharePoll(pollData.question || null)}
+                            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            title="Share poll"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {isOwnMessage && (
+                          <button
+                            onClick={() => startEditPoll(msg, pollData)}
+                            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            title="Edit poll"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {pollData.question && (
                       <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{pollData.question}</p>

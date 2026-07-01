@@ -423,6 +423,21 @@ export const CompanyPage = () => {
     }
   }
 
+  const handleSharePoll = async (pollQuestion: string | null) => {
+    const url = `${window.location.origin}/${company.slug}?chat=open`
+    const hasQuestion = !!pollQuestion
+    const text = hasQuestion
+      ? `Vote on "${pollQuestion}" — ${company.name} Chat on Layoff Live`
+      : `Vote on this poll on ${company.name} Chat — Layoff Live`
+    const shareData = { title: hasQuestion ? `"${pollQuestion}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
+    if (navigator.share) {
+      try { await navigator.share(shareData) } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${url}`)
+      showToast('Poll link copied to clipboard')
+    }
+  }
+
   const PastEventsSection = () => past.length > 0 ? (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3">
@@ -788,7 +803,7 @@ export const CompanyPage = () => {
     {company && (
       <>
         <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt} />
-        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} onShare={handleShareChat} />
+        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} onShare={handleShareChat} onSharePoll={handleSharePoll} />
       </>
     )}
     </>

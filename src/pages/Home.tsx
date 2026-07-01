@@ -741,6 +741,20 @@ export const Home = () => {
                 showToast('Chat link copied to clipboard')
               }
             }}
+            onSharePoll={async (pollQuestion) => {
+              const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
+              const hasQuestion = !!pollQuestion
+              const text = hasQuestion
+                ? `Vote on "${pollQuestion}" — ${topFavoritedCompany.name} Chat on Layoff Live`
+                : `Vote on this poll on ${topFavoritedCompany.name} Chat — Layoff Live`
+              const shareData = { title: hasQuestion ? `"${pollQuestion}" — ${topFavoritedCompany.name} Chat on Layoff Live` : `${topFavoritedCompany.name} Chat on Layoff Live`, text, url }
+              if (navigator.share) {
+                try { await navigator.share(shareData) } catch {}
+              } else {
+                await navigator.clipboard.writeText(`${text}\n${url}`)
+                showToast('Poll link copied to clipboard')
+              }
+            }}
           />
         </>
       )}
