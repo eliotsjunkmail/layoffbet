@@ -448,7 +448,7 @@ export const Admin = () => {
                 'user,agarcia,changeme456,100',
               ]}
               resultNoun="user"
-              username={currentUser.username}
+              username={currentUser.username || ''}
               password={currentUser.password || ''}
             />
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
@@ -504,7 +504,7 @@ export const Admin = () => {
                 'bet,Acme Corp,Will there be layoffs in Q3?,agarcia,no,10',
               ]}
               resultNoun="bet"
-              username={currentUser.username}
+              username={currentUser.username || ''}
               password={currentUser.password || ''}
             />
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
@@ -562,7 +562,7 @@ export const Admin = () => {
                 'comment,Acme Corp,Will there be layoffs in Q3?,,Management has been evasive about headcount plans',
               ]}
               resultNoun="comment"
-              username={currentUser.username}
+              username={currentUser.username || ''}
               password={currentUser.password || ''}
             />
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
@@ -636,7 +636,7 @@ export const Admin = () => {
                   'event,BNY,Will tech division see layoffs?,"Banking sector consolidation underway",60,',
                 ]}
                 resultNoun="event"
-                username={currentUser.username}
+                username={currentUser.username || ''}
                 password={currentUser.password || ''}
               />
 
@@ -852,7 +852,7 @@ export const Admin = () => {
                   'company,Globex Inc,Multinational conglomerate,Technology,#7C3AED',
                 ]}
                 resultNoun="company"
-                username={currentUser.username}
+                username={currentUser.username || ''}
                 password={currentUser.password || ''}
               />
 
