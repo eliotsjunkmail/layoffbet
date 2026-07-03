@@ -6,7 +6,161 @@ import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Chec
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const ADS_ENABLED_KEY = 'lb-ads-enabled'
 
-type Tab = 'users' | 'bets' | 'comments' | 'companies' | 'events' | 'settings'
+type Tab = 'settings' | 'companies' | 'users' | 'bets' | 'comments' | 'events'
+
+const parseCSVLine = (line: string): string[] => {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
+      else inQuotes = !inQuotes
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current)
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  result.push(current)
+  return result
+}
+
+const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNoun, username, password }: {
+  title: string
+  description: React.ReactNode
+  sampleFileName: string
+  sampleRows: string[]
+  resultNoun: string
+  username: string
+  password: string
+}) => {
+  const [file, setFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<{ created: number; errors: string[] } | null>(null)
+
+  const downloadSample = () => {
+    const blob = new Blob([sampleRows.join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = sampleFileName
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const doImport = async () => {
+    if (!file) return
+    setLoading(true)
+    setResults(null)
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+      if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row')
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim())
+      const getCol = (row: string[], name: string) => {
+        const idx = headers.indexOf(name)
+        return idx >= 0 ? (row[idx] || '').trim() : ''
+      }
+      const items: any[] = []
+      for (let i = 1; i < lines.length; i++) {
+        const row = parseCSVLine(lines[i])
+        const type = getCol(row, 'type').toLowerCase()
+        if (type === 'event') {
+          items.push({
+            type: 'event',
+            company: getCol(row, 'company'),
+            title: getCol(row, 'title'),
+            description: getCol(row, 'description'),
+            expiresDays: parseInt(getCol(row, 'expires_days') || '30', 10) || 30,
+          })
+        } else if (type === 'comment') {
+          items.push({
+            type: 'comment',
+            comment: getCol(row, 'comment'),
+            company: getCol(row, 'company'),
+            eventTitle: getCol(row, 'event_title'),
+            username: getCol(row, 'username'),
+          })
+        } else if (type === 'company') {
+          items.push({
+            type: 'company',
+            name: getCol(row, 'name'),
+            description: getCol(row, 'description'),
+            industry: getCol(row, 'industry'),
+            color: getCol(row, 'color'),
+          })
+        } else if (type === 'user') {
+          items.push({
+            type: 'user',
+            username: getCol(row, 'username'),
+            password: getCol(row, 'password'),
+            coins: parseInt(getCol(row, 'coins') || '100', 10) || 100,
+          })
+        } else if (type === 'bet') {
+          items.push({
+            type: 'bet',
+            company: getCol(row, 'company'),
+            eventTitle: getCol(row, 'event_title'),
+            username: getCol(row, 'username'),
+            side: getCol(row, 'side').toLowerCase(),
+            amount: parseInt(getCol(row, 'amount') || '10', 10) || 10,
+          })
+        }
+      }
+      const response = await fetch('/api/admin/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, username, password }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Import failed')
+      setResults(result)
+      if (result.created > 0) setTimeout(() => window.location.reload(), 1500)
+    } catch (err) {
+      setResults({ created: 0, errors: [err instanceof Error ? err.message : 'Import failed'] })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-4">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{title}</h3>
+      <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">{description}</p>
+      <div className="flex flex-wrap gap-2 mb-3">
+        <button
+          onClick={downloadSample}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+        >
+          <Download className="w-4 h-4" /> Download sample CSV
+        </button>
+        <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+          <Upload className="w-4 h-4" />
+          {file ? file.name : 'Choose CSV file'}
+          <input type="file" accept=".csv" className="sr-only" onChange={e => setFile(e.target.files?.[0] || null)} />
+        </label>
+        {file && (
+          <button
+            onClick={doImport}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Importing...' : 'Import'}
+          </button>
+        )}
+      </div>
+      {results && (
+        <div className={`rounded-lg p-3 text-sm ${results.errors.length > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
+          <div className="font-medium">{results.created} {resultNoun}{results.created === 1 ? '' : 's'} created</div>
+          {results.errors.map((e, i) => <div key={i} className="text-xs mt-1">{e}</div>)}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export const Admin = () => {
   const currentUser = useStore(s => s.currentUser)
@@ -22,7 +176,7 @@ export const Admin = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const stored = localStorage.getItem('admin-active-tab')
-    return (stored as Tab) || 'companies'
+    return (stored as Tab) || 'settings'
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
@@ -39,9 +193,6 @@ export const Admin = () => {
   const [showAddEventForm, setShowAddEventForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '' })
   const [filterCompanyId, setFilterCompanyId] = useState('')
-  const [importFile, setImportFile] = useState<File | null>(null)
-  const [importResults, setImportResults] = useState<{ created: number; errors: string[] } | null>(null)
-  const [importLoading, setImportLoading] = useState(false)
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -162,26 +313,6 @@ export const Admin = () => {
     localStorage.setItem(ADS_ENABLED_KEY, next ? 'true' : 'false')
   }
 
-  const parseCSVLine = (line: string): string[] => {
-    const result: string[] = []
-    let current = ''
-    let inQuotes = false
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i]
-      if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
-        else inQuotes = !inQuotes
-      } else if (ch === ',' && !inQuotes) {
-        result.push(current)
-        current = ''
-      } else {
-        current += ch
-      }
-    }
-    result.push(current)
-    return result
-  }
-
   const startEditEvent = (event: typeof events[0]) => {
     setEditingEventId(event.id)
     const d = new Date(event.expiresAt)
@@ -252,77 +383,13 @@ export const Admin = () => {
     }
   }
 
-  const downloadSampleCSV = () => {
-    const rows = [
-      'type,company,title,description,expires_days,comment',
-      'event,Acme Corp,Will there be layoffs in Q3?,"Rumors about restructuring after earnings miss",30,',
-      'comment,,,,,"I think this is very likely given the market conditions"',
-      'comment,,,,,"Management has been evasive about headcount plans"',
-      'event,Acme Corp,Will the CEO resign?,"Speculation following poor quarterly results",14,',
-      'comment,,,,,"Board pressure is mounting after last earnings call"',
-      'event,BNY,Will tech division see layoffs?,"Banking sector consolidation underway",60,',
-    ]
-    const blob = new Blob([rows.join('\n')], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'events_sample.csv'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const handleImport = async () => {
-    if (!importFile || !currentUser) return
-    setImportLoading(true)
-    setImportResults(null)
-    try {
-      const text = await importFile.text()
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
-      if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row')
-      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim())
-      const getCol = (row: string[], name: string) => {
-        const idx = headers.indexOf(name)
-        return idx >= 0 ? (row[idx] || '').trim() : ''
-      }
-      const items: { type: string; company?: string; title?: string; description?: string; expiresDays?: number; comment?: string }[] = []
-      for (let i = 1; i < lines.length; i++) {
-        const row = parseCSVLine(lines[i])
-        const type = getCol(row, 'type').toLowerCase()
-        if (type === 'event') {
-          items.push({
-            type: 'event',
-            company: getCol(row, 'company'),
-            title: getCol(row, 'title'),
-            description: getCol(row, 'description'),
-            expiresDays: parseInt(getCol(row, 'expires_days') || '30', 10) || 30,
-          })
-        } else if (type === 'comment') {
-          items.push({ type: 'comment', comment: getCol(row, 'comment') })
-        }
-      }
-      const response = await fetch('/api/admin/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, username: currentUser.username, password: currentUser.password }),
-      })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Import failed')
-      setImportResults(result)
-      if (result.created > 0) setTimeout(() => window.location.reload(), 1500)
-    } catch (err) {
-      setImportResults({ created: 0, errors: [err instanceof Error ? err.message : 'Import failed'] })
-    } finally {
-      setImportLoading(false)
-    }
-  }
-
   const tabs: { id: Tab; label: string; count?: number; icon: React.ReactNode }[] = [
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
     { id: 'companies', label: 'Companies', count: companies.length, icon: <Building2 className="w-4 h-4" /> },
     { id: 'users', label: 'Users', count: nonAdminUsers.length, icon: <Users className="w-4 h-4" /> },
     { id: 'bets', label: 'Bets', count: bets.length, icon: <TrendingUp className="w-4 h-4" /> },
     { id: 'comments', label: 'Comments', count: comments.length, icon: <MessageSquare className="w-4 h-4" /> },
     { id: 'events', label: 'Events', count: events.length, icon: <Calendar className="w-4 h-4" /> },
-    { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ]
 
   return (
@@ -370,129 +437,174 @@ export const Admin = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
-                  <tr>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Username</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Password</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Coins</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {nonAdminUsers.map(user => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                      <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{user.username}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 font-mono text-xs">{user.password || '-'}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{user.coins}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
-                        <button
-                          onClick={() => deleteItem('users', user.id)}
-                          disabled={loading}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" /> Delete
-                        </button>
-                      </td>
+          <>
+            <CSVImportBox
+              title="Bulk Import via CSV"
+              description="CSV format: one user per row. Rows with a username matching an existing user are skipped."
+              sampleFileName="users_sample.csv"
+              sampleRows={[
+                'type,username,password,coins',
+                'user,jsmith,changeme123,100',
+                'user,agarcia,changeme456,100',
+              ]}
+              resultNoun="user"
+              username={currentUser.username}
+              password={currentUser.password || ''}
+            />
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
+                    <tr>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Username</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Password</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Coins</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                      <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                    {nonAdminUsers.map(user => (
+                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="px-2 py-4 text-sm font-medium text-gray-900 dark:text-white">{user.username}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 font-mono text-xs">{user.password || '-'}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{user.coins}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
+                          <button
+                            onClick={() => deleteItem('users', user.id)}
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {nonAdminUsers.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No users</div>}
             </div>
-            {nonAdminUsers.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No users</div>}
-          </div>
+          </>
         )}
 
         {/* Bets Tab */}
         {activeTab === 'bets' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
-                  <tr>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Side</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Amount</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {bets.map(bet => (
-                    <tr key={bet.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                      <td className="px-2 py-4 text-sm text-gray-900 dark:text-white">{getUsername(bet.userId)}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(bet.eventId)}</td>
-                      <td className="px-2 py-4 text-sm"><span className={`px-2 py-1 rounded text-xs font-medium ${bet.side === 'yes' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>{bet.side.toUpperCase()}</span></td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{bet.amount}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
-                        {new Date(bet.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
-                        <button
-                          onClick={() => deleteItem('bets', bet.id)}
-                          disabled={loading}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" /> Delete
-                        </button>
-                      </td>
+          <>
+            <CSVImportBox
+              title="Bulk Import via CSV"
+              description="CSV format: one bet per row. Company, event, and user must already exist."
+              sampleFileName="bets_sample.csv"
+              sampleRows={[
+                'type,company,event_title,username,side,amount',
+                'bet,Acme Corp,Will there be layoffs in Q3?,jsmith,yes,10',
+                'bet,Acme Corp,Will there be layoffs in Q3?,agarcia,no,10',
+              ]}
+              resultNoun="bet"
+              username={currentUser.username}
+              password={currentUser.password || ''}
+            />
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
+                    <tr>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Side</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Amount</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                      <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                    {bets.map(bet => (
+                      <tr key={bet.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="px-2 py-4 text-sm text-gray-900 dark:text-white">{getUsername(bet.userId)}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(bet.eventId)}</td>
+                        <td className="px-2 py-4 text-sm"><span className={`px-2 py-1 rounded text-xs font-medium ${bet.side === 'yes' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>{bet.side.toUpperCase()}</span></td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{bet.amount}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
+                          {new Date(bet.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
+                          <button
+                            onClick={() => deleteItem('bets', bet.id)}
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {bets.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No bets</div>}
             </div>
-            {bets.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No bets</div>}
-          </div>
+          </>
         )}
 
         {/* Comments Tab */}
         {activeTab === 'comments' && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
-                  <tr>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comment</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Upvotes</th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
-                    <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {comments.map(comment => (
-                    <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                      <td className="px-2 py-4 text-sm text-gray-900 dark:text-white">{getUsername(comment.userId)}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(comment.eventId)}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{comment.upvotes || 0}</td>
-                      <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
-                        {new Date(comment.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
-                        <button
-                          onClick={() => deleteItem('comments', comment.id)}
-                          disabled={loading}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" /> Delete
-                        </button>
-                      </td>
+          <>
+            <CSVImportBox
+              title="Bulk Import via CSV"
+              description="CSV format: one comment per row, attached to an existing event. Leave username blank to post as admin."
+              sampleFileName="comments_sample.csv"
+              sampleRows={[
+                'type,company,event_title,username,comment',
+                'comment,Acme Corp,Will there be layoffs in Q3?,jsmith,I think this is very likely given the market conditions',
+                'comment,Acme Corp,Will there be layoffs in Q3?,,Management has been evasive about headcount plans',
+              ]}
+              resultNoun="comment"
+              username={currentUser.username}
+              password={currentUser.password || ''}
+            />
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-200 dark:border-slate-700">
+                    <tr>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">User</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Comment</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Event</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Upvotes</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Created</th>
+                      <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                    {comments.map(comment => (
+                      <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="px-2 py-4 text-sm text-gray-900 dark:text-white">{getUsername(comment.userId)}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400 truncate max-w-xs">{getEventTitle(comment.eventId)}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">{comment.upvotes || 0}</td>
+                        <td className="px-2 py-4 text-sm text-gray-600 dark:text-slate-400">
+                          {new Date(comment.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="sticky right-0 px-2 py-4 text-right bg-white dark:bg-slate-800 z-10">
+                          <button
+                            onClick={() => deleteItem('comments', comment.id)}
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {comments.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No comments</div>}
             </div>
-            {comments.length === 0 && <div className="p-6 text-center text-gray-600 dark:text-slate-400">No comments</div>}
-          </div>
+          </>
         )}
 
         {/* Events Tab */}
@@ -505,41 +617,28 @@ export const Admin = () => {
           return (
             <>
               {/* CSV Import */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-4">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Bulk Import via CSV</h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
-                  CSV format: rows of type <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">event</code> or <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">comment</code>.
-                  Each comment row belongs to the event above it.
-                </p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <button
-                    onClick={downloadSampleCSV}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                  >
-                    <Download className="w-4 h-4" /> Download sample CSV
-                  </button>
-                  <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
-                    <Upload className="w-4 h-4" />
-                    {importFile ? importFile.name : 'Choose CSV file'}
-                    <input type="file" accept=".csv" className="sr-only" onChange={e => setImportFile(e.target.files?.[0] || null)} />
-                  </label>
-                  {importFile && (
-                    <button
-                      onClick={handleImport}
-                      disabled={importLoading}
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {importLoading ? 'Importing...' : 'Import'}
-                    </button>
-                  )}
-                </div>
-                {importResults && (
-                  <div className={`rounded-lg p-3 text-sm ${importResults.errors.length > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
-                    <div className="font-medium">{importResults.created} event(s) created</div>
-                    {importResults.errors.map((e, i) => <div key={i} className="text-xs mt-1">{e}</div>)}
-                  </div>
-                )}
-              </div>
+              <CSVImportBox
+                title="Bulk Import via CSV"
+                description={
+                  <>
+                    CSV format: rows of type <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">event</code> or <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">comment</code>.
+                    Each comment row belongs to the event above it. If a company doesn't exist yet, it's created automatically.
+                  </>
+                }
+                sampleFileName="events_sample.csv"
+                sampleRows={[
+                  'type,company,title,description,expires_days,comment',
+                  'event,Acme Corp,Will there be layoffs in Q3?,"Rumors about restructuring after earnings miss",30,',
+                  'comment,,,,,"I think this is very likely given the market conditions"',
+                  'comment,,,,,"Management has been evasive about headcount plans"',
+                  'event,Acme Corp,Will the CEO resign?,"Speculation following poor quarterly results",14,',
+                  'comment,,,,,"Board pressure is mounting after last earnings call"',
+                  'event,BNY,Will tech division see layoffs?,"Banking sector consolidation underway",60,',
+                ]}
+                resultNoun="event"
+                username={currentUser.username}
+                password={currentUser.password || ''}
+              />
 
               {/* Add Event Form */}
               <div className="flex items-center justify-between mb-3">
@@ -743,6 +842,20 @@ export const Admin = () => {
 
           return (
             <>
+              <CSVImportBox
+                title="Bulk Import via CSV"
+                description="CSV format: one company per row. Rows with a name matching an existing company are skipped."
+                sampleFileName="companies_sample.csv"
+                sampleRows={[
+                  'type,name,description,industry,color',
+                  'company,Acme Corp,Global widget manufacturer,Manufacturing,#003DA5',
+                  'company,Globex Inc,Multinational conglomerate,Technology,#7C3AED',
+                ]}
+                resultNoun="company"
+                username={currentUser.username}
+                password={currentUser.password || ''}
+              />
+
               <div className="flex items-center justify-between gap-3 mb-4 px-0">
                 <label className="flex items-center cursor-pointer">
                   <input

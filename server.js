@@ -62,6 +62,8 @@ app.post('/api/admin/clear-seeded-data', async (req, res) => {
   }
 })
 
+const slugify = (name) => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 app.post('/api/admin/import', async (req, res) => {
   try {
     const { username, password, items } = req.body
@@ -71,16 +73,33 @@ app.post('/api/admin/import', async (req, res) => {
     if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'No items to import' })
 
     const companies = await db.getCompanies()
+    const users = await db.getUsers()
+    const events = await db.getEvents()
     const errors = []
     let created = 0
     let currentEventId = null
+
+    const findCompany = (name) => companies.find(c => c.name.toLowerCase() === (name || '').toLowerCase())
+    const findEvent = (companyId, title) => events.find(e => e.companyId === companyId && e.title.toLowerCase() === (title || '').toLowerCase())
+    const findUser = (uname) => users.find(u => u.username && u.username.toLowerCase() === (uname || '').toLowerCase())
 
     for (const item of items) {
       if (item.type === 'event') {
         currentEventId = null
         if (!item.company || !item.title) { errors.push(`Skipped event: missing company or title`); continue }
-        const company = companies.find(c => c.name.toLowerCase() === (item.company || '').toLowerCase())
-        if (!company) { errors.push(`Company not found: "${item.company}"`); continue }
+        let company = findCompany(item.company)
+        if (!company) {
+          company = await db.createCompany({
+            id: 'comp-' + crypto.randomBytes(8).toString('hex'),
+            name: item.company.trim(),
+            slug: slugify(item.company),
+            description: '',
+            industry: '',
+            color: '#003DA5',
+            createdAt: new Date().toISOString(),
+          })
+          companies.push(company)
+        }
         const expiresAt = new Date(Date.now() + (item.expiresDays || 30) * 24 * 60 * 60 * 1000).toISOString()
         const event = await db.createEvent({
           id: 'evt-' + crypto.randomBytes(8).toString('hex'),
@@ -96,20 +115,86 @@ app.post('/api/admin/import', async (req, res) => {
           noPool: 0,
           createdAt: new Date().toISOString(),
         })
+        events.push(event)
         currentEventId = event.id
         created++
       } else if (item.type === 'comment') {
-        if (!currentEventId) { errors.push(`Skipped comment: no preceding event`); continue }
+        let eventId = currentEventId
+        if (item.company && item.eventTitle) {
+          const company = findCompany(item.company)
+          if (!company) { errors.push(`Skipped comment: company not found "${item.company}"`); continue }
+          const event = findEvent(company.id, item.eventTitle)
+          if (!event) { errors.push(`Skipped comment: event not found "${item.eventTitle}"`); continue }
+          eventId = event.id
+        }
+        if (!eventId) { errors.push(`Skipped comment: no preceding event`); continue }
         if (!item.comment?.trim()) continue
+        let author = adminUser
+        if (item.username) {
+          const found = findUser(item.username)
+          if (!found) { errors.push(`Skipped comment: user not found "${item.username}"`); continue }
+          author = found
+        }
         await db.createComment({
           id: 'cmt-' + crypto.randomBytes(8).toString('hex'),
-          eventId: currentEventId,
-          userId: adminUser.id,
+          eventId,
+          userId: author.id,
           content: item.comment.trim(),
-          displayName: adminUser.username,
+          displayName: author.username,
           createdAt: new Date().toISOString(),
           upvotes: 0,
         })
+        created++
+      } else if (item.type === 'company') {
+        if (!item.name) { errors.push(`Skipped company: missing name`); continue }
+        if (findCompany(item.name)) { errors.push(`Skipped company: "${item.name}" already exists`); continue }
+        const company = await db.createCompany({
+          id: 'comp-' + crypto.randomBytes(8).toString('hex'),
+          name: item.name.trim(),
+          slug: slugify(item.name),
+          description: (item.description || '').trim(),
+          industry: (item.industry || '').trim(),
+          color: item.color || '#003DA5',
+          createdAt: new Date().toISOString(),
+        })
+        companies.push(company)
+        created++
+      } else if (item.type === 'user') {
+        if (!item.username || !item.password) { errors.push(`Skipped user: missing username or password`); continue }
+        if (findUser(item.username)) { errors.push(`Skipped user: "${item.username}" already exists`); continue }
+        const user = await db.createUser({
+          id: 'user-' + crypto.randomBytes(8).toString('hex'),
+          username: item.username.trim(),
+          password: item.password,
+          coins: item.coins ?? 100,
+          isAdmin: false,
+          isAnonymous: false,
+          createdAt: new Date().toISOString(),
+          lastCoinsDate: new Date().toISOString().split('T')[0],
+        })
+        users.push(user)
+        created++
+      } else if (item.type === 'bet') {
+        if (!item.company || !item.eventTitle || !item.username || !item.side) { errors.push(`Skipped bet: missing required fields`); continue }
+        const company = findCompany(item.company)
+        if (!company) { errors.push(`Skipped bet: company not found "${item.company}"`); continue }
+        const event = findEvent(company.id, item.eventTitle)
+        if (!event) { errors.push(`Skipped bet: event not found "${item.eventTitle}"`); continue }
+        const user = findUser(item.username)
+        if (!user) { errors.push(`Skipped bet: user not found "${item.username}"`); continue }
+        const side = item.side === 'yes' || item.side === 'no' ? item.side : null
+        if (!side) { errors.push(`Skipped bet: side must be "yes" or "no"`); continue }
+        const amount = item.amount || 10
+        await db.createBet({
+          id: 'bet-' + crypto.randomBytes(8).toString('hex'),
+          eventId: event.id,
+          userId: user.id,
+          side,
+          amount,
+          createdAt: new Date().toISOString(),
+        })
+        await db.adjustEventPool(event.id, side === 'yes' ? amount : 0, side === 'no' ? amount : 0)
+        created++
       }
     }
 
@@ -604,7 +689,7 @@ app.post('/api/companies', async (req, res) => {
     const { name, description = '', industry = '', color = '#003DA5' } = req.body
     if (!name) return res.status(400).json({ error: 'Company name required' })
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const slug = slugify(name)
     const company = await db.createCompany({
       id: 'comp-' + crypto.randomBytes(8).toString('hex'),
       name,
