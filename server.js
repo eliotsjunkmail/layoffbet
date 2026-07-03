@@ -395,6 +395,7 @@ app.get('/api/users/:userId/bets/count', async (req, res) => {
 app.post('/api/bets', async (req, res) => {
   try {
     const bet = await db.createBet({ id: 'bet-' + crypto.randomBytes(8).toString('hex'), ...req.body, createdAt: new Date().toISOString() })
+    await db.adjustEventPool(bet.eventId, bet.side === 'yes' ? bet.amount : 0, bet.side === 'no' ? bet.amount : 0)
     res.json(bet)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -403,8 +404,15 @@ app.post('/api/bets', async (req, res) => {
 
 app.put('/api/bets/:id', async (req, res) => {
   try {
+    const existing = await db.getBetById(req.params.id)
     const bet = await db.updateBet(req.params.id, req.body)
     if (!bet) return res.status(404).json({ error: 'Bet not found' })
+    if (existing && typeof req.body.amount === 'number') {
+      const delta = req.body.amount - existing.amount
+      if (delta !== 0) {
+        await db.adjustEventPool(bet.eventId, bet.side === 'yes' ? delta : 0, bet.side === 'no' ? delta : 0)
+      }
+    }
     res.json(bet)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -429,6 +437,7 @@ app.delete('/api/bets/:id', async (req, res) => {
     }
 
     await db.deleteBet(bet.id)
+    await db.adjustEventPool(bet.eventId, bet.side === 'yes' ? -bet.amount : 0, bet.side === 'no' ? -bet.amount : 0)
     console.log('[DELETE /api/bets/:id] Deleted bet:', { betId: bet.id, eventId: bet.eventId, userId: bet.userId })
     res.json({ ok: true })
   } catch (err) {

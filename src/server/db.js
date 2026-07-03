@@ -195,6 +195,16 @@ export const db = {
     throwOnError(error, 'deleteEvent')
   },
 
+  async adjustEventPool(eventId, deltaYes, deltaNo) {
+    const { data: event, error: fetchErr } = await supabase.from('events').select('yes_pool, no_pool').eq('id', eventId).single()
+    throwOnError(fetchErr, 'adjustEventPool:fetch')
+    const yes_pool = Math.max(0, (event.yes_pool || 0) + deltaYes)
+    const no_pool = Math.max(0, (event.no_pool || 0) + deltaNo)
+    const { data, error } = await supabase.from('events').update({ yes_pool, no_pool }).eq('id', eventId).select().single()
+    throwOnError(error, 'adjustEventPool:update')
+    return fromDb(data)
+  },
+
   // ===== BETS =====
   async getBets() {
     const { data, error } = await supabase.from('bets').select('*').order('created_at')
