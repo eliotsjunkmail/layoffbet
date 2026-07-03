@@ -6,3 +6,4 @@ data.json
 .env
 .env.local
 .env.*.local
+*.tsbuildinfo
