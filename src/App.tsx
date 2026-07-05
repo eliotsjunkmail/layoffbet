@@ -316,9 +316,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
   // Prevent code input from being auto-focused on mount
   useEffect(() => {
-    requestAnimationFrame(() => {
+    const blurActive = () => {
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-    })
+    }
+    requestAnimationFrame(blurActive)
+    const timer = setTimeout(blurActive, 150)
+    return () => clearTimeout(timer)
   }, [])
 
   // Fetch next anonymous username on mount
@@ -490,7 +493,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         {/* Tagline */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-10">
           <div className="text-center">
             <div className="flex items-baseline justify-center gap-1 mb-2">
               <span className="text-2xl font-semibold text-gray-600 dark:text-slate-300 tracking-tight">Layoff</span>
@@ -501,7 +504,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* Company selection grid */}
-        <div className="mb-6">
+        <div className="mb-2">
           <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={(id) => setSelectedCompanyId(prev => prev === id ? undefined : id)} />
         </div>
 
