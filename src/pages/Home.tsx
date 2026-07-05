@@ -668,6 +668,16 @@ export const Home = () => {
                       </>
                     )
                   })}
+                  {/* Add prediction CTA */}
+                  <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col items-center gap-3 mt-2">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">Make your first prediction</span>
+                    <button
+                      onClick={() => navigate('/create', { state: { companyId: c.id } })}
+                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
+                    >
+                      {currentUser ? '+ New bet' : '+ Bet'}
+                    </button>
+                  </div>
                 </div>
               ) : null}
               {activeEvents.length === 0 && (
