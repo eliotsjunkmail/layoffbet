@@ -727,10 +727,22 @@ export const Home = () => {
                 </div>
               ) : null}
               {activeEvents.length === 0 && (
-                <Link to={`/${c.slug}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl px-4 py-4 text-center shadow-sm transition-colors group">
-                  <p className="text-sm text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">No active predictions for {c.name}</p>
-                  <p className="text-xs text-blue-500 dark:text-blue-400 font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity">View company →</p>
-                </Link>
+                <>
+                  <Link to={`/${c.slug}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl px-4 py-4 text-center shadow-sm transition-colors group">
+                    <p className="text-sm text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">No active predictions for {c.name}</p>
+                    <p className="text-xs text-blue-500 dark:text-blue-400 font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity">View company →</p>
+                  </Link>
+                  {/* Add prediction CTA */}
+                  <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col items-center gap-3 mt-2">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">Make your first prediction</span>
+                    <button
+                      onClick={() => navigate('/create', { state: { companyId: c.id } })}
+                      className="px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium transition-colors"
+                    >
+                      {currentUser ? '+ New bet' : '+ Bet'}
+                    </button>
+                  </div>
+                </>
               )}
             </section>
           )
