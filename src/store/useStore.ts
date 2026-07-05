@@ -874,12 +874,15 @@ export const useStore = create<StoreState>()(
 
       upvoteComment: (commentId) => {
         const { upvotedCommentIds } = get()
-        if (upvotedCommentIds.includes(commentId)) return
+        const alreadyUpvoted = upvotedCommentIds.includes(commentId)
+        const delta = alreadyUpvoted ? -1 : 1
         set(s => ({
-          comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: (c.upvotes ?? 0) + 1 } : c),
-          upvotedCommentIds: [...s.upvotedCommentIds, commentId],
+          comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: Math.max(0, (c.upvotes ?? 0) + delta) } : c),
+          upvotedCommentIds: alreadyUpvoted
+            ? s.upvotedCommentIds.filter(id => id !== commentId)
+            : [...s.upvotedCommentIds, commentId],
         }))
-        api.upvoteComment(commentId).catch(() => {})
+        api.upvoteComment(commentId, delta).catch(() => {})
       },
 
       recordShare: (eventId) => {

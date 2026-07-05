@@ -265,11 +265,12 @@ export const db = {
     throwOnError(error, 'deleteComment')
   },
 
-  async upvoteComment(id) {
+  async upvoteComment(id, delta = 1) {
     const { data: existing, error: fetchErr } = await supabase.from('comments').select('upvotes').eq('id', id).maybeSingle()
     throwOnError(fetchErr, 'upvoteComment:fetch')
     if (!existing) return null
-    const { data, error } = await supabase.from('comments').update({ upvotes: (existing.upvotes ?? 0) + 1 }).eq('id', id).select().single()
+    const upvotes = Math.max(0, (existing.upvotes ?? 0) + delta)
+    const { data, error } = await supabase.from('comments').update({ upvotes }).eq('id', id).select().single()
     throwOnError(error, 'upvoteComment:update')
     return fromDb(data)
   },

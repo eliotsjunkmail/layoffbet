@@ -683,7 +683,7 @@ export const CompanyPage = () => {
                                   )}
                                   <button
                                     onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                                    className={`flex items-center gap-1 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
+                                    className={`flex items-center gap-1 p-1.5 rounded-lg transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
                                   >
                                     <ThumbsUp className="w-3 h-3" />
                                     {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
