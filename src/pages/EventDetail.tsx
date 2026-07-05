@@ -198,7 +198,7 @@ export const EventDetail = () => {
     const url = company
       ? `${window.location.origin}/${company.slug}/bet/${id}/${eventSlug}`
       : `${window.location.origin}/event/${id}`
-    const shareText = `"${event.title}" — ${prob.yes}% likely on Layoff Live`
+    const shareText = `"${event.title}" — ${prob.yes}% likely at LayoffLive.com - ${event.companyName}`
     const shareData = {
       title: event.companyName,
       text: shareText,

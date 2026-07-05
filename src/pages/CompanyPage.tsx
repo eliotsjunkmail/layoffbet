@@ -409,7 +409,7 @@ export const CompanyPage = () => {
     const url = window.location.href
     const shareData = {
       title: `${company.name} on Layoff Live`,
-      text: `What's really happening at ${company.name}? Insiders are betting on it.`,
+      text: `What's really happening? Insiders are betting on it at LayoffLive.com - ${company.name}`,
       url,
     }
     if (navigator.share) {
@@ -426,8 +426,8 @@ export const CompanyPage = () => {
     const topicName = liveTopicName !== undefined ? liveTopicName : (chatExpiresAt && chatDisplayName !== `${company.name} Chat` ? chatDisplayName : null)
     const hasTopic = !!topicName
     const text = hasTopic
-      ? `Join the "${topicName}" discussion on ${company.name} — Layoff Live`
-      : `Join the live discussion on ${company.name} — Layoff Live`
+      ? `Join the "${topicName}" discussion at LayoffLive.com - ${company.name}`
+      : `Join the live discussion at LayoffLive.com - ${company.name}`
     const shareData = { title: hasTopic ? `"${topicName}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
@@ -441,8 +441,8 @@ export const CompanyPage = () => {
     const url = `${window.location.origin}/${company.slug}?chat=open`
     const hasQuestion = !!pollQuestion
     const text = hasQuestion
-      ? `Vote on "${pollQuestion}" — ${company.name} Chat on Layoff Live`
-      : `Vote on this poll on ${company.name} Chat — Layoff Live`
+      ? `Vote on "${pollQuestion}" at LayoffLive.com - ${company.name}`
+      : `Vote on this poll at LayoffLive.com - ${company.name}`
     const shareData = { title: hasQuestion ? `"${pollQuestion}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}

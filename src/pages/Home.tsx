@@ -597,7 +597,7 @@ export const Home = () => {
                   <button
                     onClick={() => {
                       const url = `${window.location.origin}/${c.slug}`
-                      const text = `What's really happening at ${c.name}? Insiders are betting on it.`
+                      const text = `What's really happening? Insiders are betting on it at LayoffLive.com - ${c.name}`
                       if (navigator.share) {
                         navigator.share({ title: `${c.name} on Layoff Live`, text, url }).catch(() => {})
                       } else {
@@ -835,8 +835,8 @@ export const Home = () => {
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
               const hasTopic = !!liveTopicName
               const text = hasTopic
-                ? `Join the "${liveTopicName}" discussion on ${topFavoritedCompany.name} — Layoff Live`
-                : `Join the live discussion on ${topFavoritedCompany.name} — Layoff Live`
+                ? `Join the "${liveTopicName}" discussion at LayoffLive.com - ${topFavoritedCompany.name}`
+                : `Join the live discussion at LayoffLive.com - ${topFavoritedCompany.name}`
               const shareData = { title: hasTopic ? `"${liveTopicName}" — ${topFavoritedCompany.name} Chat on Layoff Live` : `${topFavoritedCompany.name} Chat on Layoff Live`, text, url }
               if (navigator.share) {
                 try { await navigator.share(shareData) } catch {}
@@ -849,8 +849,8 @@ export const Home = () => {
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
               const hasQuestion = !!pollQuestion
               const text = hasQuestion
-                ? `Vote on "${pollQuestion}" — ${topFavoritedCompany.name} Chat on Layoff Live`
-                : `Vote on this poll on ${topFavoritedCompany.name} Chat — Layoff Live`
+                ? `Vote on "${pollQuestion}" at LayoffLive.com - ${topFavoritedCompany.name}`
+                : `Vote on this poll at LayoffLive.com - ${topFavoritedCompany.name}`
               const shareData = { title: hasQuestion ? `"${pollQuestion}" — ${topFavoritedCompany.name} Chat on Layoff Live` : `${topFavoritedCompany.name} Chat on Layoff Live`, text, url }
               if (navigator.share) {
                 try { await navigator.share(shareData) } catch {}
