@@ -265,14 +265,32 @@ export const db = {
     throwOnError(error, 'deleteComment')
   },
 
-  async upvoteComment(id, delta = 1) {
-    const { data: existing, error: fetchErr } = await supabase.from('comments').select('upvotes').eq('id', id).maybeSingle()
-    throwOnError(fetchErr, 'upvoteComment:fetch')
-    if (!existing) return null
-    const upvotes = Math.max(0, (existing.upvotes ?? 0) + delta)
-    const { data, error } = await supabase.from('comments').update({ upvotes }).eq('id', id).select().single()
-    throwOnError(error, 'upvoteComment:update')
-    return fromDb(data)
+  async toggleCommentUpvote(commentId, userId) {
+    const { data: commentRow, error: commentFetchErr } = await supabase.from('comments').select('upvotes').eq('id', commentId).maybeSingle()
+    throwOnError(commentFetchErr, 'toggleCommentUpvote:fetchComment')
+    if (!commentRow) return null
+
+    const { data: existing, error: fetchErr } = await supabase
+      .from('comment_upvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle()
+    throwOnError(fetchErr, 'toggleCommentUpvote:fetchUpvote')
+
+    let upvotes
+    let upvoted
+    if (existing) {
+      const { error: delErr } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
+      throwOnError(delErr, 'toggleCommentUpvote:delete')
+      upvotes = Math.max(0, (commentRow.upvotes ?? 0) - 1)
+      upvoted = false
+    } else {
+      const { error: insErr } = await supabase.from('comment_upvotes').insert({ comment_id: commentId, user_id: userId })
+      throwOnError(insErr, 'toggleCommentUpvote:insert')
+      upvotes = (commentRow.upvotes ?? 0) + 1
+      upvoted = true
+    }
+
+    const { data, error } = await supabase.from('comments').update({ upvotes }).eq('id', commentId).select().single()
+    throwOnError(error, 'toggleCommentUpvote:update')
+    return { comment: fromDb(data), upvoted }
   },
 
   // ===== CHAT MESSAGES =====
@@ -418,9 +436,10 @@ export const db = {
       this.getHiddenCompanyIds(),
     ])
 
-    const [{ data: chatMsgRows }, { data: favRows }] = await Promise.all([
+    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }] = await Promise.all([
       supabase.from('chat_messages').select('*').order('created_at'),
       supabase.from('favorites').select('*'),
+      supabase.from('comment_upvotes').select('*'),
     ])
 
     const chatMessages = (chatMsgRows || []).map(fromDb)
@@ -429,6 +448,12 @@ export const db = {
     for (const f of (favRows || [])) {
       if (!favorites[f.user_id]) favorites[f.user_id] = []
       favorites[f.user_id].push(f.company_id)
+    }
+
+    const commentUpvotesByUser = {}
+    for (const u of (upvoteRows || [])) {
+      if (!commentUpvotesByUser[u.user_id]) commentUpvotesByUser[u.user_id] = []
+      commentUpvotesByUser[u.user_id].push(u.comment_id)
     }
 
     return {
@@ -443,6 +468,7 @@ export const db = {
       pinnedEvents: {},
       hiddenCompanyIds,
       anonVotedEvents: {},
+      commentUpvotesByUser,
     }
   },
 

@@ -90,11 +90,11 @@ export const api = {
     }
   },
 
-  upvoteComment: async (id: string, delta: 1 | -1 = 1): Promise<Comment> => {
+  upvoteComment: async (id: string, userId: string): Promise<{ comment: Comment; upvoted: boolean }> => {
     const response = await fetch(`${API_BASE}/api/comments/${id}/upvote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ delta }),
+      body: JSON.stringify({ userId }),
     })
     if (!response.ok) {
       throw new Error('Failed to upvote comment')

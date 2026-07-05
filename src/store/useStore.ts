@@ -873,16 +873,28 @@ export const useStore = create<StoreState>()(
       },
 
       upvoteComment: (commentId) => {
-        const { upvotedCommentIds } = get()
+        const { currentUser, upvotedCommentIds } = get()
+        if (!currentUser) return
         const alreadyUpvoted = upvotedCommentIds.includes(commentId)
         const delta = alreadyUpvoted ? -1 : 1
+        // Optimistic local update
         set(s => ({
           comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: Math.max(0, (c.upvotes ?? 0) + delta) } : c),
           upvotedCommentIds: alreadyUpvoted
             ? s.upvotedCommentIds.filter(id => id !== commentId)
             : [...s.upvotedCommentIds, commentId],
         }))
-        api.upvoteComment(commentId, delta).catch(() => {})
+        // Reconcile with the server's authoritative per-user record
+        api.upvoteComment(commentId, currentUser.id)
+          .then(({ comment, upvoted }) => {
+            set(s => ({
+              comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes } : c),
+              upvotedCommentIds: upvoted
+                ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
+                : s.upvotedCommentIds.filter(id => id !== commentId),
+            }))
+          })
+          .catch(() => {})
       },
 
       recordShare: (eventId) => {
@@ -943,6 +955,9 @@ export const useStore = create<StoreState>()(
             // For logged-in users, use server data. For anonymous users, preserve local favorites
             const newFavs = userId && serverData.favorites?.[userId] ? serverData.favorites[userId] : currentFavs
             const newPinned = userId && serverData.pinnedEvents?.[userId] ? serverData.pinnedEvents[userId] : currentPinned
+            const newUpvotedCommentIds = userId && serverData.commentUpvotesByUser?.[userId]
+              ? serverData.commentUpvotesByUser[userId]
+              : get().upvotedCommentIds
 
             // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
             const serverBets = serverData.bets || []
@@ -976,6 +991,7 @@ export const useStore = create<StoreState>()(
               feedback: serverData.feedback || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
+              upvotedCommentIds: newUpvotedCommentIds,
             })
           }
         } catch (error) {

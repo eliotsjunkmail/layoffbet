@@ -572,10 +572,11 @@ app.delete('/api/comments/:id', async (req, res) => {
 
 app.post('/api/comments/:id/upvote', async (req, res) => {
   try {
-    const delta = req.body?.delta === -1 ? -1 : 1
-    const comment = await db.upvoteComment(req.params.id, delta)
-    if (!comment) return res.status(404).json({ error: 'Comment not found' })
-    res.json(comment)
+    const { userId } = req.body
+    if (!userId) return res.status(400).json({ error: 'userId required' })
+    const result = await db.toggleCommentUpvote(req.params.id, userId)
+    if (!result) return res.status(404).json({ error: 'Comment not found' })
+    res.json(result)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
