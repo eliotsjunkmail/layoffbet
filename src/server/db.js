@@ -301,12 +301,6 @@ export const db = {
     return fromDb(row)
   },
 
-  async getCompanySuggestions() {
-    const { data, error } = await supabase.from('company_suggestions').select('*').order('created_at')
-    throwOnError(error, 'getCompanySuggestions')
-    return (data || []).map(fromDb)
-  },
-
   async updateCompanySuggestionStatus(id, status) {
     const { data, error } = await supabase.from('company_suggestions').update({ status }).eq('id', id).select().maybeSingle()
     throwOnError(error, 'updateCompanySuggestionStatus')
@@ -447,21 +441,25 @@ export const db = {
 
   // ===== SYNC =====
   async getAllSyncData() {
-    const [users, events, bets, comments, companies, hiddenCompanyIds, companySuggestions] = await Promise.all([
+    const [users, events, bets, comments, companies, hiddenCompanyIds] = await Promise.all([
       this.getUsers(),
       this.getEvents(),
       this.getBets(),
       this.getComments(),
       this.getCompanies(),
       this.getHiddenCompanyIds(),
-      this.getCompanySuggestions(),
     ])
 
-    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }] = await Promise.all([
+    // These tables were added after initial launch — fetched defensively (no throwOnError)
+    // so a not-yet-migrated Supabase project degrades to empty data instead of failing the whole sync.
+    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }] = await Promise.all([
       supabase.from('chat_messages').select('*').order('created_at'),
       supabase.from('favorites').select('*'),
       supabase.from('comment_upvotes').select('*'),
+      supabase.from('company_suggestions').select('*').order('created_at'),
     ])
+
+    const companySuggestions = (suggestionRows || []).map(fromDb)
 
     const chatMessages = (chatMsgRows || []).map(fromDb)
 
