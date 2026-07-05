@@ -81,6 +81,7 @@ export const Home = () => {
   const [chatDisplayName, setChatDisplayName] = useState('')
   const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
   const [showAlertsModal, setShowAlertsModal] = useState(false)
+  const [dismissedAlertsPrompt, setDismissedAlertsPrompt] = useState(() => localStorage.getItem('lb-dismissed-alerts-prompt') === 'true')
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -421,7 +422,7 @@ export const Home = () => {
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
-        {(currentUser && userStats) || !currentUser ? (
+        {((currentUser && userStats) || !currentUser) && (hasActivity || !dismissedAlertsPrompt) ? (
           <div className="pt-3 pb-0 -mx-4 px-4 mb-4">
             {hasActivity ? (
               <div className="grid grid-cols-3 gap-3">
@@ -468,10 +469,20 @@ export const Home = () => {
                 )}
               </div>
             ) : (
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Place a bet, drop a comment, or start a prediction to see your stats here.</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Not ready yet? Get notified when something changes instead.</p>
+              <div className="relative bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 sm:p-4 pr-8 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3">
+                <button
+                  onClick={() => {
+                    localStorage.setItem('lb-dismissed-alerts-prompt', 'true')
+                    setDismissedAlertsPrompt(true)
+                  }}
+                  className="absolute top-2 right-2 text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400 transition-colors"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Bet, comment, or predict to see your stats</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Or get notified about changes instead</p>
                 </div>
                 <button
                   onClick={() => setShowAlertsModal(true)}
