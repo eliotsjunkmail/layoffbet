@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight, Share2, Bell } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight, Share2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
@@ -9,7 +9,6 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
 import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
-import { AlertsModal } from '../components/AlertsModal'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { api } from '../services/api'
 
@@ -80,8 +79,6 @@ export const Home = () => {
   const [chatOpen, setChatOpen] = useState(false)
   const [chatDisplayName, setChatDisplayName] = useState('')
   const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
-  const [showAlertsModal, setShowAlertsModal] = useState(false)
-  const [dismissedAlertsPrompt, setDismissedAlertsPrompt] = useState(() => localStorage.getItem('lb-dismissed-alerts-prompt') === 'true')
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -422,80 +419,53 @@ export const Home = () => {
       <Layout fullWidth>
       <div className="max-w-2xl mx-auto px-4">
         {/* User Stats (logged in) or Coins for anonymous */}
-        {((currentUser && userStats) || !currentUser) && (hasActivity || !dismissedAlertsPrompt) ? (
+        {((currentUser && userStats) || !currentUser) && hasActivity ? (
           <div className="pt-3 pb-0 -mx-4 px-4 mb-4">
-            {hasActivity ? (
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={async () => {
-                  if (currentUser) {
-                    await addCoin()
-                  } else if (userStats) {
-                    navigate('/bets')
-                  }
-                }} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
-                  <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 relative inline-block flex-1 flex items-center justify-center">
-                    {currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}
-                    {coinPuff && (
-                      <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
-                        ✨
-                      </div>
-                    )}
-                  </div>
-                </button>
-                {currentUser && userStats && (
-                  <>
-                    <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                      <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                      <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
-                    </button>
-                    <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                      <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Won</div>
-                      <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.wonBets}</div>
-                    </button>
-                  </>
-                )}
-                {!currentUser && (
-                  <>
-                    <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                      <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                      <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
-                    </button>
-                    <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                      <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Won</div>
-                      <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.wonBets ?? 0}</div>
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="relative bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3.5 sm:p-4 pr-8 shadow-sm flex flex-col sm:flex-row sm:items-center gap-3">
-                <button
-                  onClick={() => {
-                    localStorage.setItem('lb-dismissed-alerts-prompt', 'true')
-                    setDismissedAlertsPrompt(true)
-                  }}
-                  className="absolute top-2 right-2 text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400 transition-colors"
-                  aria-label="Dismiss"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Bet, comment, or predict to see your stats</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Or get notified about changes instead</p>
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={async () => {
+                if (currentUser) {
+                  await addCoin()
+                } else if (userStats) {
+                  navigate('/bets')
+                }
+              }} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95">
+                <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Coins</div>
+                <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 relative inline-block flex-1 flex items-center justify-center">
+                  {currentUser && userStats ? userStats.coins : Math.max(0, anonCoins - anonCoinsSpent)}
+                  {coinPuff && (
+                    <div className="coin-puff absolute text-2xl" style={{ left: `${coinPuff.x}%`, top: `${coinPuff.y}%` }}>
+                      ✨
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => setShowAlertsModal(true)}
-                  className="flex-shrink-0 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
-                >
-                  <Bell className="w-3.5 h-3.5" /> Get Alerts
-                </button>
-              </div>
-            )}
+              </button>
+              {currentUser && userStats && (
+                <>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
+                  </button>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Won</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.wonBets}</div>
+                  </button>
+                </>
+              )}
+              {!currentUser && (
+                <>
+                  <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
+                  </button>
+                  <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Won</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.wonBets ?? 0}</div>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         ) : null}
-
-        {showAlertsModal && <AlertsModal onClose={() => setShowAlertsModal(false)} />}
 
         {/* Hero */}
         <div className={`${(currentUser || hasFavorites) ? 'pt-2 pb-2' : 'pt-6 pb-4'} text-center`}>
@@ -557,7 +527,7 @@ export const Home = () => {
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
-            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-6'}`}>
+            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>

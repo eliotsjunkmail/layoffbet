@@ -151,27 +151,12 @@ const GuestSheet = ({ onClose }: { onClose: () => void }) => {
 
 export const Header = () => {
   const currentUser = useStore(s => s.currentUser)
-  const companies = useStore(s => s.companies)
-  const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
-  const companyLastVisit = useStore(s => s.companyLastVisit)
 
   const location = useLocation()
-  const navigate = useNavigate()
   const [showProfile, setShowProfile] = useState(false)
 
   const isAnon = currentUser?.isAnonymous || currentUser?.username?.match(/^Anon\d+$/)
   const isLoggedIn = !!currentUser && !isAnon
-
-  const pathSlug = location.pathname.replace(/^\//, '').split('/')[0]
-  const currentCompany = companies.find(c => c.slug === pathSlug)
-
-  const getCreateCompanyId = () => {
-    if (currentCompany) return currentCompany.id
-    if (favoriteCompanyIds.length > 0) return favoriteCompanyIds[0]
-    const lastVisited = Object.entries(companyLastVisit)
-      .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())[0]
-    return lastVisited?.[0]
-  }
 
   const isActive = (path: string) =>
     location.pathname === path
@@ -194,16 +179,6 @@ export const Header = () => {
             <Link to="/search" className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isActive('/search')}`}>
               <Search className="w-4 sm:w-5 h-4 sm:h-5" />
             </Link>
-            <button
-              onClick={() => navigate('/create', { state: { companyId: getCreateCompanyId() } })}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium text-xs sm:text-sm border-2 transition-colors ${
-                isActive('/create').includes('violet')
-                  ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500'
-              }`}
-            >
-              + Bet
-            </button>
             {isLoggedIn ? (
               <button
                 onClick={() => setShowProfile(true)}
