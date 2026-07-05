@@ -119,7 +119,7 @@ export const Feed = () => {
                       Bet {userBet.side.toUpperCase()}
                     </span>
                   ) : (
-                    <span className="text-xs font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
+                    <span className="text-xs font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
                   )}
                 </div>
                 <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug mb-3 line-clamp-2">{event.title}</p>
