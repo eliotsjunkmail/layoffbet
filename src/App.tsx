@@ -5,6 +5,7 @@ import { api } from './services/api'
 import { X, Search as SearchIcon } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
+import { AddCompanyModal } from './components/AddCompanyModal'
 import type { ReactNode } from 'react'
 
 const API_BASE = ''
@@ -179,8 +180,34 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const currentUser = useStore(s => s.currentUser)
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
+  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const [search, setSearch] = useState('')
   const [showAll, setShowAll] = useState(false)
+  const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
+  const [toast, setToast] = useState('')
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
+
+  const handleSuggestCompany = async () => {
+    const name = search.trim()
+    setSearch('')
+    try {
+      await api.suggestCompany(name, currentUser?.id)
+      showToast(`Thanks! We'll look into adding ${name}.`)
+    } catch {
+      showToast('Failed to send suggestion — try again later')
+    }
+  }
+
+  const handleCompanyCreated = (companyId: string) => {
+    setShowAddCompanyModal(false)
+    setSearch('')
+    toggleFavoriteCompany(companyId)
+    syncCommentsFromServer()
+    showToast('Company created')
+  }
 
   const activeByCompany = useMemo(() => {
     const map: Record<string, number> = {}
@@ -226,7 +253,26 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
 
         <div className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
           {displayed.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-slate-500 px-4 py-3">No companies found.</p>
+            <div className="px-4 py-3 text-center">
+              <p className="text-sm text-gray-400 dark:text-slate-500 mb-1.5">No companies found.</p>
+              {search.trim() && (
+                currentUser?.isAdmin ? (
+                  <button
+                    onClick={() => setShowAddCompanyModal(true)}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    + Add "{search.trim()}" as a new company
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSuggestCompany}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    Suggest adding "{search.trim()}"
+                  </button>
+                )
+              )}
+            </div>
           ) : displayed.map((c, i) => {
             const activeCount = activeByCompany[c.id] ?? 0
             return (
@@ -260,6 +306,20 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
           <a href="/login?gate=1" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</a>
         </p>
       </div>
+
+      {showAddCompanyModal && (
+        <AddCompanyModal
+          initialName={search.trim()}
+          onClose={() => setShowAddCompanyModal(false)}
+          onCreated={handleCompanyCreated}
+        />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[60] pointer-events-none">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
