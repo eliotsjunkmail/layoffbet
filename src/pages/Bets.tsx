@@ -378,22 +378,23 @@ export const Bets = () => {
                         <div className={`mb-2 ${bet.side === 'no' ? 'flex justify-end' : ''}`}>
                           {BetTag}
                         </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">
-                          {event.title}{' '}
-                          <span className="inline-flex items-center gap-0.5 align-middle text-[10px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
-                        </p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
                         <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                           <div
                             className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <div className="flex justify-between text-xs">
-                          {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                          {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                        </div>
-                        <div className={`text-[11px] text-gray-400 dark:text-slate-500 mt-1 ${dominant === 'yes' ? 'text-right' : 'text-left'}`}>
-                          {eventBetCount} bet{eventBetCount === 1 ? '' : 's'}
+                        <div className="flex justify-between items-center text-xs">
+                          {dominant === 'yes'
+                            ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
+                            : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                          }
+                          <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
+                          {dominant === 'no'
+                            ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                            : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                          }
                         </div>
                       </SwipeCard>
                     </div>
