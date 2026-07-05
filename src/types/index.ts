@@ -73,3 +73,11 @@ export interface FeedbackItem {
   createdAt: string
   status: 'active' | 'completed' | 'ignored'
 }
+
+export interface CompanySuggestion {
+  id: string
+  name: string
+  suggestedBy?: string | null
+  status: 'pending' | 'accepted' | 'rejected'
+  createdAt: string
+}

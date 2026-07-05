@@ -9,6 +9,7 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
 import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
+import { AddCompanyModal } from '../components/AddCompanyModal'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { api } from '../services/api'
 
@@ -46,6 +47,7 @@ export const Home = () => {
   const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const chatMessages = useStore(s => s.chatMessages)
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const navigate = useNavigate()
   const location = useLocation()
   const users = useStore(s => s.users)
@@ -79,6 +81,7 @@ export const Home = () => {
   const [chatOpen, setChatOpen] = useState(false)
   const [chatDisplayName, setChatDisplayName] = useState('')
   const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
+  const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -131,6 +134,26 @@ export const Home = () => {
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 15000) }
+
+  const handleSuggestCompany = async (name: string) => {
+    setShowDropdown(false)
+    setQuery('')
+    try {
+      await api.suggestCompany(name, currentUser?.id ?? anonUser?.id)
+      showToast(`Thanks! We'll look into adding ${name}.`)
+    } catch {
+      showToast('Failed to send suggestion — try again later')
+    }
+  }
+
+  const handleCompanyCreated = (companyId: string) => {
+    setShowAddCompanyModal(false)
+    setQuery('')
+    setShowDropdown(false)
+    toggleFavoriteCompany(companyId)
+    syncCommentsFromServer()
+    showToast('Company created')
+  }
 
   const userStats = useMemo(() => {
     // For logged-in users
@@ -503,13 +526,36 @@ export const Home = () => {
               </div>
             )}
             {showDropdown && query && typeaheadResults.length === 0 && (
-              <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-gray-400 dark:text-slate-500 text-center">
-                No companies found for "{query}"
+              <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 px-4 py-5 text-sm text-center">
+                <p className="text-gray-400 dark:text-slate-500 mb-2">No companies found for "{query}"</p>
+                {currentUser?.isAdmin ? (
+                  <button
+                    onClick={() => setShowAddCompanyModal(true)}
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    + Add "{query}" as a new company
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSuggestCompany(query)}
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    Suggest adding "{query}"
+                  </button>
+                )}
               </div>
             )}
           </div>
 
         </div>
+
+        {showAddCompanyModal && (
+          <AddCompanyModal
+            initialName={query}
+            onClose={() => setShowAddCompanyModal(false)}
+            onCreated={handleCompanyCreated}
+          />
+        )}
 
         {/* Company sections (favorites) */}
         {favorites.map((c, cIdx) => {

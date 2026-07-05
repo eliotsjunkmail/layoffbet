@@ -33,6 +33,7 @@ const JS_TO_DB = {
   chatName: 'chat_name',
   lastSide: 'last_side',
   anonId: 'anon_id',
+  suggestedBy: 'suggested_by',
 }
 
 const DB_TO_JS = Object.fromEntries(Object.entries(JS_TO_DB).map(([k, v]) => [v, k]))
@@ -293,6 +294,25 @@ export const db = {
     return { comment: fromDb(data), upvoted }
   },
 
+  // ===== COMPANY SUGGESTIONS =====
+  async createCompanySuggestion(data) {
+    const { data: row, error } = await supabase.from('company_suggestions').insert(toDb(data)).select().single()
+    throwOnError(error, 'createCompanySuggestion')
+    return fromDb(row)
+  },
+
+  async getCompanySuggestions() {
+    const { data, error } = await supabase.from('company_suggestions').select('*').order('created_at')
+    throwOnError(error, 'getCompanySuggestions')
+    return (data || []).map(fromDb)
+  },
+
+  async updateCompanySuggestionStatus(id, status) {
+    const { data, error } = await supabase.from('company_suggestions').update({ status }).eq('id', id).select().maybeSingle()
+    throwOnError(error, 'updateCompanySuggestionStatus')
+    return fromDb(data)
+  },
+
   // ===== CHAT MESSAGES =====
   async getChatMessages(companyId) {
     const { data, error } = await supabase.from('chat_messages').select('*').eq('company_id', companyId).order('created_at')
@@ -427,13 +447,14 @@ export const db = {
 
   // ===== SYNC =====
   async getAllSyncData() {
-    const [users, events, bets, comments, companies, hiddenCompanyIds] = await Promise.all([
+    const [users, events, bets, comments, companies, hiddenCompanyIds, companySuggestions] = await Promise.all([
       this.getUsers(),
       this.getEvents(),
       this.getBets(),
       this.getComments(),
       this.getCompanies(),
       this.getHiddenCompanyIds(),
+      this.getCompanySuggestions(),
     ])
 
     const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }] = await Promise.all([
@@ -469,6 +490,7 @@ export const db = {
       hiddenCompanyIds,
       anonVotedEvents: {},
       commentUpvotesByUser,
+      companySuggestions,
     }
   },
 

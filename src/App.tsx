@@ -697,6 +697,7 @@ import { FeedbackAdmin } from './pages/FeedbackAdmin'
 import { Settings } from './pages/Settings'
 import { ContentGuidelines } from './pages/ContentGuidelines'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
+import { CompanySuggestionsAlert } from './components/CompanySuggestionsAlert'
 
 const Protected = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
@@ -810,6 +811,7 @@ export const App = () => (
     <ThemeEffect />
     <ScrollToTop />
     <DataSync />
+    <CompanySuggestionsAlert />
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />

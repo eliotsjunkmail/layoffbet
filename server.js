@@ -582,6 +582,39 @@ app.post('/api/comments/:id/upvote', async (req, res) => {
   }
 })
 
+// ===== COMPANY SUGGESTIONS =====
+app.post('/api/company-suggestions', async (req, res) => {
+  try {
+    const { name, userId } = req.body
+    if (!name?.trim()) return res.status(400).json({ error: 'Company name required' })
+    const suggestion = await db.createCompanySuggestion({
+      id: 'sugg-' + crypto.randomBytes(8).toString('hex'),
+      name: name.trim(),
+      suggestedBy: userId || null,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    })
+    res.json(suggestion)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/company-suggestions/:id/resolve', async (req, res) => {
+  try {
+    const { status, username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const admin = await db.getUserByUsername(username)
+    if (!admin || admin.password !== password || !admin.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+    if (!['accepted', 'rejected'].includes(status)) return res.status(400).json({ error: 'Invalid status' })
+    const suggestion = await db.updateCompanySuggestionStatus(req.params.id, status)
+    if (!suggestion) return res.status(404).json({ error: 'Suggestion not found' })
+    res.json(suggestion)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== CHAT MESSAGES =====
 app.get('/api/companies/:companyId/chat', async (req, res) => {
   try {

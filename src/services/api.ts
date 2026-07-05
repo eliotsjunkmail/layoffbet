@@ -1,4 +1,4 @@
-import type { User, Comment } from '../types'
+import type { User, Comment, CompanySuggestion } from '../types'
 
 // Use relative URLs in production (same origin)
 // In development, this will fail because frontend is on 5174 and API is on 3000
@@ -98,6 +98,31 @@ export const api = {
     })
     if (!response.ok) {
       throw new Error('Failed to upvote comment')
+    }
+    return response.json()
+  },
+
+  // Company suggestion endpoints
+  suggestCompany: async (name: string, userId?: string): Promise<CompanySuggestion> => {
+    const response = await fetch(`${API_BASE}/api/company-suggestions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, userId }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to suggest company')
+    }
+    return response.json()
+  },
+
+  resolveCompanySuggestion: async (id: string, status: 'accepted' | 'rejected', username: string, password: string): Promise<CompanySuggestion> => {
+    const response = await fetch(`${API_BASE}/api/company-suggestions/${id}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, username, password }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to resolve suggestion')
     }
     return response.json()
   },

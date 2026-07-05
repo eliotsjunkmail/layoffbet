@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem } from '../types'
+import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem, CompanySuggestion } from '../types'
 import { uid, isExpired, validateNoPersonalNames } from '../utils/odds'
 import { api } from '../services/api'
 
@@ -38,6 +38,8 @@ interface StoreState {
   hiddenCompanyIds: string[]
   pinnedEventIds: string[]
   feedback: FeedbackItem[]
+  companySuggestions: CompanySuggestion[]
+  resolveCompanySuggestionLocally: (id: string, status: 'accepted' | 'rejected') => void
   anonVotedEvents: Record<string, { lastSide: 'yes' | 'no'; count: number }>
   companyLastVisit: Record<string, string>
   markCompanyVisited: (companyId: string) => void
@@ -106,6 +108,10 @@ export const useStore = create<StoreState>()(
       hiddenCompanyIds: [],
       pinnedEventIds: [],
       feedback: [],
+      companySuggestions: [],
+      resolveCompanySuggestionLocally: (id, status) => set(s => ({
+        companySuggestions: s.companySuggestions.map(cs => cs.id === id ? { ...cs, status } : cs),
+      })),
       anonVotedEvents: {},
       companyLastVisit: {},
       upvotedCommentIds: [],
@@ -989,6 +995,7 @@ export const useStore = create<StoreState>()(
               favoriteCompanyIds: newFavs,
               pinnedEventIds: newPinned,
               feedback: serverData.feedback || [],
+              companySuggestions: serverData.companySuggestions || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
               upvotedCommentIds: newUpvotedCommentIds,
@@ -1014,6 +1021,7 @@ export const useStore = create<StoreState>()(
         favoriteCompanyIds: s.favoriteCompanyIds,
         pinnedEventIds: s.pinnedEventIds,
         feedback: s.feedback,
+        companySuggestions: s.companySuggestions,
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
         upvotedCommentIds: s.upvotedCommentIds,
