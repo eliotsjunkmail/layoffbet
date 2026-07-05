@@ -148,16 +148,15 @@ export const Home = () => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-      const activeBetAmount = userBets.filter(b => {
+      const wonBets = userBets.filter(b => {
         const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'active'
-      }).reduce((sum, b) => sum + b.amount, 0)
+        return event && getEffectiveStatus(event) === 'resolved' && event.outcome === b.side
+      }).length
       return {
         coins: currentUser.coins,
         totalBets: userBets.length,
         activeBets: activeBetCount,
-        totalBetAmount,
+        wonBets,
       }
     }
 
@@ -176,11 +175,14 @@ export const Home = () => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
+      const wonBets = userBets.filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && getEffectiveStatus(event) === 'resolved' && event.outcome === b.side
+      }).length
       return {
         totalBets: userBets.length,
         activeBets: activeBetCount,
-        totalBetAmount,
+        wonBets,
       }
     }
 
@@ -437,8 +439,8 @@ export const Home = () => {
                     <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBets}</div>
                   </button>
                   <button onClick={() => navigate('/bets')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.totalBetAmount}</div>
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Won</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats.wonBets}</div>
                   </button>
                 </>
               )}
@@ -449,8 +451,8 @@ export const Home = () => {
                     <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBets ?? 0}</div>
                   </button>
                   <button onClick={() => navigate('/login')} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col">
-                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.totalBetAmount ?? 0}</div>
+                    <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Won</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{userStats?.wonBets ?? 0}</div>
                   </button>
                 </>
               )}
