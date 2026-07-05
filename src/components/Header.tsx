@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, User, Shield, LogOut, Settings, ChevronDown, Coins, X, MessageSquare, Trash2 } from 'lucide-react'
+import { Search, User, Shield, LogOut, Settings, ChevronDown, Coins, X, MessageSquare, Trash2, AlertTriangle } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { APP_VERSION } from '../constants'
 
@@ -12,22 +12,48 @@ const deleteSession = (onClose: () => void) => {
   window.location.href = '/'
 }
 
+const DeleteSessionConfirm = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => (
+  <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={onCancel}>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+      <div className="flex items-start gap-3 mb-5">
+        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Delete session?</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400">You'll lose the ability to view your bets.</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={onCancel}
+          className="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium transition-colors"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)
+
 const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const logout = useStore(s => s.logout)
   const navigate = useNavigate()
   const isAnon = currentUser?.isAnonymous || currentUser?.username?.match(/^Anon\d+$/)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleLogout = () => {
     logout()
     onClose()
     localStorage.removeItem('lb-gate-v2')
     window.location.href = '/'
-  }
-
-  const handleDeleteSession = () => {
-    if (!window.confirm('Delete your anonymous session? You will return to the gate and lose your anonymous account.')) return
-    deleteSession(onClose)
   }
 
   const go = (path: string) => { navigate(path); onClose() }
@@ -77,12 +103,19 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
               </>
             )}
             {isAnon && (
-              <button onClick={handleDeleteSession} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-left">
+              <button onClick={() => setShowDeleteConfirm(true)} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-left">
                 <Trash2 className="w-5 h-5 text-rose-500 dark:text-rose-400" />
                 <span className="text-sm font-medium text-rose-600 dark:text-rose-400">Delete session</span>
               </button>
             )}
           </div>
+
+          {showDeleteConfirm && (
+            <DeleteSessionConfirm
+              onConfirm={() => deleteSession(onClose)}
+              onCancel={() => setShowDeleteConfirm(false)}
+            />
+          )}
 
           {isAnon ? (
             <Link
@@ -110,10 +143,7 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
 }
 
 const GuestSheet = ({ onClose }: { onClose: () => void }) => {
-  const handleDeleteSession = () => {
-    if (!window.confirm('Delete your session? You will return to the gate.')) return
-    deleteSession(onClose)
-  }
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   return (
     <>
@@ -128,11 +158,18 @@ const GuestSheet = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           <div className="space-y-1 mb-4">
-            <button onClick={handleDeleteSession} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-left">
+            <button onClick={() => setShowDeleteConfirm(true)} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-left">
               <Trash2 className="w-5 h-5 text-rose-500 dark:text-rose-400" />
               <span className="text-sm font-medium text-rose-600 dark:text-rose-400">Delete session</span>
             </button>
           </div>
+
+          {showDeleteConfirm && (
+            <DeleteSessionConfirm
+              onConfirm={() => deleteSession(onClose)}
+              onCancel={() => setShowDeleteConfirm(false)}
+            />
+          )}
 
           <Link
             to="/login"
