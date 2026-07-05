@@ -9,7 +9,7 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
 import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
-import { getProbability, betMovementStr } from '../utils/odds'
+import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { api } from '../services/api'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
@@ -593,9 +593,12 @@ export const Home = () => {
                           )}
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
-                            {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                              <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
-                            )}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <span className="text-[10px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(e.expiresAt)}</span>
+                              {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
+                                <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                              )}
+                            </div>
                           </div>
                           <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                             <div

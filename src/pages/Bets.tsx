@@ -386,7 +386,7 @@ export const Bets = () => {
                         </div>
                         <div className="flex justify-between text-xs">
                           {dominant === 'yes' ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
-                          <span className="text-gray-400 dark:text-slate-500 flex items-center gap-0.5"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
+                          <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
                           {dominant === 'no' ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span> : <span className="text-gray-300 dark:text-slate-700">·</span>}
                         </div>
                       </SwipeCard>
