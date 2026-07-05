@@ -5,7 +5,9 @@ import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { EmptyState } from '../components/EmptyState'
+import { AddCompanyModal } from '../components/AddCompanyModal'
 import { getProbability } from '../utils/odds'
+import { api } from '../services/api'
 
 const fmtViews = (n: number) => {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
@@ -18,9 +20,35 @@ export const Search = () => {
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
+  const currentUser = useStore(s => s.currentUser)
+  const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
+  const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const [query, setQuery] = useState('')
+  const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
+  const [toast, setToast] = useState('')
 
   const q = query.toLowerCase().trim()
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
+
+  const handleSuggestCompany = async () => {
+    const name = query.trim()
+    setQuery('')
+    try {
+      await api.suggestCompany(name, currentUser?.id)
+      showToast(`Thanks! We'll look into adding ${name}.`)
+    } catch {
+      showToast('Failed to send suggestion — try again later')
+    }
+  }
+
+  const handleCompanyCreated = (companyId: string) => {
+    setShowAddCompanyModal(false)
+    setQuery('')
+    toggleFavoriteCompany(companyId)
+    syncCommentsFromServer()
+    showToast('Company created')
+  }
 
   const sentimentByCompany = useMemo(() => {
     const map: Record<string, number> = {}
@@ -86,7 +114,30 @@ export const Search = () => {
               </Link>
             )
           })}
-          {matchedCompanies.length === 0 && <EmptyState icon={Building2} description="No companies found." size="sm" />}
+          {matchedCompanies.length === 0 && (
+            <EmptyState
+              icon={Building2}
+              description="No companies found."
+              size="sm"
+              action={q ? (
+                currentUser?.isAdmin ? (
+                  <button
+                    onClick={() => setShowAddCompanyModal(true)}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    + Add "{query.trim()}" as a new company
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSuggestCompany}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    Suggest adding "{query.trim()}"
+                  </button>
+                )
+              ) : undefined}
+            />
+          )}
         </div>
       </section>
 
@@ -121,6 +172,20 @@ export const Search = () => {
           {matchedEvents.length === 0 && <EmptyState icon={SearchX} description="No predictions found." size="sm" />}
         </div>
       </section>
+
+      {showAddCompanyModal && (
+        <AddCompanyModal
+          initialName={query.trim()}
+          onClose={() => setShowAddCompanyModal(false)}
+          onCreated={handleCompanyCreated}
+        />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
+          {toast}
+        </div>
+      )}
     </Layout>
   )
 }
