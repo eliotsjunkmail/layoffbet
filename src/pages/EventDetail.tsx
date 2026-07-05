@@ -5,7 +5,9 @@ import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { AuthModal } from '../components/AuthModal'
 import { EmptyState } from '../components/EmptyState'
+import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug, timeAgo } from '../utils/odds'
+import { checkContentModeration } from '../utils/moderation'
 
 export const EventDetail = () => {
   const { id, slug } = useParams<{ id?: string; slug?: string }>()
@@ -32,6 +34,7 @@ export const EventDetail = () => {
   const [commentText, setCommentText] = useState('')
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentError, setCommentError] = useState('')
+  const [moderationWarning, setModerationWarning] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const betAmount = 10
   const [toast, setToast] = useState('')
@@ -155,17 +158,25 @@ export const EventDetail = () => {
       } else {
         setCommentError(result.error || 'Error editing comment')
       }
+      return
+    }
+
+    const moderation = checkContentModeration(commentText.trim())
+    if (moderation) {
+      setModerationWarning(moderation.reason)
+      return
+    }
+    submitComment()
+  }
+
+  const submitComment = () => {
+    const result = addComment(id!, commentText)
+    if (result.ok) {
+      setCommentText('')
+      setCommentError('')
+      if (result.pending) showToast('Submitted for admin review.')
     } else {
-      const result = addComment(id!, commentText)
-      if (result.ok) {
-        setCommentText('')
-        setCommentError('')
-        if (result.pending) {
-          showToast(`Your comment needs admin approval before it's visible — it may contain ${result.reason}.`)
-        }
-      } else {
-        setCommentError(result.error || 'Error adding comment')
-      }
+      setCommentError(result.error || 'Error adding comment')
     }
   }
 
@@ -429,6 +440,13 @@ export const EventDetail = () => {
       </div>
 
       {showAuthModal && <AuthModal onClose={handleAuthClose} prompt="Sign in or create a free account to place your bet." />}
+      {moderationWarning && (
+        <ModerationWarningModal
+          reason={moderationWarning}
+          onEdit={() => setModerationWarning(null)}
+          onSubmitAnyway={() => { setModerationWarning(null); submitComment() }}
+        />
+      )}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50">
           {toast}

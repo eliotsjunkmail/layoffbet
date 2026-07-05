@@ -10,7 +10,9 @@ import { AdBanner } from '../components/AdBanner'
 import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
 import { AddCompanyModal } from '../components/AddCompanyModal'
+import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
+import { checkContentModeration } from '../utils/moderation'
 import { api } from '../services/api'
 
 const INDUSTRIES = ['All', 'Tech', 'Software', 'AI & Machine Learning', 'Finance', 'Healthcare', 'Retail', 'Media & Entertainment', 'Energy', 'Consulting', 'Logistics', 'Food & Beverage', 'Manufacturing']
@@ -82,6 +84,7 @@ export const Home = () => {
   const [chatDisplayName, setChatDisplayName] = useState('')
   const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
+  const [moderationWarning, setModerationWarning] = useState<{ eventId: string; reason: string; text: string } | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
   const removeBet = useStore(s => s.removeBet)
@@ -128,12 +131,20 @@ export const Home = () => {
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
     if (!text) return
+
+    const moderation = checkContentModeration(text)
+    if (moderation) {
+      setModerationWarning({ eventId, reason: moderation.reason, text })
+      return
+    }
+    submitComment(eventId, text)
+  }
+
+  const submitComment = (eventId: string, text: string) => {
     const result = addComment(eventId, text)
     setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
     setFocusedInput(null)
-    if (result.pending) {
-      showToast(`Your comment needs admin approval before it's visible — it may contain ${result.reason}.`)
-    }
+    if (result.pending) showToast('Submitted for admin review.')
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 15000) }
@@ -788,6 +799,18 @@ export const Home = () => {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
           {toast}
         </div>
+      )}
+
+      {moderationWarning && (
+        <ModerationWarningModal
+          reason={moderationWarning.reason}
+          onEdit={() => setModerationWarning(null)}
+          onSubmitAnyway={() => {
+            const { eventId, text } = moderationWarning
+            setModerationWarning(null)
+            submitComment(eventId, text)
+          }}
+        />
       )}
 
       {topFavoritedCompany && (

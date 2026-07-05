@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronLeft, Calendar } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
+import { ModerationWarningModal } from '../components/ModerationWarningModal'
+import { checkContentModeration } from '../utils/moderation'
 
 export const CreateEvent = () => {
   const companies = useStore(s => s.companies)
@@ -29,6 +31,7 @@ export const CreateEvent = () => {
   const [side, setSide] = useState<'yes' | 'no' | null>(null)
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
+  const [moderationWarning, setModerationWarning] = useState<string | null>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   const selectedCompany = companies.find(c => c.id === companyId)
@@ -41,11 +44,21 @@ export const CreateEvent = () => {
     if (!title.trim() || title.trim().length < 10) return setError('Title must be at least 10 characters.')
     if (!expiresAt) return setError('Set an expiration date.')
     if (!side) return setError('Choose YES or NO for your prediction.')
+
+    const moderation = checkContentModeration(`${title.trim()} ${description.trim()}`)
+    if (moderation) {
+      setModerationWarning(moderation.reason)
+      return
+    }
+    await submitEvent()
+  }
+
+  const submitEvent = async () => {
     const company = companies.find(c => c.id === companyId)
     if (!company) return
-    const newEvent = await createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
+    const newEvent = await createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side! })
     if (newEvent && typeof newEvent === 'object' && 'pending' in newEvent) {
-      setToast(`Your prediction needs admin approval before it's visible — it may contain ${newEvent.reason}.`)
+      setToast('Submitted for admin review.')
       setTimeout(() => navigate('/'), 2500)
       return
     }
@@ -151,6 +164,14 @@ export const CreateEvent = () => {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 max-w-[90vw] text-center">
           {toast}
         </div>
+      )}
+
+      {moderationWarning && (
+        <ModerationWarningModal
+          reason={moderationWarning}
+          onEdit={() => setModerationWarning(null)}
+          onSubmitAnyway={() => { setModerationWarning(null); submitEvent() }}
+        />
       )}
     </Layout>
   )

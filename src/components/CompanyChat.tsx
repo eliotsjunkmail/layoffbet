@@ -3,6 +3,7 @@ import { X, Send, ThumbsUp, ThumbsDown, Laugh, Frown, Trash2, RefreshCw, CheckCi
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 import { checkContentModeration } from '../utils/moderation'
+import { ModerationWarningModal } from './ModerationWarningModal'
 
 type ReactionType = 'thumbsup' | 'thumbsdown' | 'laugh' | 'cry'
 
@@ -85,6 +86,7 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const [pollQuestion, setPollQuestion] = useState('')
   const [pollChoices, setPollChoices] = useState<string[]>(['', ''])
   const [editingPollId, setEditingPollId] = useState<string | null>(null)
+  const [moderationWarning, setModerationWarning] = useState<{ reason: string; text: string } | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -425,29 +427,38 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
   const handleSend = async () => {
     if (!input.trim()) return
 
-    const userId = myUserIdRef.current
     const text = input.trim()
 
     const moderation = checkContentModeration(text)
     if (moderation) {
-      try {
-        const nameResponse = await api.getOrAssignChatName(companyId, userId)
-        await api.submitForModeration({
-          contentType: 'chat_message',
-          companyId,
-          companyName,
-          userId,
-          reason: moderation.reason,
-          payload: { companyId, userId, username: nameResponse.chatName, text, reactions: [] },
-        })
-        setInput('')
-        showToast(`Your message needs admin approval before it's visible — it may contain ${moderation.reason}.`)
-      } catch (error) {
-        console.error('Failed to submit message for moderation:', error)
-      }
+      setModerationWarning({ reason: moderation.reason, text })
       return
     }
 
+    await sendMessage(text)
+  }
+
+  const submitMessageForModeration = async (text: string, reason: string) => {
+    const userId = myUserIdRef.current
+    try {
+      const nameResponse = await api.getOrAssignChatName(companyId, userId)
+      await api.submitForModeration({
+        contentType: 'chat_message',
+        companyId,
+        companyName,
+        userId,
+        reason,
+        payload: { companyId, userId, username: nameResponse.chatName, text, reactions: [] },
+      })
+      setInput('')
+      showToast('Submitted for admin review.')
+    } catch (error) {
+      console.error('Failed to submit message for moderation:', error)
+    }
+  }
+
+  const sendMessage = async (text: string) => {
+    const userId = myUserIdRef.current
     try {
       // Get or assign anonymous chat name
       const nameResponse = await api.getOrAssignChatName(companyId, userId)
@@ -1171,6 +1182,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[70] max-w-[90vw] text-center pointer-events-none">
           {toast}
         </div>
+      )}
+
+      {moderationWarning && (
+        <ModerationWarningModal
+          reason={moderationWarning.reason}
+          onEdit={() => setModerationWarning(null)}
+          onSubmitAnyway={() => {
+            const { text, reason } = moderationWarning
+            setModerationWarning(null)
+            submitMessageForModeration(text, reason)
+          }}
+        />
       )}
     </div>
   )

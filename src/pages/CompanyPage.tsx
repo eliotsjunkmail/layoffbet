@@ -9,7 +9,9 @@ import { SwipeCard } from '../components/SwipeCard'
 import { EmptyState } from '../components/EmptyState'
 import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
+import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
+import { checkContentModeration } from '../utils/moderation'
 import { AdBanner } from '../components/AdBanner'
 import { api } from '../services/api'
 
@@ -70,6 +72,7 @@ export const CompanyPage = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [commentErrors, setCommentErrors] = useState<Record<string, string>>({})
+  const [moderationWarning, setModerationWarning] = useState<{ eventId: string; reason: string; text: string } | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
   const [newMessageCount, setNewMessageCount] = useState(0)
   const [shouldShake, setShouldShake] = useState(false)
@@ -217,18 +220,26 @@ export const CompanyPage = () => {
       } else {
         setCommentErrors(prev => ({ ...prev, [eventId]: result.error || 'Error' }))
       }
+      return
+    }
+
+    const moderation = checkContentModeration(text)
+    if (moderation) {
+      setModerationWarning({ eventId, reason: moderation.reason, text })
+      return
+    }
+    submitComment(eventId, text)
+  }
+
+  const submitComment = (eventId: string, text: string) => {
+    const result = addComment(eventId, text)
+    if (result.ok) {
+      setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
+      setFocusedInput(null)
+      setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
+      if (result.pending) showToast('Submitted for admin review.')
     } else {
-      const result = addComment(eventId, text)
-      if (result.ok) {
-        setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
-        setFocusedInput(null)
-        setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
-        if (result.pending) {
-          showToast(`Your comment needs admin approval before it's visible — it may contain ${result.reason}.`)
-        }
-      } else {
-        setCommentErrors(prev => ({ ...prev, [eventId]: result.error || 'Error' }))
-      }
+      setCommentErrors(prev => ({ ...prev, [eventId]: result.error || 'Error' }))
     }
   }
 
@@ -794,6 +805,18 @@ export const CompanyPage = () => {
         <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[60] pointer-events-none ${toastExiting ? 'animate-slide-down' : 'animate-slide-up'}`}>
           {toast}
         </div>
+      )}
+
+      {moderationWarning && (
+        <ModerationWarningModal
+          reason={moderationWarning.reason}
+          onEdit={() => setModerationWarning(null)}
+          onSubmitAnyway={() => {
+            const { eventId, text } = moderationWarning
+            setModerationWarning(null)
+            submitComment(eventId, text)
+          }}
+        />
       )}
 
       {/* Ad Banner at bottom */}
