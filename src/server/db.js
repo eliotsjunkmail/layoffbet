@@ -34,6 +34,7 @@ const JS_TO_DB = {
   lastSide: 'last_side',
   anonId: 'anon_id',
   suggestedBy: 'suggested_by',
+  contentType: 'content_type',
 }
 
 const DB_TO_JS = Object.fromEntries(Object.entries(JS_TO_DB).map(([k, v]) => [v, k]))
@@ -307,6 +308,25 @@ export const db = {
     return fromDb(data)
   },
 
+  // ===== MODERATION QUEUE =====
+  async createModerationItem(data) {
+    const { data: row, error } = await supabase.from('moderation_queue').insert(toDb(data)).select().single()
+    throwOnError(error, 'createModerationItem')
+    return fromDb(row)
+  },
+
+  async getModerationItemById(id) {
+    const { data, error } = await supabase.from('moderation_queue').select('*').eq('id', id).maybeSingle()
+    throwOnError(error, 'getModerationItemById')
+    return data ? fromDb(data) : null
+  },
+
+  async updateModerationItemStatus(id, status) {
+    const { data, error } = await supabase.from('moderation_queue').update({ status }).eq('id', id).select().maybeSingle()
+    throwOnError(error, 'updateModerationItemStatus')
+    return fromDb(data)
+  },
+
   // ===== CHAT MESSAGES =====
   async getChatMessages(companyId) {
     const { data, error } = await supabase.from('chat_messages').select('*').eq('company_id', companyId).order('created_at')
@@ -452,14 +472,16 @@ export const db = {
 
     // These tables were added after initial launch — fetched defensively (no throwOnError)
     // so a not-yet-migrated Supabase project degrades to empty data instead of failing the whole sync.
-    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }] = await Promise.all([
+    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
       supabase.from('chat_messages').select('*').order('created_at'),
       supabase.from('favorites').select('*'),
       supabase.from('comment_upvotes').select('*'),
       supabase.from('company_suggestions').select('*').order('created_at'),
+      supabase.from('moderation_queue').select('*').order('created_at'),
     ])
 
     const companySuggestions = (suggestionRows || []).map(fromDb)
+    const moderationQueue = (moderationRows || []).map(fromDb)
 
     const chatMessages = (chatMsgRows || []).map(fromDb)
 
@@ -489,6 +511,7 @@ export const db = {
       anonVotedEvents: {},
       commentUpvotesByUser,
       companySuggestions,
+      moderationQueue,
     }
   },
 

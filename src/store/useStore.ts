@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem, CompanySuggestion } from '../types'
-import { uid, isExpired, validateNoPersonalNames } from '../utils/odds'
+import type { User, Company, Event, Bet, Comment, Theme, FeedbackItem, CompanySuggestion, ModerationItem } from '../types'
+import { uid, isExpired } from '../utils/odds'
+import { checkContentModeration } from '../utils/moderation'
 import { api } from '../services/api'
 
 const DAILY_COINS = 100
@@ -40,6 +41,8 @@ interface StoreState {
   feedback: FeedbackItem[]
   companySuggestions: CompanySuggestion[]
   resolveCompanySuggestionLocally: (id: string, status: 'accepted' | 'rejected') => void
+  moderationQueue: ModerationItem[]
+  resolveModerationItemLocally: (id: string, status: 'approved' | 'rejected') => void
   anonVotedEvents: Record<string, { lastSide: 'yes' | 'no'; count: number }>
   companyLastVisit: Record<string, string>
   markCompanyVisited: (companyId: string) => void
@@ -68,7 +71,7 @@ interface StoreState {
   removeBet: (eventId: string) => void
   removeAnonymousVote: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
-  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Promise<Event | false>
+  createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Promise<Event | false | { pending: true; reason: string }>
   updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
@@ -78,8 +81,8 @@ interface StoreState {
   updateCompany: (id: string, name: string, description: string, industry: string) => void
   deleteCompany: (id: string) => void
 
-  addComment: (eventId: string, content: string) => { ok: boolean; error?: string }
-  editComment: (id: string, content: string) => { ok: boolean; error?: string }
+  addComment: (eventId: string, content: string) => { ok: boolean; error?: string; pending?: boolean; reason?: string }
+  editComment: (id: string, content: string) => { ok: boolean; error?: string; pending?: boolean; reason?: string }
   deleteComment: (id: string) => boolean
   upvoteComment: (commentId: string) => void
   recordShare: (eventId: string) => void
@@ -111,6 +114,10 @@ export const useStore = create<StoreState>()(
       companySuggestions: [],
       resolveCompanySuggestionLocally: (id, status) => set(s => ({
         companySuggestions: s.companySuggestions.map(cs => cs.id === id ? { ...cs, status } : cs),
+      })),
+      moderationQueue: [],
+      resolveModerationItemLocally: (id, status) => set(s => ({
+        moderationQueue: s.moderationQueue.map(m => m.id === id ? { ...m, status } : m),
       })),
       anonVotedEvents: {},
       companyLastVisit: {},
@@ -688,6 +695,19 @@ export const useStore = create<StoreState>()(
         const userCoins = currentUser?.coins ?? guestCoins
         if (userCoins < costCoins) return false
 
+        const moderation = checkContentModeration(`${eventData.title} ${eventData.description || ''}`)
+        if (moderation) {
+          api.submitForModeration({
+            contentType: 'event',
+            companyId: eventData.companyId,
+            companyName: eventData.companyName,
+            userId: currentUser?.id || null,
+            reason: moderation.reason,
+            payload: { ...eventData, creatorId, creatorName, initialSide, costCoins },
+          }).catch(err => console.error('Failed to submit event for moderation:', err))
+          return { pending: true, reason: moderation.reason }
+        }
+
         const event: Event = {
           ...eventData,
           id: `evt-${uid()}`,
@@ -801,9 +821,29 @@ export const useStore = create<StoreState>()(
 
         const trimmed = content.trim()
         if (!trimmed) return { ok: false, error: 'Comment cannot be empty' }
-        if (!validateNoPersonalNames(trimmed)) return { ok: false, error: 'Please avoid using personal names in comments' }
 
         const event = events.find(e => e.id === eventId)
+
+        const moderation = checkContentModeration(trimmed)
+        if (moderation) {
+          api.submitForModeration({
+            contentType: 'comment',
+            companyId: event?.companyId || null,
+            companyName: event?.companyName || 'Unknown',
+            userId: currentUser.id,
+            reason: moderation.reason,
+            payload: {
+              eventId,
+              companyId: event?.companyId,
+              userId: currentUser.id,
+              displayName: currentUser.displayName || currentUser.username || undefined,
+              content: trimmed,
+              upvotes: 0,
+            },
+          }).catch(err => console.error('[Store] Failed to submit comment for moderation:', err))
+          return { ok: true, pending: true, reason: moderation.reason }
+        }
+
         const comment: Comment = {
           id: `cmt-${uid()}`,
           eventId,
@@ -847,7 +887,8 @@ export const useStore = create<StoreState>()(
 
         const trimmed = content.trim()
         if (!trimmed) return { ok: false, error: 'Comment cannot be empty' }
-        if (!validateNoPersonalNames(trimmed)) return { ok: false, error: 'Please avoid using personal names in comments' }
+        const moderation = checkContentModeration(trimmed)
+        if (moderation) return { ok: false, error: `Your edit may contain ${moderation.reason} — please revise it` }
 
         const editedAt = new Date().toISOString()
         set(s => ({
@@ -996,6 +1037,7 @@ export const useStore = create<StoreState>()(
               pinnedEventIds: newPinned,
               feedback: serverData.feedback || [],
               companySuggestions: serverData.companySuggestions || [],
+              moderationQueue: serverData.moderationQueue || [],
               anonVotedEvents: serverData.anonVotedEvents || {},
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
               upvotedCommentIds: newUpvotedCommentIds,
@@ -1022,6 +1064,7 @@ export const useStore = create<StoreState>()(
         pinnedEventIds: s.pinnedEventIds,
         feedback: s.feedback,
         companySuggestions: s.companySuggestions,
+        moderationQueue: s.moderationQueue,
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
         upvotedCommentIds: s.upvotedCommentIds,

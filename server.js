@@ -615,6 +615,88 @@ app.post('/api/company-suggestions/:id/resolve', async (req, res) => {
   }
 })
 
+// ===== MODERATION QUEUE =====
+app.post('/api/moderation-queue', async (req, res) => {
+  try {
+    const { contentType, companyId, companyName, userId, reason, payload } = req.body
+    if (!contentType || !payload) return res.status(400).json({ error: 'contentType and payload required' })
+    const item = await db.createModerationItem({
+      id: 'mod-' + crypto.randomBytes(8).toString('hex'),
+      contentType,
+      companyId: companyId || null,
+      companyName: companyName || 'Unknown',
+      userId: userId || null,
+      reason: reason || 'flagged content',
+      payload,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    })
+    res.json(item)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/moderation-queue/:id/resolve', async (req, res) => {
+  try {
+    const { status, username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const admin = await db.getUserByUsername(username)
+    if (!admin || admin.password !== password || !admin.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+    if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Invalid status' })
+
+    const item = await db.getModerationItemById(req.params.id)
+    if (!item) return res.status(404).json({ error: 'Moderation item not found' })
+
+    if (status === 'approved') {
+      const payload = item.payload || {}
+      if (item.contentType === 'comment') {
+        await db.createComment({
+          id: 'cmt-' + crypto.randomBytes(8).toString('hex'),
+          ...payload,
+          createdAt: new Date().toISOString(),
+        })
+      } else if (item.contentType === 'chat_message') {
+        await db.createChatMessage({
+          id: 'msg-' + crypto.randomBytes(8).toString('hex'),
+          ...payload,
+          createdAt: new Date().toISOString(),
+        })
+      } else if (item.contentType === 'event') {
+        const { initialSide, costCoins, ...eventData } = payload
+        const event = await db.createEvent({
+          id: 'evt-' + crypto.randomBytes(8).toString('hex'),
+          ...eventData,
+          yesPool: 0,
+          noPool: 0,
+          outcome: null,
+          status: 'active',
+          viewCount: 0,
+          shareCount: 0,
+          createdAt: new Date().toISOString(),
+        })
+        if (initialSide && payload.creatorId) {
+          const amount = costCoins || 10
+          await db.createBet({
+            id: 'bet-' + crypto.randomBytes(8).toString('hex'),
+            eventId: event.id,
+            userId: payload.creatorId,
+            side: initialSide,
+            amount,
+            createdAt: new Date().toISOString(),
+          })
+          await db.adjustEventPool(event.id, initialSide === 'yes' ? amount : 0, initialSide === 'no' ? amount : 0)
+        }
+      }
+    }
+
+    const updated = await db.updateModerationItemStatus(req.params.id, status)
+    res.json(updated)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== CHAT MESSAGES =====
 app.get('/api/companies/:companyId/chat', async (req, res) => {
   try {

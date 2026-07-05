@@ -223,6 +223,9 @@ export const CompanyPage = () => {
         setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
         setFocusedInput(null)
         setCommentErrors(prev => ({ ...prev, [eventId]: '' }))
+        if (result.pending) {
+          showToast(`Your comment needs admin approval before it's visible — it may contain ${result.reason}.`)
+        }
       } else {
         setCommentErrors(prev => ({ ...prev, [eventId]: result.error || 'Error' }))
       }

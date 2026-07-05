@@ -80,17 +80,4 @@ export const makeSlug = (text: string): string => {
     .slice(0, 50)
 }
 
-export const validateNoPersonalNames = (text: string): boolean => {
-  const lowerText = text.toLowerCase()
-  const personalNamePatterns = [
-    /\b[a-z]\.[\s]?[a-z]/gi,
-    /\b(?:john|jane|bob|alice|michael|sarah|david|emily|james|jessica|robert|jennifer|william|linda|richard|barbara|charles|susan|joseph|jessica|thomas|karen|christopher|nancy|daniel|lisa|matthew|betty|anthony|margaret|mark|sandra|donald|ashley|steven|kimberly|paul|donna|andrew|carol|joshua|michelle|kenneth|amanda|kevin|melissa|brian|deborah|george|stephanie|edward|rebecca|ronald|sharon|timothy|laura|jason|cynthia|jeffrey|kathleen|ryan|amy|jacob|angela|gary|shirley|nicholas|anna|eric|brenda|jonathan|pamela|stephen|emma|larry|nicole|justin|helen|scott|kathryn|brandon|gloria|benjamin|sara|samuel|diane|frank|julie|gregory|joyce|raymond|evelyn|patrick|judith|alexander|megan|jack|cheryl|dennis|andrea|jerry|hannah|tyler|jacqueline|aaron|martha|josé|madison|adam|teresa|henry|gloria|douglas|sara|zachary|ciara|peter|grace|kyle|amber|walter|brittany|harold|belinda|keith|patricia)\b/gi,
-  ]
-
-  for (const pattern of personalNamePatterns) {
-    if (pattern.test(lowerText)) return false
-  }
-
-  return true
-}
 

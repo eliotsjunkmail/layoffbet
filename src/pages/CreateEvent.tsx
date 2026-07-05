@@ -28,6 +28,7 @@ export const CreateEvent = () => {
   const [expiresAt, setExpiresAt] = useState('')
   const [side, setSide] = useState<'yes' | 'no' | null>(null)
   const [error, setError] = useState('')
+  const [toast, setToast] = useState('')
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   const selectedCompany = companies.find(c => c.id === companyId)
@@ -43,6 +44,11 @@ export const CreateEvent = () => {
     const company = companies.find(c => c.id === companyId)
     if (!company) return
     const newEvent = await createEvent({ companyId, companyName: company.name, title: title.trim(), description: description.trim(), expiresAt: new Date(expiresAt).toISOString(), initialSide: side })
+    if (newEvent && typeof newEvent === 'object' && 'pending' in newEvent) {
+      setToast(`Your prediction needs admin approval before it's visible — it may contain ${newEvent.reason}.`)
+      setTimeout(() => navigate('/'), 2500)
+      return
+    }
     if (!newEvent) return setError('Not enough coins to create prediction. (Costs 10 coins)')
     navigate(`/${company.slug}`, { state: { newEventId: newEvent.id, showToast: true } })
   }
@@ -140,6 +146,12 @@ export const CreateEvent = () => {
           Create Prediction
         </button>
       </form>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 max-w-[90vw] text-center">
+          {toast}
+        </div>
+      )}
     </Layout>
   )
 }

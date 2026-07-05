@@ -81,3 +81,17 @@ export interface CompanySuggestion {
   status: 'pending' | 'accepted' | 'rejected'
   createdAt: string
 }
+
+export type ModerationContentType = 'comment' | 'chat_message' | 'event'
+
+export interface ModerationItem {
+  id: string
+  contentType: ModerationContentType
+  companyId?: string | null
+  companyName: string
+  userId?: string | null
+  reason: string
+  payload: Record<string, any>
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: string
+}

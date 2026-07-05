@@ -128,9 +128,12 @@ export const Home = () => {
   const handleAddComment = (eventId: string) => {
     const text = commentInputs[eventId]?.trim()
     if (!text) return
-    addComment(eventId, text)
+    const result = addComment(eventId, text)
     setCommentInputs(prev => ({ ...prev, [eventId]: '' }))
     setFocusedInput(null)
+    if (result.pending) {
+      showToast(`Your comment needs admin approval before it's visible — it may contain ${result.reason}.`)
+    }
   }
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 15000) }

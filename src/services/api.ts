@@ -1,4 +1,4 @@
-import type { User, Comment, CompanySuggestion } from '../types'
+import type { User, Comment, CompanySuggestion, ModerationItem, ModerationContentType } from '../types'
 
 // Use relative URLs in production (same origin)
 // In development, this will fail because frontend is on 5174 and API is on 3000
@@ -123,6 +123,38 @@ export const api = {
     })
     if (!response.ok) {
       throw new Error('Failed to resolve suggestion')
+    }
+    return response.json()
+  },
+
+  // Moderation queue endpoints
+  submitForModeration: async (params: {
+    contentType: ModerationContentType
+    companyId?: string | null
+    companyName: string
+    userId?: string | null
+    reason: string
+    payload: Record<string, any>
+  }): Promise<ModerationItem> => {
+    const response = await fetch(`${API_BASE}/api/moderation-queue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to submit for moderation')
+    }
+    return response.json()
+  },
+
+  resolveModerationItem: async (id: string, status: 'approved' | 'rejected', username: string, password: string): Promise<ModerationItem> => {
+    const response = await fetch(`${API_BASE}/api/moderation-queue/${id}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, username, password }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to resolve moderation item')
     }
     return response.json()
   },

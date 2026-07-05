@@ -160,6 +160,9 @@ export const EventDetail = () => {
       if (result.ok) {
         setCommentText('')
         setCommentError('')
+        if (result.pending) {
+          showToast(`Your comment needs admin approval before it's visible — it may contain ${result.reason}.`)
+        }
       } else {
         setCommentError(result.error || 'Error adding comment')
       }
