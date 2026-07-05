@@ -556,6 +556,7 @@ export const Home = () => {
                       ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id)
                       : anonUser ? bets.find(b => b.eventId === e.id && b.userId === anonUser.id && !b.id.startsWith('pending-'))
                       : undefined
+                    const eventBetCount = bets.filter(b => b.eventId === e.id).length
                     const eventComments = comments.filter(c => c.eventId === e.id)
                     const midpoint = Math.floor(activeEvents.length / 2)
                     return (
@@ -591,15 +592,13 @@ export const Home = () => {
                               </button>
                             </div>
                           )}
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1">{e.title}</p>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <span className="text-[10px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(e.expiresAt)}</span>
-                              {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                                <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
-                              )}
-                            </div>
-                          </div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">
+                            {e.title}{' '}
+                            <span className="inline-block align-middle text-[10px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(e.expiresAt)}</span>
+                            {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
+                              <span className="inline-block align-middle ml-1 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                            )}
+                          </p>
                           <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                             <div
                               className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
@@ -611,11 +610,13 @@ export const Home = () => {
                               ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
                               : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
                             }
-                            <span className="text-gray-400 dark:text-slate-500">{e.yesPool + e.noPool} coins</span>
                             {dominant === 'no'
                               ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
                               : <span className="text-gray-300 dark:text-slate-700 font-semibold">·</span>
                             }
+                          </div>
+                          <div className={`text-[11px] text-gray-400 dark:text-slate-500 mt-1 ${dominant === 'yes' ? 'text-right' : 'text-left'}`}>
+                            {eventBetCount} bet{eventBetCount === 1 ? '' : 's'}
                           </div>
                         </SwipeCard>
                         {(showComments || hidingComments) && (

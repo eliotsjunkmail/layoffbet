@@ -536,6 +536,7 @@ export const CompanyPage = () => {
                   const eventComments = comments.filter(c => c.eventId === event.id)
                   const midpoint = Math.floor(active.length / 2)
                   const userBet = currentUser ? bets.find(b => b.eventId === event.id && b.userId === currentUser.id) : null
+                  const eventBetCount = bets.filter(b => b.eventId === event.id).length
                   return (
                     <>
                       <div key={event.id} ref={state?.newEventId === event.id ? scrollTargetRef : null}>
@@ -581,7 +582,10 @@ export const CompanyPage = () => {
                               className="flex-1 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded px-2 py-1 text-gray-900 dark:text-white"
                             />
                           ) : (
-                            <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">{event.title}</p>
+                            <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">
+                              {event.title}{' '}
+                              <span className="inline-block align-middle text-[10px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
+                            </p>
                           )}
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {currentUser && (event.creatorId === currentUser.id || currentUser.isAdmin) && (
@@ -639,11 +643,13 @@ export const CompanyPage = () => {
                             ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
                             : <span className="text-gray-300 dark:text-slate-700">·</span>
                           }
-                          <span className="text-[11px] font-medium text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
                           {dominant === 'no'
                             ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
                             : <span className="text-gray-300 dark:text-slate-700">·</span>
                           }
+                        </div>
+                        <div className={`text-[11px] text-gray-400 dark:text-slate-500 mt-1 ${dominant === 'yes' ? 'text-right' : 'text-left'}`}>
+                          {eventBetCount} bet{eventBetCount === 1 ? '' : 's'}
                         </div>
                       </SwipeCard>
                       <div className="mt-2">
