@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
-import { Building2, Clock, Users, X, Send, Trash2, CheckCircle, Share2, Check, Edit2, MessageSquare, ThumbsUp } from 'lucide-react'
+import { Building2, Clock, Users, X, Send, Trash2, CheckCircle, Share2, Check, Edit2, MessageSquare } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { AuthModal } from '../components/AuthModal'
 import { EmptyState } from '../components/EmptyState'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
+import { CommentVotes } from '../components/CommentVotes'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 
@@ -25,8 +26,6 @@ export const EventDetail = () => {
   const addComment = useStore(s => s.addComment)
   const editComment = useStore(s => s.editComment)
   const deleteComment = useStore(s => s.deleteComment)
-  const upvoteComment = useStore(s => s.upvoteComment)
-  const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const resolveEvent = useStore(s => s.resolveEvent)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
@@ -369,7 +368,6 @@ export const EventDetail = () => {
                 <EmptyState icon={MessageSquare} description="No comments yet. Be the first." size="sm" />
               )}
               {eventComments.map(c => {
-                const hasUpvoted = upvotedCommentIds.includes(c.id)
                 return (
                   <div key={c.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 group">
                     <p className="text-sm text-gray-700 dark:text-slate-200 leading-relaxed">{c.content}</p>
@@ -386,13 +384,7 @@ export const EventDetail = () => {
                             </button>
                           </div>
                         )}
-                        <button
-                          onClick={() => upvoteComment(c.id)}
-                          className={`flex items-center gap-1 p-1.5 rounded-lg transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
-                        >
-                          <ThumbsUp className="w-3.5 h-3.5" />
-                          {(c.upvotes ?? 0) > 0 && <span className="text-[11px] font-medium">{c.upvotes}</span>}
-                        </button>
+                        <CommentVotes comment={c} size="md" />
                       </div>
                     </div>
                   </div>

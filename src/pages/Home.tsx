@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, ThumbsUp, Check, ChevronRight, Share2, Loader2 } from 'lucide-react'
+import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, Check, ChevronRight, Share2, Loader2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
@@ -11,6 +11,7 @@ import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
 import { AddCompanyModal } from '../components/AddCompanyModal'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
+import { CommentVotes } from '../components/CommentVotes'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 import { api } from '../services/api'
@@ -95,8 +96,6 @@ export const Home = () => {
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
   const addComment = useStore(s => s.addComment)
-  const upvoteComment = useStore(s => s.upvoteComment)
-  const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const chatMessages = useStore(s => s.chatMessages)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
@@ -710,17 +709,10 @@ export const Home = () => {
                         {(showComments || hidingComments) && (
                         <div className={`mt-1.5 ml-2 space-y-1.5 ${hidingComments ? 'comments-exit' : 'comments-enter'}`} onClick={ev => ev.stopPropagation()}>
                           {[...eventComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(cmt => {
-                            const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                             return (
                               <div key={cmt.id} className="bg-gray-100 dark:bg-slate-700/60 rounded-xl rounded-tl-sm px-3 py-2 flex items-start gap-2">
                                 <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed flex-1">{cmt.content}</p>
-                                <button
-                                  onClick={() => upvoteComment(cmt.id)}
-                                  className={`flex items-center gap-1 flex-shrink-0 mt-0.5 transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
-                                >
-                                  <ThumbsUp className="w-3 h-3" />
-                                  {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
-                                </button>
+                                <CommentVotes comment={cmt} />
                               </div>
                             )
                           })}

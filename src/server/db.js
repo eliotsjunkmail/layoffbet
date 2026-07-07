@@ -267,32 +267,65 @@ export const db = {
     throwOnError(error, 'deleteComment')
   },
 
-  async toggleCommentUpvote(commentId, userId) {
-    const { data: commentRow, error: commentFetchErr } = await supabase.from('comments').select('upvotes').eq('id', commentId).maybeSingle()
-    throwOnError(commentFetchErr, 'toggleCommentUpvote:fetchComment')
+  // direction: 'up' | 'down'. Voting one direction clears the user's opposite vote (mutually exclusive), like typical thumbs up/down widgets.
+  async toggleCommentVote(commentId, userId, direction) {
+    const { data: commentRow, error: commentFetchErr } = await supabase.from('comments').select('upvotes, downvotes').eq('id', commentId).maybeSingle()
+    throwOnError(commentFetchErr, 'toggleCommentVote:fetchComment')
     if (!commentRow) return null
 
-    const { data: existing, error: fetchErr } = await supabase
-      .from('comment_upvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle()
-    throwOnError(fetchErr, 'toggleCommentUpvote:fetchUpvote')
+    const [{ data: existingUp, error: upFetchErr }, { data: existingDown, error: downFetchErr }] = await Promise.all([
+      supabase.from('comment_upvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle(),
+      supabase.from('comment_downvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle(),
+    ])
+    throwOnError(upFetchErr, 'toggleCommentVote:fetchUpvote')
+    throwOnError(downFetchErr, 'toggleCommentVote:fetchDownvote')
 
-    let upvotes
-    let upvoted
-    if (existing) {
-      const { error: delErr } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
-      throwOnError(delErr, 'toggleCommentUpvote:delete')
-      upvotes = Math.max(0, (commentRow.upvotes ?? 0) - 1)
-      upvoted = false
+    let upvotes = commentRow.upvotes ?? 0
+    let downvotes = commentRow.downvotes ?? 0
+    let upvoted = !!existingUp
+    let downvoted = !!existingDown
+
+    if (direction === 'up') {
+      if (existingUp) {
+        const { error } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
+        throwOnError(error, 'toggleCommentVote:removeUpvote')
+        upvotes = Math.max(0, upvotes - 1)
+        upvoted = false
+      } else {
+        const { error } = await supabase.from('comment_upvotes').insert({ comment_id: commentId, user_id: userId })
+        throwOnError(error, 'toggleCommentVote:addUpvote')
+        upvotes = upvotes + 1
+        upvoted = true
+        if (existingDown) {
+          const { error: clearErr } = await supabase.from('comment_downvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
+          throwOnError(clearErr, 'toggleCommentVote:clearDownvote')
+          downvotes = Math.max(0, downvotes - 1)
+          downvoted = false
+        }
+      }
     } else {
-      const { error: insErr } = await supabase.from('comment_upvotes').insert({ comment_id: commentId, user_id: userId })
-      throwOnError(insErr, 'toggleCommentUpvote:insert')
-      upvotes = (commentRow.upvotes ?? 0) + 1
-      upvoted = true
+      if (existingDown) {
+        const { error } = await supabase.from('comment_downvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
+        throwOnError(error, 'toggleCommentVote:removeDownvote')
+        downvotes = Math.max(0, downvotes - 1)
+        downvoted = false
+      } else {
+        const { error } = await supabase.from('comment_downvotes').insert({ comment_id: commentId, user_id: userId })
+        throwOnError(error, 'toggleCommentVote:addDownvote')
+        downvotes = downvotes + 1
+        downvoted = true
+        if (existingUp) {
+          const { error: clearErr } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
+          throwOnError(clearErr, 'toggleCommentVote:clearUpvote')
+          upvotes = Math.max(0, upvotes - 1)
+          upvoted = false
+        }
+      }
     }
 
-    const { data, error } = await supabase.from('comments').update({ upvotes }).eq('id', commentId).select().single()
-    throwOnError(error, 'toggleCommentUpvote:update')
-    return { comment: fromDb(data), upvoted }
+    const { data, error } = await supabase.from('comments').update({ upvotes, downvotes }).eq('id', commentId).select().single()
+    throwOnError(error, 'toggleCommentVote:update')
+    return { comment: fromDb(data), upvoted, downvoted }
   },
 
   // ===== COMPANY SUGGESTIONS =====
@@ -472,10 +505,11 @@ export const db = {
 
     // These tables were added after initial launch — fetched defensively (no throwOnError)
     // so a not-yet-migrated Supabase project degrades to empty data instead of failing the whole sync.
-    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
+    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: downvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
       supabase.from('chat_messages').select('*').order('created_at'),
       supabase.from('favorites').select('*'),
       supabase.from('comment_upvotes').select('*'),
+      supabase.from('comment_downvotes').select('*'),
       supabase.from('company_suggestions').select('*').order('created_at'),
       supabase.from('moderation_queue').select('*').order('created_at'),
     ])
@@ -497,6 +531,12 @@ export const db = {
       commentUpvotesByUser[u.user_id].push(u.comment_id)
     }
 
+    const commentDownvotesByUser = {}
+    for (const d of (downvoteRows || [])) {
+      if (!commentDownvotesByUser[d.user_id]) commentDownvotesByUser[d.user_id] = []
+      commentDownvotesByUser[d.user_id].push(d.comment_id)
+    }
+
     return {
       users,
       events,
@@ -510,6 +550,7 @@ export const db = {
       hiddenCompanyIds,
       anonVotedEvents: {},
       commentUpvotesByUser,
+      commentDownvotesByUser,
       companySuggestions,
       moderationQueue,
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate, useLocation, useSearchParams } from 'react-router-dom'
-import { PlusCircle, Star, Share2, Check, Send, ThumbsUp, X, Edit2, Trash2, ChevronLeft, TrendingUp } from 'lucide-react'
+import { PlusCircle, Star, Share2, Check, Send, X, Edit2, Trash2, ChevronLeft, TrendingUp } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -10,6 +10,7 @@ import { EmptyState } from '../components/EmptyState'
 import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
+import { CommentVotes } from '../components/CommentVotes'
 import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 import { AdBanner } from '../components/AdBanner'
@@ -51,8 +52,6 @@ export const CompanyPage = () => {
   const addComment = useStore(s => s.addComment)
   const editComment = useStore(s => s.editComment)
   const deleteComment = useStore(s => s.deleteComment)
-  const upvoteComment = useStore(s => s.upvoteComment)
-  const upvotedCommentIds = useStore(s => s.upvotedCommentIds)
   const chatMessages = useStore(s => s.chatMessages)
   const deleteEvent = useStore(s => s.deleteEvent)
   const updateEvent = useStore(s => s.updateEvent)
@@ -669,7 +668,6 @@ export const CompanyPage = () => {
                         )}
                         <div className="space-y-1.5">
                         {[...eventComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(cmt => {
-                          const hasUpvoted = upvotedCommentIds.includes(cmt.id)
                           const canEdit = currentUser && (cmt.userId === currentUser.id || currentUser.isAdmin)
                           return (
                             <div key={cmt.id} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5 shadow-sm group">
@@ -695,13 +693,7 @@ export const CompanyPage = () => {
                                       </button>
                                     </>
                                   )}
-                                  <button
-                                    onClick={ev => { ev.stopPropagation(); upvoteComment(cmt.id) }}
-                                    className={`flex items-center gap-1 p-1.5 rounded-lg transition-colors ${hasUpvoted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-300 dark:text-slate-600 hover:text-blue-500'}`}
-                                  >
-                                    <ThumbsUp className="w-3 h-3" />
-                                    {(cmt.upvotes ?? 0) > 0 && <span className="text-[10px] font-medium">{cmt.upvotes}</span>}
-                                  </button>
+                                  <CommentVotes comment={cmt} />
                                 </div>
                               </div>
                             </div>

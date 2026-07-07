@@ -61,6 +61,7 @@ export interface Comment {
   createdAt: string
   editedAt?: string
   upvotes?: number
+  downvotes?: number
   displayName?: string
 }
 

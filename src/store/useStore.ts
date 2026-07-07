@@ -85,8 +85,11 @@ interface StoreState {
   editComment: (id: string, content: string) => { ok: boolean; error?: string; pending?: boolean; reason?: string }
   deleteComment: (id: string) => boolean
   upvoteComment: (commentId: string) => void
+  downvoteComment: (commentId: string) => void
   recordShare: (eventId: string) => void
   upvotedCommentIds: string[]
+  downvotedCommentIds: string[]
+  pendingCommentVotes: Record<string, 'up' | 'down'>
 
   getEffectiveStatus: (event: Event) => Event['status']
   banUser: (userId: string) => void
@@ -122,6 +125,8 @@ export const useStore = create<StoreState>()(
       anonVotedEvents: {},
       companyLastVisit: {},
       upvotedCommentIds: [],
+      downvotedCommentIds: [],
+      pendingCommentVotes: {},
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -163,6 +168,7 @@ export const useStore = create<StoreState>()(
             anonVotedEvents: fullState.anonVotedEvents,
             companyLastVisit: fullState.companyLastVisit,
             upvotedCommentIds: fullState.upvotedCommentIds,
+            downvotedCommentIds: fullState.downvotedCommentIds,
           }
           localStorage.setItem('layoff-bets-store-v7', JSON.stringify(stateToSave))
 
@@ -920,28 +926,101 @@ export const useStore = create<StoreState>()(
       },
 
       upvoteComment: (commentId) => {
-        const { currentUser, upvotedCommentIds } = get()
-        if (!currentUser) return
+        const { currentUser, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
+        if (!currentUser || pendingCommentVotes[commentId]) return
         const alreadyUpvoted = upvotedCommentIds.includes(commentId)
-        const delta = alreadyUpvoted ? -1 : 1
+        const wasDownvoted = downvotedCommentIds.includes(commentId)
+        const upDelta = alreadyUpvoted ? -1 : 1
+        const downDelta = !alreadyUpvoted && wasDownvoted ? -1 : 0
         // Optimistic local update
         set(s => ({
-          comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: Math.max(0, (c.upvotes ?? 0) + delta) } : c),
+          comments: s.comments.map(c => c.id === commentId ? {
+            ...c,
+            upvotes: Math.max(0, (c.upvotes ?? 0) + upDelta),
+            downvotes: Math.max(0, (c.downvotes ?? 0) + downDelta),
+          } : c),
           upvotedCommentIds: alreadyUpvoted
             ? s.upvotedCommentIds.filter(id => id !== commentId)
             : [...s.upvotedCommentIds, commentId],
+          downvotedCommentIds: (!alreadyUpvoted && wasDownvoted)
+            ? s.downvotedCommentIds.filter(id => id !== commentId)
+            : s.downvotedCommentIds,
+          pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'up' },
         }))
         // Reconcile with the server's authoritative per-user record
         api.upvoteComment(commentId, currentUser.id)
-          .then(({ comment, upvoted }) => {
-            set(s => ({
-              comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes } : c),
-              upvotedCommentIds: upvoted
-                ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
-                : s.upvotedCommentIds.filter(id => id !== commentId),
-            }))
+          .then(({ comment, upvoted, downvoted }) => {
+            set(s => {
+              const nextPending = { ...s.pendingCommentVotes }
+              delete nextPending[commentId]
+              return {
+                comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes, downvotes: comment.downvotes } : c),
+                upvotedCommentIds: upvoted
+                  ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
+                  : s.upvotedCommentIds.filter(id => id !== commentId),
+                downvotedCommentIds: downvoted
+                  ? (s.downvotedCommentIds.includes(commentId) ? s.downvotedCommentIds : [...s.downvotedCommentIds, commentId])
+                  : s.downvotedCommentIds.filter(id => id !== commentId),
+                pendingCommentVotes: nextPending,
+              }
+            })
           })
-          .catch(() => {})
+          .catch(() => {
+            set(s => {
+              const nextPending = { ...s.pendingCommentVotes }
+              delete nextPending[commentId]
+              return { pendingCommentVotes: nextPending }
+            })
+          })
+      },
+
+      downvoteComment: (commentId) => {
+        const { currentUser, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
+        if (!currentUser || pendingCommentVotes[commentId]) return
+        const alreadyDownvoted = downvotedCommentIds.includes(commentId)
+        const wasUpvoted = upvotedCommentIds.includes(commentId)
+        const downDelta = alreadyDownvoted ? -1 : 1
+        const upDelta = !alreadyDownvoted && wasUpvoted ? -1 : 0
+        // Optimistic local update
+        set(s => ({
+          comments: s.comments.map(c => c.id === commentId ? {
+            ...c,
+            downvotes: Math.max(0, (c.downvotes ?? 0) + downDelta),
+            upvotes: Math.max(0, (c.upvotes ?? 0) + upDelta),
+          } : c),
+          downvotedCommentIds: alreadyDownvoted
+            ? s.downvotedCommentIds.filter(id => id !== commentId)
+            : [...s.downvotedCommentIds, commentId],
+          upvotedCommentIds: (!alreadyDownvoted && wasUpvoted)
+            ? s.upvotedCommentIds.filter(id => id !== commentId)
+            : s.upvotedCommentIds,
+          pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'down' },
+        }))
+        // Reconcile with the server's authoritative per-user record
+        api.downvoteComment(commentId, currentUser.id)
+          .then(({ comment, upvoted, downvoted }) => {
+            set(s => {
+              const nextPending = { ...s.pendingCommentVotes }
+              delete nextPending[commentId]
+              return {
+                comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes, downvotes: comment.downvotes } : c),
+                upvotedCommentIds: upvoted
+                  ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
+                  : s.upvotedCommentIds.filter(id => id !== commentId),
+                downvotedCommentIds: downvoted
+                  ? (s.downvotedCommentIds.includes(commentId) ? s.downvotedCommentIds : [...s.downvotedCommentIds, commentId])
+                  : s.downvotedCommentIds.filter(id => id !== commentId),
+                pendingCommentVotes: nextPending,
+              }
+            })
+          })
+          .catch(() => {
+            set(s => {
+              const nextPending = { ...s.pendingCommentVotes }
+              delete nextPending[commentId]
+              return { pendingCommentVotes: nextPending }
+            })
+          })
       },
 
       recordShare: (eventId) => {
@@ -1005,6 +1084,9 @@ export const useStore = create<StoreState>()(
             const newUpvotedCommentIds = userId && serverData.commentUpvotesByUser?.[userId]
               ? serverData.commentUpvotesByUser[userId]
               : get().upvotedCommentIds
+            const newDownvotedCommentIds = userId && serverData.commentDownvotesByUser?.[userId]
+              ? serverData.commentDownvotesByUser[userId]
+              : get().downvotedCommentIds
 
             // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
             const serverBets = serverData.bets || []
@@ -1041,6 +1123,7 @@ export const useStore = create<StoreState>()(
               anonVotedEvents: serverData.anonVotedEvents || {},
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
               upvotedCommentIds: newUpvotedCommentIds,
+              downvotedCommentIds: newDownvotedCommentIds,
             })
           }
         } catch (error) {
@@ -1068,6 +1151,7 @@ export const useStore = create<StoreState>()(
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
         upvotedCommentIds: s.upvotedCommentIds,
+        downvotedCommentIds: s.downvotedCommentIds,
         hiddenCompanyIds: s.hiddenCompanyIds,
       }),
       onRehydrateStorage: () => (state) => {
