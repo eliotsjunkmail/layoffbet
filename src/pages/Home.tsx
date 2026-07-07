@@ -229,11 +229,16 @@ export const Home = () => {
           betsMap.set(b.eventId, b)
         }
       })
-      const userBets = Array.from(betsMap.values())
+      // Only count bets whose event still exists and isn't on a hidden company —
+      // matches exactly what the My Bets page (Active + Completed) actually shows.
+      const userBets = Array.from(betsMap.values()).filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && !hiddenCompanyIds.includes(event.companyId)
+      })
 
       const activeBetCount = userBets.filter(b => {
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'active'
+        const event = events.find(e => e.id === b.eventId)!
+        return getEffectiveStatus(event) === 'active'
       }).length
       return {
         coins: currentUser.coins,
@@ -252,11 +257,16 @@ export const Home = () => {
           betsMap.set(b.eventId, b)
         }
       })
-      const userBets = Array.from(betsMap.values())
+      // Only count bets whose event still exists and isn't on a hidden company —
+      // matches exactly what the My Bets page (Active + Completed) actually shows.
+      const userBets = Array.from(betsMap.values()).filter(b => {
+        const event = events.find(e => e.id === b.eventId)
+        return event && !hiddenCompanyIds.includes(event.companyId)
+      })
 
       const activeBetCount = userBets.filter(b => {
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'active'
+        const event = events.find(e => e.id === b.eventId)!
+        return getEffectiveStatus(event) === 'active'
       }).length
       return {
         totalBets: userBets.length,
@@ -266,7 +276,7 @@ export const Home = () => {
     }
 
     return null
-  }, [currentUser, anonUser, bets, events, getEffectiveStatus])
+  }, [currentUser, anonUser, bets, events, hiddenCompanyIds, getEffectiveStatus])
 
   const activeUserId = currentUser?.id ?? anonUser?.id
   const hasActivity = !!(

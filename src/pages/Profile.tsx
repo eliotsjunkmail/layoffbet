@@ -15,10 +15,19 @@ export const Profile = () => {
 
   if (!currentUser || !currentUser.username) return null
 
-  const userBets = bets.filter(b => b.userId === currentUser.id)
-  const betsWithEvents = userBets
-    .map(bet => ({ bet, event: events.find(e => e.id === bet.eventId) }))
-    .filter((x): x is { bet: typeof userBets[0]; event: typeof events[0] } => !!x.event)
+  // Deduplicate bets: keep only one bet per eventId, and only count bets whose event
+  // still exists and isn't on a hidden company — matches what the My Bets page shows.
+  const betsMap = new Map<string, typeof bets[0]>()
+  bets.forEach(b => {
+    if (b.userId === currentUser.id && !betsMap.has(b.eventId)) {
+      betsMap.set(b.eventId, b)
+    }
+  })
+  const userBets = Array.from(betsMap.values()).filter(b => {
+    const event = events.find(e => e.id === b.eventId)
+    return event && !hiddenCompanyIds.includes(event.companyId)
+  })
+  const betsWithEvents = userBets.map(bet => ({ bet, event: events.find(e => e.id === bet.eventId)! }))
 
   const resolved = betsWithEvents.filter(({ event }) => getEffectiveStatus(event) === 'resolved' && event.outcome)
   const wins = resolved.filter(({ bet, event }) => bet.side === event.outcome).length
