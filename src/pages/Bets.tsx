@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { CheckCircle, Clock, ChevronRight, ChevronLeft, X, Dices, ClipboardList } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -68,22 +68,6 @@ export const Bets = () => {
       removeBet(eventId)
     }
   }
-
-  const userStats = useMemo(() => {
-    if (!currentUser) return null
-    const userBets = bets.filter(b => b.userId === currentUser.id)
-    const activeBetCount = userBets.filter(b => {
-      const event = events.find(e => e.id === b.eventId)
-      return event && getEffectiveStatus(event) === 'active'
-    }).length
-    const totalBetAmount = userBets.reduce((sum, b) => sum + b.amount, 0)
-    return {
-      coins: currentUser.coins,
-      totalBets: userBets.length,
-      activeBets: activeBetCount,
-      totalBetAmount,
-    }
-  }, [currentUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
     const event = events.find(e => e.id === eventId)
@@ -190,6 +174,15 @@ export const Bets = () => {
       return new Date(b.bet.createdAt).getTime() - new Date(a.bet.createdAt).getTime()
     })
 
+  // Derived from the same deduplicated, filtered list the tabs below render, so the header
+  // counts can never disagree with what's actually shown in Active/Completed.
+  const userStats = currentUser ? {
+    coins: currentUser.coins,
+    totalBets: allItems.length,
+    activeBets: activeItems.length,
+    totalBetAmount: allItems.reduce((sum, x) => sum + x.bet.amount, 0),
+  } : null
+
   // Group by company, preserving bet-side order
   const groupByCompany = (items: typeof allItems) => {
     const map = new Map<string, { companyName: string; slug: string; items: typeof allItems }>()
@@ -246,8 +239,8 @@ export const Bets = () => {
               <>
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
                   <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">My Bets</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{Object.keys(anonVotedEvents).length}</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{Object.keys(anonVotedEvents).length} active</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 flex-1 flex items-center justify-center">{allItems.length}</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 sm:mt-1">{activeItems.length} active</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm flex flex-col">
                   <div className="text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2">Wagered</div>
