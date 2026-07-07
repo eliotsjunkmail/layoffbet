@@ -90,7 +90,7 @@ export const api = {
     }
   },
 
-  upvoteComment: async (id: string, userId: string): Promise<{ comment: Comment; upvoted: boolean; downvoted: boolean }> => {
+  upvoteComment: async (id: string, userId: string): Promise<{ comment: Comment; upvoted: boolean }> => {
     const response = await fetch(`${API_BASE}/api/comments/${id}/upvote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -102,7 +102,7 @@ export const api = {
     return response.json()
   },
 
-  downvoteComment: async (id: string, userId: string): Promise<{ comment: Comment; upvoted: boolean; downvoted: boolean }> => {
+  downvoteComment: async (id: string, userId: string): Promise<{ comment: Comment; downvoted: boolean }> => {
     const response = await fetch(`${API_BASE}/api/comments/${id}/downvote`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

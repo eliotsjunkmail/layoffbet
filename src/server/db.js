@@ -267,65 +267,42 @@ export const db = {
     throwOnError(error, 'deleteComment')
   },
 
-  // direction: 'up' | 'down'. Voting one direction clears the user's opposite vote (mutually exclusive), like typical thumbs up/down widgets.
+  // direction: 'up' | 'down'. Independent toggle per direction, same as chat message reactions —
+  // no mutual exclusion, and no restriction on voting on your own content.
   async toggleCommentVote(commentId, userId, direction) {
     const { data: commentRow, error: commentFetchErr } = await supabase.from('comments').select('upvotes, downvotes').eq('id', commentId).maybeSingle()
     throwOnError(commentFetchErr, 'toggleCommentVote:fetchComment')
     if (!commentRow) return null
 
-    const [{ data: existingUp, error: upFetchErr }, { data: existingDown, error: downFetchErr }] = await Promise.all([
-      supabase.from('comment_upvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle(),
-      supabase.from('comment_downvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle(),
-    ])
-    throwOnError(upFetchErr, 'toggleCommentVote:fetchUpvote')
-    throwOnError(downFetchErr, 'toggleCommentVote:fetchDownvote')
+    const table = direction === 'up' ? 'comment_upvotes' : 'comment_downvotes'
+    const countField = direction === 'up' ? 'upvotes' : 'downvotes'
 
-    let upvotes = commentRow.upvotes ?? 0
-    let downvotes = commentRow.downvotes ?? 0
-    let upvoted = !!existingUp
-    let downvoted = !!existingDown
+    const { data: existing, error: fetchErr } = await supabase
+      .from(table).select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle()
+    throwOnError(fetchErr, 'toggleCommentVote:fetchExisting')
 
-    if (direction === 'up') {
-      if (existingUp) {
-        const { error } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
-        throwOnError(error, 'toggleCommentVote:removeUpvote')
-        upvotes = Math.max(0, upvotes - 1)
-        upvoted = false
-      } else {
-        const { error } = await supabase.from('comment_upvotes').insert({ comment_id: commentId, user_id: userId })
-        throwOnError(error, 'toggleCommentVote:addUpvote')
-        upvotes = upvotes + 1
-        upvoted = true
-        if (existingDown) {
-          const { error: clearErr } = await supabase.from('comment_downvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
-          throwOnError(clearErr, 'toggleCommentVote:clearDownvote')
-          downvotes = Math.max(0, downvotes - 1)
-          downvoted = false
-        }
-      }
+    let count = commentRow[countField] ?? 0
+    let voted = !!existing
+
+    if (existing) {
+      const { error } = await supabase.from(table).delete().eq('comment_id', commentId).eq('user_id', userId)
+      throwOnError(error, 'toggleCommentVote:remove')
+      count = Math.max(0, count - 1)
+      voted = false
     } else {
-      if (existingDown) {
-        const { error } = await supabase.from('comment_downvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
-        throwOnError(error, 'toggleCommentVote:removeDownvote')
-        downvotes = Math.max(0, downvotes - 1)
-        downvoted = false
-      } else {
-        const { error } = await supabase.from('comment_downvotes').insert({ comment_id: commentId, user_id: userId })
-        throwOnError(error, 'toggleCommentVote:addDownvote')
-        downvotes = downvotes + 1
-        downvoted = true
-        if (existingUp) {
-          const { error: clearErr } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
-          throwOnError(clearErr, 'toggleCommentVote:clearUpvote')
-          upvotes = Math.max(0, upvotes - 1)
-          upvoted = false
-        }
-      }
+      const { error } = await supabase.from(table).insert({ comment_id: commentId, user_id: userId })
+      throwOnError(error, 'toggleCommentVote:add')
+      count = count + 1
+      voted = true
     }
 
-    const { data, error } = await supabase.from('comments').update({ upvotes, downvotes }).eq('id', commentId).select().single()
+    const { data, error } = await supabase.from('comments').update({ [countField]: count }).eq('id', commentId).select().single()
     throwOnError(error, 'toggleCommentVote:update')
-    return { comment: fromDb(data), upvoted, downvoted }
+    return {
+      comment: fromDb(data),
+      upvoted: direction === 'up' ? voted : undefined,
+      downvoted: direction === 'down' ? voted : undefined,
+    }
   },
 
   // ===== COMPANY SUGGESTIONS =====

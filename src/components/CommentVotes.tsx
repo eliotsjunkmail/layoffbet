@@ -15,8 +15,7 @@ export const CommentVotes = ({ comment, size = 'sm' }: { comment: Comment; size?
   const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
   const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
 
-  const isOwnComment = !!voterId && comment.userId === voterId
-  const canVote = !!voterId && !isOwnComment
+  const canVote = !!voterId
   const hasUpvoted = upvotedCommentIds.includes(comment.id)
   const hasDownvoted = downvotedCommentIds.includes(comment.id)
   const pending = pendingCommentVotes[comment.id]

@@ -942,32 +942,28 @@ export const useStore = create<StoreState>()(
       },
 
       upvoteComment: (commentId) => {
-        const { currentUser, users, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
+        const { currentUser, users, upvotedCommentIds, pendingCommentVotes } = get()
         const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
         const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
         if (!voterId || pendingCommentVotes[commentId]) return
+        // Independent toggle, same as chat message reactions: no mutual exclusion with downvote,
+        // no restriction on voting on your own content.
         const alreadyUpvoted = upvotedCommentIds.includes(commentId)
-        const wasDownvoted = downvotedCommentIds.includes(commentId)
         const upDelta = alreadyUpvoted ? -1 : 1
-        const downDelta = !alreadyUpvoted && wasDownvoted ? -1 : 0
         // Optimistic local update
         set(s => ({
           comments: s.comments.map(c => c.id === commentId ? {
             ...c,
             upvotes: Math.max(0, (c.upvotes ?? 0) + upDelta),
-            downvotes: Math.max(0, (c.downvotes ?? 0) + downDelta),
           } : c),
           upvotedCommentIds: alreadyUpvoted
             ? s.upvotedCommentIds.filter(id => id !== commentId)
             : [...s.upvotedCommentIds, commentId],
-          downvotedCommentIds: (!alreadyUpvoted && wasDownvoted)
-            ? s.downvotedCommentIds.filter(id => id !== commentId)
-            : s.downvotedCommentIds,
           pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'up' },
         }))
-        // Reconcile with the server's authoritative per-user record
+        // Reconcile with the server's authoritative per-user record (only the upvote side — downvotes are untouched)
         api.upvoteComment(commentId, voterId)
-          .then(({ comment, upvoted, downvoted }) => {
+          .then(({ comment, upvoted }) => {
             set(s => {
               const nextPending = { ...s.pendingCommentVotes }
               delete nextPending[commentId]
@@ -976,9 +972,6 @@ export const useStore = create<StoreState>()(
                 upvotedCommentIds: upvoted
                   ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
                   : s.upvotedCommentIds.filter(id => id !== commentId),
-                downvotedCommentIds: downvoted
-                  ? (s.downvotedCommentIds.includes(commentId) ? s.downvotedCommentIds : [...s.downvotedCommentIds, commentId])
-                  : s.downvotedCommentIds.filter(id => id !== commentId),
                 pendingCommentVotes: nextPending,
               }
             })
@@ -993,40 +986,33 @@ export const useStore = create<StoreState>()(
       },
 
       downvoteComment: (commentId) => {
-        const { currentUser, users, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
+        const { currentUser, users, downvotedCommentIds, pendingCommentVotes } = get()
         const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
         const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
         if (!voterId || pendingCommentVotes[commentId]) return
+        // Independent toggle, same as chat message reactions: no mutual exclusion with upvote,
+        // no restriction on voting on your own content.
         const alreadyDownvoted = downvotedCommentIds.includes(commentId)
-        const wasUpvoted = upvotedCommentIds.includes(commentId)
         const downDelta = alreadyDownvoted ? -1 : 1
-        const upDelta = !alreadyDownvoted && wasUpvoted ? -1 : 0
         // Optimistic local update
         set(s => ({
           comments: s.comments.map(c => c.id === commentId ? {
             ...c,
             downvotes: Math.max(0, (c.downvotes ?? 0) + downDelta),
-            upvotes: Math.max(0, (c.upvotes ?? 0) + upDelta),
           } : c),
           downvotedCommentIds: alreadyDownvoted
             ? s.downvotedCommentIds.filter(id => id !== commentId)
             : [...s.downvotedCommentIds, commentId],
-          upvotedCommentIds: (!alreadyDownvoted && wasUpvoted)
-            ? s.upvotedCommentIds.filter(id => id !== commentId)
-            : s.upvotedCommentIds,
           pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'down' },
         }))
-        // Reconcile with the server's authoritative per-user record
+        // Reconcile with the server's authoritative per-user record (only the downvote side — upvotes are untouched)
         api.downvoteComment(commentId, voterId)
-          .then(({ comment, upvoted, downvoted }) => {
+          .then(({ comment, downvoted }) => {
             set(s => {
               const nextPending = { ...s.pendingCommentVotes }
               delete nextPending[commentId]
               return {
                 comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes, downvotes: comment.downvotes } : c),
-                upvotedCommentIds: upvoted
-                  ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
-                  : s.upvotedCommentIds.filter(id => id !== commentId),
                 downvotedCommentIds: downvoted
                   ? (s.downvotedCommentIds.includes(commentId) ? s.downvotedCommentIds : [...s.downvotedCommentIds, commentId])
                   : s.downvotedCommentIds.filter(id => id !== commentId),
