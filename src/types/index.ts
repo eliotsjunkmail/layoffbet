@@ -9,6 +9,7 @@ export interface User {
   lastCoinsDate: string
   anonymousNumber?: number
   displayName?: string
+  shareCount?: number
 }
 
 export interface Company {

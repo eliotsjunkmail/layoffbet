@@ -52,6 +52,7 @@ export const CompanyPage = () => {
   const addComment = useStore(s => s.addComment)
   const editComment = useStore(s => s.editComment)
   const deleteComment = useStore(s => s.deleteComment)
+  const recordUserShare = useStore(s => s.recordUserShare)
   const chatMessages = useStore(s => s.chatMessages)
   const deleteEvent = useStore(s => s.deleteEvent)
   const updateEvent = useStore(s => s.updateEvent)
@@ -405,6 +406,7 @@ export const CompanyPage = () => {
   const past = companyEvents.filter(e => ['expired', 'resolved', 'archived'].includes(getEffectiveStatus(e)))
 
   const handleShare = async () => {
+    recordUserShare()
     const url = window.location.href
     const shareData = {
       title: `${company.name} on Layoff Live`,
@@ -421,6 +423,7 @@ export const CompanyPage = () => {
   }
 
   const handleShareChat = async (liveTopicName?: string | null) => {
+    recordUserShare()
     const url = `${window.location.origin}/${company.slug}?chat=open`
     const topicName = liveTopicName !== undefined ? liveTopicName : (chatExpiresAt && chatDisplayName !== `${company.name} Chat` ? chatDisplayName : null)
     const hasTopic = !!topicName
@@ -437,6 +440,7 @@ export const CompanyPage = () => {
   }
 
   const handleSharePoll = async (pollQuestion: string | null) => {
+    recordUserShare()
     const url = `${window.location.origin}/${company.slug}?chat=open`
     const hasQuestion = !!pollQuestion
     const text = hasQuestion

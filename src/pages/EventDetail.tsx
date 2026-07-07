@@ -49,6 +49,7 @@ export const EventDetail = () => {
     return stored ? parseInt(stored) : 0
   })
   const recordShare = useStore(s => s.recordShare)
+  const recordUserShare = useStore(s => s.recordUserShare)
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -204,6 +205,7 @@ export const EventDetail = () => {
       url,
     }
     recordShare(id!)
+    recordUserShare()
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
     } else {

@@ -56,6 +56,7 @@ interface StoreState {
   checkDailyCoins: () => void
   updateCoins: (amount: number) => void
   addCoin: () => Promise<void>
+  recordUserShare: () => void
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
@@ -475,6 +476,21 @@ export const useStore = create<StoreState>()(
         } catch (error) {
           console.error('Failed to add coin:', error)
         }
+      },
+
+      recordUserShare: () => {
+        const { currentUser, users } = get()
+        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+        const userId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
+        if (!userId) return
+        api.recordUserShare(userId)
+          .then(updated => {
+            set(s => ({
+              currentUser: s.currentUser?.id === updated.id ? updated : s.currentUser,
+              users: s.users.map(u => u.id === updated.id ? updated : u),
+            }))
+          })
+          .catch(err => console.error('Failed to record share:', err))
       },
 
       placeBet: (eventId, side, amount) => {

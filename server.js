@@ -414,6 +414,16 @@ app.post('/api/users/:id/coins', async (req, res) => {
   }
 })
 
+app.post('/api/users/:id/share', async (req, res) => {
+  try {
+    const user = await db.getUserById(req.params.id)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    res.json(await db.updateUser(req.params.id, { shareCount: (user.shareCount ?? 0) + 1 }))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.delete('/api/users/:id', async (req, res) => {
   try {
     await db.deleteUser(req.params.id)

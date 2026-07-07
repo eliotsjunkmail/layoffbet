@@ -283,6 +283,17 @@ export const api = {
     return response.json()
   },
 
+  recordUserShare: async (userId: string) => {
+    const response = await fetch(`${API_BASE}/api/users/${userId}/share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to record share')
+    }
+    return response.json()
+  },
+
   // Sync endpoint
   sync: async () => {
     const response = await fetch(`${API_BASE}/api/sync`)

@@ -32,13 +32,12 @@ const barProps = (yesPool: number, noPool: number) => {
   return { dominant: 'no' as const, pct: 100 - yesPct }
 }
 
-const UserStatsRow = ({ coins, bets, won, onCoinsClick, onBetsClick, onWonClick, coinPuff }: {
+const UserStatsRow = ({ coins, bets, shares, onCoinsClick, onBetsClick, coinPuff }: {
   coins: number
   bets: number
-  won: number
+  shares: number
   onCoinsClick: () => void
   onBetsClick: () => void
-  onWonClick: () => void
   coinPuff: { id: string; x: number; y: number } | null
 }) => {
   const [stage, setStage] = useState(0)
@@ -53,6 +52,7 @@ const UserStatsRow = ({ coins, bets, won, onCoinsClick, onBetsClick, onWonClick,
   }, [])
 
   const cardCls = "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative flex flex-col active:scale-95"
+  const staticCardCls = "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg sm:rounded-xl p-2.5 sm:p-4 text-center shadow-sm relative flex flex-col"
   const labelCls = "text-xs text-gray-500 dark:text-slate-400 uppercase font-medium mb-1 sm:mb-2"
   const valueCls = "text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 relative inline-block flex-1 flex items-center justify-center"
   const spinner = <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-blue-300 dark:text-blue-600" />
@@ -74,10 +74,10 @@ const UserStatsRow = ({ coins, bets, won, onCoinsClick, onBetsClick, onWonClick,
         <div className={labelCls}>My Bets</div>
         <div className={valueCls}>{stage >= 2 ? bets : stage === 1 ? spinner : null}</div>
       </button>
-      <button onClick={onWonClick} className={cardCls}>
-        <div className={labelCls}>Won</div>
-        <div className={valueCls}>{stage >= 3 ? won : stage === 2 ? spinner : null}</div>
-      </button>
+      <div className={staticCardCls}>
+        <div className={labelCls}>Shares</div>
+        <div className={valueCls}>{stage >= 3 ? shares : stage === 2 ? spinner : null}</div>
+      </div>
     </div>
   )
 }
@@ -96,6 +96,7 @@ export const Home = () => {
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
   const addComment = useStore(s => s.addComment)
+  const recordUserShare = useStore(s => s.recordUserShare)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const chatMessages = useStore(s => s.chatMessages)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
@@ -234,15 +235,11 @@ export const Home = () => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const wonBets = userBets.filter(b => {
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'resolved' && event.outcome === b.side
-      }).length
       return {
         coins: currentUser.coins,
         totalBets: userBets.length,
         activeBets: activeBetCount,
-        wonBets,
+        shareCount: currentUser.shareCount ?? 0,
       }
     }
 
@@ -261,14 +258,10 @@ export const Home = () => {
         const event = events.find(e => e.id === b.eventId)
         return event && getEffectiveStatus(event) === 'active'
       }).length
-      const wonBets = userBets.filter(b => {
-        const event = events.find(e => e.id === b.eventId)
-        return event && getEffectiveStatus(event) === 'resolved' && event.outcome === b.side
-      }).length
       return {
         totalBets: userBets.length,
         activeBets: activeBetCount,
-        wonBets,
+        shareCount: anonUser.shareCount ?? 0,
       }
     }
 
@@ -510,7 +503,7 @@ export const Home = () => {
             <UserStatsRow
               coins={currentUser && userStats ? (userStats.coins ?? 0) : Math.max(0, anonCoins - anonCoinsSpent)}
               bets={userStats?.totalBets ?? 0}
-              won={userStats?.wonBets ?? 0}
+              shares={userStats?.shareCount ?? 0}
               coinPuff={coinPuff}
               onCoinsClick={async () => {
                 if (currentUser) {
@@ -520,7 +513,6 @@ export const Home = () => {
                 }
               }}
               onBetsClick={() => navigate('/bets')}
-              onWonClick={() => navigate(currentUser ? '/bets' : '/login')}
             />
           </div>
         ) : null}
@@ -617,6 +609,7 @@ export const Home = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
+                      recordUserShare()
                       const url = `${window.location.origin}/${c.slug}`
                       const text = `What's really happening? Insiders are betting on it at LayoffLive.com - ${c.name}`
                       if (navigator.share) {
@@ -846,6 +839,7 @@ export const Home = () => {
                 .catch(err => console.error('Failed to reload chat settings:', err))
             }}
             onShare={async (liveTopicName) => {
+              recordUserShare()
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
               const hasTopic = !!liveTopicName
               const text = hasTopic
@@ -860,6 +854,7 @@ export const Home = () => {
               }
             }}
             onSharePoll={async (pollQuestion) => {
+              recordUserShare()
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
               const hasQuestion = !!pollQuestion
               const text = hasQuestion
