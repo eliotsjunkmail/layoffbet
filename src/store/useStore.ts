@@ -942,8 +942,10 @@ export const useStore = create<StoreState>()(
       },
 
       upvoteComment: (commentId) => {
-        const { currentUser, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
-        if (!currentUser || pendingCommentVotes[commentId]) return
+        const { currentUser, users, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
+        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+        const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
+        if (!voterId || pendingCommentVotes[commentId]) return
         const alreadyUpvoted = upvotedCommentIds.includes(commentId)
         const wasDownvoted = downvotedCommentIds.includes(commentId)
         const upDelta = alreadyUpvoted ? -1 : 1
@@ -964,7 +966,7 @@ export const useStore = create<StoreState>()(
           pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'up' },
         }))
         // Reconcile with the server's authoritative per-user record
-        api.upvoteComment(commentId, currentUser.id)
+        api.upvoteComment(commentId, voterId)
           .then(({ comment, upvoted, downvoted }) => {
             set(s => {
               const nextPending = { ...s.pendingCommentVotes }
@@ -991,8 +993,10 @@ export const useStore = create<StoreState>()(
       },
 
       downvoteComment: (commentId) => {
-        const { currentUser, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
-        if (!currentUser || pendingCommentVotes[commentId]) return
+        const { currentUser, users, upvotedCommentIds, downvotedCommentIds, pendingCommentVotes } = get()
+        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+        const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
+        if (!voterId || pendingCommentVotes[commentId]) return
         const alreadyDownvoted = downvotedCommentIds.includes(commentId)
         const wasUpvoted = upvotedCommentIds.includes(commentId)
         const downDelta = alreadyDownvoted ? -1 : 1
@@ -1013,7 +1017,7 @@ export const useStore = create<StoreState>()(
           pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'down' },
         }))
         // Reconcile with the server's authoritative per-user record
-        api.downvoteComment(commentId, currentUser.id)
+        api.downvoteComment(commentId, voterId)
           .then(({ comment, upvoted, downvoted }) => {
             set(s => {
               const nextPending = { ...s.pendingCommentVotes }
@@ -1097,11 +1101,14 @@ export const useStore = create<StoreState>()(
             // For logged-in users, use server data. For anonymous users, preserve local favorites
             const newFavs = userId && serverData.favorites?.[userId] ? serverData.favorites[userId] : currentFavs
             const newPinned = userId && serverData.pinnedEvents?.[userId] ? serverData.pinnedEvents[userId] : currentPinned
-            const newUpvotedCommentIds = userId && serverData.commentUpvotesByUser?.[userId]
-              ? serverData.commentUpvotesByUser[userId]
+            // Comment votes are attributed to whichever identity (logged-in or anonymous) can cast them
+            const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+            const voterId = userId || anonUserId || get().users.find(u => u.isAnonymous)?.id
+            const newUpvotedCommentIds = voterId && serverData.commentUpvotesByUser?.[voterId]
+              ? serverData.commentUpvotesByUser[voterId]
               : get().upvotedCommentIds
-            const newDownvotedCommentIds = userId && serverData.commentDownvotesByUser?.[userId]
-              ? serverData.commentDownvotesByUser[userId]
+            const newDownvotedCommentIds = voterId && serverData.commentDownvotesByUser?.[voterId]
+              ? serverData.commentDownvotesByUser[voterId]
               : get().downvotedCommentIds
 
             // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
