@@ -206,10 +206,8 @@ export const Header = () => {
         <div className="max-w-md sm:max-w-5xl mx-auto w-full px-4 sm:px-8 flex items-center justify-between h-14">
           <Link to="/" className="flex items-center gap-1.5 flex-shrink-0">
             <div className="relative w-7 h-7 flex-shrink-0">
-              <MessageSquare className="absolute left-0 top-0 w-5 h-5 text-gray-500 dark:text-slate-400" strokeWidth={2.5} />
-              <span className="absolute right-0 bottom-0 bg-white dark:bg-slate-950 rounded-full p-0.5 flex">
-                <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
-              </span>
+              <MessageSquare className="absolute left-0 top-0 w-5 h-5 text-gray-500 dark:text-slate-400 opacity-80" strokeWidth={2.5} />
+              <MessageSquare className="absolute right-0 bottom-0 w-5 h-5 text-blue-600 dark:text-blue-400 opacity-80 -scale-x-100" strokeWidth={2.5} />
             </div>
             <div className="flex items-baseline gap-0.5">
               <span className="font-semibold text-gray-600 dark:text-slate-300 text-[1.75rem] tracking-tight">Layoff</span>
