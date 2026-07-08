@@ -206,8 +206,8 @@ export const Header = () => {
         <div className="max-w-md sm:max-w-5xl mx-auto w-full px-4 sm:px-8 flex items-center justify-between h-14">
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <div className="flex items-baseline gap-0.5">
-              <span className="font-semibold text-gray-600 dark:text-slate-300 text-sm tracking-tight">Layoff</span>
-              <span className="font-black text-blue-600 dark:text-blue-400 text-sm tracking-tight">Live</span>
+              <span className="font-semibold text-gray-600 dark:text-slate-300 text-[1.75rem] tracking-tight">Layoff</span>
+              <span className="font-black text-blue-600 dark:text-blue-400 text-[1.75rem] tracking-tight">Live</span>
               <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">{APP_VERSION}</span>
             </div>
           </Link>
