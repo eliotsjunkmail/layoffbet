@@ -43,44 +43,36 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
+const GATE_SCROLL_PX_PER_SEC = 12 // a very slow ambient drift
+
 const CompanyRow = ({ row, selectedCompanyId, onSelectCompany }: { row: { id: string; name: string }[]; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const pausedRef = useRef(false)
-  // scrollLeft rounds to whole pixels, so a sub-pixel-per-frame speed needs its own
-  // float accumulator — repeatedly nudging the rounded property directly never accumulates.
-  const offsetRef = useRef(0)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [duration, setDuration] = useState(40)
+  const [paused, setPaused] = useState(false)
 
   useEffect(() => {
-    const el = scrollRef.current
-    if (!el || row.length === 0) return
-    let raf: number
-    const speed = 0.2 // px per frame — a very slow ambient drift
-    const tick = () => {
-      if (!pausedRef.current) {
-        offsetRef.current += speed
-        const half = el.scrollWidth / 2
-        if (half > 0 && offsetRef.current >= half) offsetRef.current -= half
-        el.scrollLeft = offsetRef.current
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [row.length])
+    if (!trackRef.current) return
+    // The track renders the row twice back-to-back; one set's width is exactly half of it.
+    const setWidth = trackRef.current.scrollWidth / 2
+    if (setWidth > 0) setDuration(setWidth / GATE_SCROLL_PX_PER_SEC)
+  }, [row])
 
-  const pause = () => { pausedRef.current = true }
-  const resume = () => { pausedRef.current = false }
+  const pause = () => setPaused(true)
+  const resume = () => setPaused(false)
 
   return (
     <div
-      ref={scrollRef}
-      className="overflow-x-auto pb-2 scrollbar-hide"
+      className="overflow-hidden pb-2"
       onMouseEnter={pause}
       onMouseLeave={resume}
       onTouchStart={pause}
       onTouchEnd={resume}
     >
-      <div className="flex gap-2 w-max">
+      <div
+        ref={trackRef}
+        className="gate-company-track flex gap-2 w-max"
+        style={{ animationDuration: `${duration}s`, animationPlayState: paused ? 'paused' : 'running' }}
+      >
         {[...row, ...row].map((c, i) => (
           <button
             key={`${c.id}-${i}`}
@@ -683,12 +675,14 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           60% { transform: translateX(-4px); }
           80% { transform: translateX(4px); }
         }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        @keyframes gate-company-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
         }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
+        .gate-company-track {
+          animation-name: gate-company-scroll;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
         }
       `}</style>
     </div>
