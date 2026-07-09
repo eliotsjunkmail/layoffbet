@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, Check, ChevronRight, Share2, Loader2 } from 'lucide-react'
-import confetti from 'canvas-confetti'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
@@ -12,6 +11,7 @@ import { CompanyChat } from '../components/CompanyChat'
 import { AddCompanyModal } from '../components/AddCompanyModal'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
+import { useSwipePending } from '../hooks/useSwipePending'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 import { api } from '../services/api'
@@ -106,6 +106,7 @@ export const Home = () => {
 
   // Get the user ID (for anonymous users, find their server-side ID)
   const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
+  const { pendingEventId, startPending } = useSwipePending(bets)
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
@@ -392,24 +393,15 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    const event = events.find(e => e.id === eventId)
     const betAmount = 10
-    const confettiColor = '#d1206a'
-
-    // Get the card element and calculate confetti origin
-    const cardEl = document.querySelector(`[data-event-id="${eventId}"]`)
-    let confettiOrigin = { x: 0.5, y: 0.2 }
-    if (cardEl) {
-      const rect = cardEl.getBoundingClientRect()
-      const x = (rect.left + rect.width / 2) / window.innerWidth
-      const y = (rect.top) / window.innerHeight
-      confettiOrigin = { x, y: Math.max(y, 0.05) }
-    }
 
     // Use placeBet for both logged-in and anonymous users
     if (placeBet(eventId, side, betAmount)) {
       setHasPlacedFirstBet(true)
-      confetti({ particleCount: betAmount, spread: 45, origin: confettiOrigin, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
+      const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+      const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
+      const voterId = currentUser?.id || anonUser?.id
+      if (voterId) startPending(eventId, voterId)
     } else {
       if (!currentUser) {
         // For anonymous users, show if not enough coins
@@ -659,6 +651,7 @@ export const Home = () => {
                           onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
                           onSwipeNo={() => handleSwipeBet(e.id, 'no')}
                           disabled={false}
+                          loading={pendingEventId === e.id}
                           onClick={() => navigate(`/event/${e.id}`)}
                           demoActive={!hasPlacedFirstBet && cIdx === 0 && eIdx === 0}
                           cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow border-blue-200 dark:border-blue-800`}

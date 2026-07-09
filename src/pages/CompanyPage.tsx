@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { PlusCircle, Star, Share2, Check, Send, X, Edit2, Trash2, ChevronLeft, TrendingUp } from 'lucide-react'
-import confetti from 'canvas-confetti'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -11,6 +10,7 @@ import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
+import { useSwipePending } from '../hooks/useSwipePending'
 import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 import { AdBanner } from '../components/AdBanner'
@@ -40,6 +40,7 @@ export const CompanyPage = () => {
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const toggleFavoriteCompany = useStore(s => s.toggleFavoriteCompany)
   const bets = useStore(s => s.bets)
+  const users = useStore(s => s.users)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const markCompanyVisited = useStore(s => s.markCompanyVisited)
   const placeBet = useStore(s => s.placeBet)
@@ -65,7 +66,7 @@ export const CompanyPage = () => {
     const stored = localStorage.getItem('anonCoinsSpent')
     return stored ? parseInt(stored) : 0
   })
-  const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
+  const { pendingEventId, startPending } = useSwipePending(bets)
   const [toast, setToast] = useState('')
   const [toastExiting, setToastExiting] = useState(false)
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
@@ -310,18 +311,13 @@ export const CompanyPage = () => {
   }, [currentUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    const event = events.find(e => e.id === eventId)
-    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
     const betAmount = 10
-    const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
     if (currentUser) {
       const existingBet = getUserBet(eventId)
       const isReducing = !!existingBet && existingBet.side !== side
       if (placeBet(eventId, side, betAmount)) {
         const newBet = getUserBet(eventId)
-        setSwipeFlash({ id: eventId, side })
-        setTimeout(() => setSwipeFlash(null), 600)
         if (isReducing) {
           if (!newBet) {
             // Bet was deleted (reduced to zero)
@@ -329,23 +325,24 @@ export const CompanyPage = () => {
           } else {
             // Bet was just reduced
             showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+            startPending(eventId, currentUser.id)
           }
         } else {
-          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+          startPending(eventId, currentUser.id)
         }
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
+      const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+      const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
       const existingVote = anonVotedEvents[eventId]
       const isReducing = !!existingVote && existingVote.lastSide !== side
       if (isReducing || Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
           const newVote = anonVotedEvents[eventId]
           setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
-          setSwipeFlash({ id: eventId, side })
-          setTimeout(() => setSwipeFlash(null), 600)
           if (isReducing) {
             if (!newVote) {
               // Vote was deleted (reduced to zero)
@@ -353,10 +350,11 @@ export const CompanyPage = () => {
             } else {
               // Vote was just reduced
               showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+              if (anonUser) startPending(eventId, anonUser.id)
             }
           } else {
-            confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
             showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+            if (anonUser) startPending(eventId, anonUser.id)
           }
         } else {
           showToast('Prediction is no longer active')
@@ -546,7 +544,6 @@ export const CompanyPage = () => {
               <div className="space-y-3">
                 {active.map((event, idx) => {
                   const { dominant, pct } = barProps(event.yesPool, event.noPool)
-                  const flash = swipeFlash?.id === event.id
                   const anonVote = anonVotedEvents[event.id]
                   const anonCount = anonVote?.count ?? 0
                   const exhausted = !currentUser && anonCount >= 10
@@ -561,12 +558,10 @@ export const CompanyPage = () => {
                         onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                         onSwipeNo={() => handleSwipeBet(event.id, 'no')}
                         disabled={exhausted}
+                        loading={pendingEventId === event.id}
                         onClick={() => navigate(`/event/${event.id}`)}
                         demoActive={false}
-                        cardClassName={`bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
-                          ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                            flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                            'border-blue-200 dark:border-blue-800'}`}
+                        cardClassName="bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow"
                       >
                         {userBet && (
                           <div className={`mb-2 ${userBet.side === 'no' ? 'flex justify-end' : ''}`}>

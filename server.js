@@ -143,7 +143,6 @@ app.post('/api/admin/import', async (req, res) => {
           displayName: author.username,
           createdAt: new Date().toISOString(),
           upvotes: 0,
-          downvotes: 0,
         })
         created++
       } else if (item.type === 'company') {
@@ -554,7 +553,7 @@ app.post('/api/comments', async (req, res) => {
   try {
     const { id, eventId, companyId, userId, content, createdAt, displayName } = req.body
     if (!id || !content || !userId || !createdAt) return res.status(400).json({ error: 'Missing required fields' })
-    const comment = await db.createComment({ id, eventId, companyId, userId, content, createdAt, displayName, upvotes: 0, downvotes: 0 })
+    const comment = await db.createComment({ id, eventId, companyId, userId, content, createdAt, displayName, upvotes: 0 })
     res.json(comment)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -585,19 +584,7 @@ app.post('/api/comments/:id/upvote', async (req, res) => {
   try {
     const { userId } = req.body
     if (!userId) return res.status(400).json({ error: 'userId required' })
-    const result = await db.toggleCommentVote(req.params.id, userId, 'up')
-    if (!result) return res.status(404).json({ error: 'Comment not found' })
-    res.json(result)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-app.post('/api/comments/:id/downvote', async (req, res) => {
-  try {
-    const { userId } = req.body
-    if (!userId) return res.status(400).json({ error: 'userId required' })
-    const result = await db.toggleCommentVote(req.params.id, userId, 'down')
+    const result = await db.toggleCommentUpvote(req.params.id, userId)
     if (!result) return res.status(404).json({ error: 'Comment not found' })
     res.json(result)
   } catch (err) {

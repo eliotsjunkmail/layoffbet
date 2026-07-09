@@ -267,42 +267,33 @@ export const db = {
     throwOnError(error, 'deleteComment')
   },
 
-  // direction: 'up' | 'down'. Independent toggle per direction, same as chat message reactions —
-  // no mutual exclusion, and no restriction on voting on your own content.
-  async toggleCommentVote(commentId, userId, direction) {
-    const { data: commentRow, error: commentFetchErr } = await supabase.from('comments').select('upvotes, downvotes').eq('id', commentId).maybeSingle()
-    throwOnError(commentFetchErr, 'toggleCommentVote:fetchComment')
+  async toggleCommentUpvote(commentId, userId) {
+    const { data: commentRow, error: commentFetchErr } = await supabase.from('comments').select('upvotes').eq('id', commentId).maybeSingle()
+    throwOnError(commentFetchErr, 'toggleCommentUpvote:fetchComment')
     if (!commentRow) return null
 
-    const table = direction === 'up' ? 'comment_upvotes' : 'comment_downvotes'
-    const countField = direction === 'up' ? 'upvotes' : 'downvotes'
-
     const { data: existing, error: fetchErr } = await supabase
-      .from(table).select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle()
-    throwOnError(fetchErr, 'toggleCommentVote:fetchExisting')
+      .from('comment_upvotes').select('*').eq('comment_id', commentId).eq('user_id', userId).maybeSingle()
+    throwOnError(fetchErr, 'toggleCommentUpvote:fetchUpvote')
 
-    let count = commentRow[countField] ?? 0
-    let voted = !!existing
+    let upvotes = commentRow.upvotes ?? 0
+    let upvoted
 
     if (existing) {
-      const { error } = await supabase.from(table).delete().eq('comment_id', commentId).eq('user_id', userId)
-      throwOnError(error, 'toggleCommentVote:remove')
-      count = Math.max(0, count - 1)
-      voted = false
+      const { error } = await supabase.from('comment_upvotes').delete().eq('comment_id', commentId).eq('user_id', userId)
+      throwOnError(error, 'toggleCommentUpvote:remove')
+      upvotes = Math.max(0, upvotes - 1)
+      upvoted = false
     } else {
-      const { error } = await supabase.from(table).insert({ comment_id: commentId, user_id: userId })
-      throwOnError(error, 'toggleCommentVote:add')
-      count = count + 1
-      voted = true
+      const { error } = await supabase.from('comment_upvotes').insert({ comment_id: commentId, user_id: userId })
+      throwOnError(error, 'toggleCommentUpvote:add')
+      upvotes = upvotes + 1
+      upvoted = true
     }
 
-    const { data, error } = await supabase.from('comments').update({ [countField]: count }).eq('id', commentId).select().single()
-    throwOnError(error, 'toggleCommentVote:update')
-    return {
-      comment: fromDb(data),
-      upvoted: direction === 'up' ? voted : undefined,
-      downvoted: direction === 'down' ? voted : undefined,
-    }
+    const { data, error } = await supabase.from('comments').update({ upvotes }).eq('id', commentId).select().single()
+    throwOnError(error, 'toggleCommentUpvote:update')
+    return { comment: fromDb(data), upvoted }
   },
 
   // ===== COMPANY SUGGESTIONS =====
@@ -482,11 +473,10 @@ export const db = {
 
     // These tables were added after initial launch — fetched defensively (no throwOnError)
     // so a not-yet-migrated Supabase project degrades to empty data instead of failing the whole sync.
-    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: downvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
+    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
       supabase.from('chat_messages').select('*').order('created_at'),
       supabase.from('favorites').select('*'),
       supabase.from('comment_upvotes').select('*'),
-      supabase.from('comment_downvotes').select('*'),
       supabase.from('company_suggestions').select('*').order('created_at'),
       supabase.from('moderation_queue').select('*').order('created_at'),
     ])
@@ -508,12 +498,6 @@ export const db = {
       commentUpvotesByUser[u.user_id].push(u.comment_id)
     }
 
-    const commentDownvotesByUser = {}
-    for (const d of (downvoteRows || [])) {
-      if (!commentDownvotesByUser[d.user_id]) commentDownvotesByUser[d.user_id] = []
-      commentDownvotesByUser[d.user_id].push(d.comment_id)
-    }
-
     return {
       users,
       events,
@@ -527,7 +511,6 @@ export const db = {
       hiddenCompanyIds,
       anonVotedEvents: {},
       commentUpvotesByUser,
-      commentDownvotesByUser,
       companySuggestions,
       moderationQueue,
     }

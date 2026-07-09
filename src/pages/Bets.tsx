@@ -7,7 +7,7 @@ import { SwipeCard } from '../components/SwipeCard'
 import { EmptyState } from '../components/EmptyState'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
-import confetti from 'canvas-confetti'
+import { useSwipePending } from '../hooks/useSwipePending'
 import { api } from '../services/api'
 
 const barProps = (yesPool: number, noPool: number) => {
@@ -33,7 +33,8 @@ export const Bets = () => {
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
-  const [swipeFlash, setSwipeFlash] = useState<{ id: string; side: 'yes' | 'no' } | null>(null)
+  const users = useStore(s => s.users)
+  const { pendingEventId, startPending } = useSwipePending(bets)
   const [toast, setToast] = useState('')
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -69,18 +70,13 @@ export const Bets = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    const event = events.find(e => e.id === eventId)
-    const movement = event ? betMovementStr(event.yesPool, event.noPool, side, 10) : ''
     const betAmount = 10
-    const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
     if (currentUser) {
       const existingBet = getUserBet(eventId)
       const isReducing = !!existingBet && existingBet.side !== side
       if (placeBet(eventId, side, betAmount)) {
         const newBet = getUserBet(eventId)
-        setSwipeFlash({ id: eventId, side })
-        setTimeout(() => setSwipeFlash(null), 600)
         if (isReducing) {
           if (!newBet) {
             // Bet was deleted (reduced to zero)
@@ -88,23 +84,24 @@ export const Bets = () => {
           } else {
             // Bet was just reduced
             showToast(`Reduced your ${existingBet!.side === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+            startPending(eventId, currentUser.id)
           }
         } else {
-          confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
           showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+          startPending(eventId, currentUser.id)
         }
       } else {
         showToast('Not enough coins or 100-coin limit reached')
       }
     } else {
+      const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+      const anonUser = anonUserId ? users.find(u => u.id === anonUserId) : users.find(u => u.isAnonymous)
       const existingVote = anonVotedEvents[eventId]
       const isReducing = !!existingVote && existingVote.lastSide !== side
       if (isReducing || Math.max(0, anonCoins - anonCoinsSpent) >= betAmount) {
         if (placeAnonymousVote(eventId, side)) {
           const newVote = anonVotedEvents[eventId]
           setAnonCoinsSpent(prev => isReducing ? Math.max(0, prev - betAmount) : prev + betAmount)
-          setSwipeFlash({ id: eventId, side })
-          setTimeout(() => setSwipeFlash(null), 600)
           if (isReducing) {
             if (!newVote) {
               // Vote was deleted (reduced to zero)
@@ -112,10 +109,11 @@ export const Bets = () => {
             } else {
               // Vote was just reduced
               showToast(`Reduced your ${existingVote!.lastSide === 'yes' ? 'YES' : 'NO'} bet by ${betAmount} coins`)
+              if (anonUser) startPending(eventId, anonUser.id)
             }
           } else {
-            confetti({ particleCount: betAmount, spread: 45, shapes: ['square'], scalar: 2, colors: [confettiColor], gravity: 0.5, ticks: 360 })
             showToast(`You bet ${side === 'yes' ? 'YES' : 'NO'} with ${betAmount} coins!`)
+            if (anonUser) startPending(eventId, anonUser.id)
           }
         } else {
           showToast('Prediction is no longer active')
@@ -284,7 +282,6 @@ export const Bets = () => {
                     {items.map(({ event, bet }) => {
                       const { dominant, pct } = barProps(event.yesPool, event.noPool)
                       const eventBetCount = bets.filter(b => b.eventId === event.id).length
-                      const flash = swipeFlash?.id === event.id
 
                       const BetTag = (
                         <button
@@ -302,11 +299,9 @@ export const Bets = () => {
                             onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                             onSwipeNo={() => handleSwipeBet(event.id, 'no')}
                             demoActive={false}
+                            loading={pendingEventId === event.id}
                             onClick={() => navigate(`/event/${event.id}`)}
-                            cardClassName={`bg-white dark:bg-slate-800 border rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow
-                              ${flash && swipeFlash?.side === 'yes' ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' :
-                                flash && swipeFlash?.side === 'no' ? 'border-rose-400 dark:border-rose-500 bg-rose-50 dark:bg-rose-900/20' :
-                                'border-violet-200 dark:border-violet-800'}`}
+                            cardClassName="bg-white dark:bg-slate-800 border border-violet-200 dark:border-violet-800 rounded-xl px-4 py-3.5 shadow-sm [@media(hover:hover)]:hover:shadow-md select-none transition-shadow"
                           >
                             <div className={`mb-2 ${bet.side === 'no' ? 'flex justify-end' : ''}`}>
                               {BetTag}

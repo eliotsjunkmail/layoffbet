@@ -102,18 +102,6 @@ export const api = {
     return response.json()
   },
 
-  downvoteComment: async (id: string, userId: string): Promise<{ comment: Comment; downvoted: boolean }> => {
-    const response = await fetch(`${API_BASE}/api/comments/${id}/downvote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    })
-    if (!response.ok) {
-      throw new Error('Failed to downvote comment')
-    }
-    return response.json()
-  },
-
   // Company suggestion endpoints
   suggestCompany: async (name: string, userId?: string): Promise<CompanySuggestion> => {
     const response = await fetch(`${API_BASE}/api/company-suggestions`, {

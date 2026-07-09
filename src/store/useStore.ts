@@ -86,11 +86,9 @@ interface StoreState {
   editComment: (id: string, content: string) => { ok: boolean; error?: string; pending?: boolean; reason?: string }
   deleteComment: (id: string) => boolean
   upvoteComment: (commentId: string) => void
-  downvoteComment: (commentId: string) => void
   recordShare: (eventId: string) => void
   upvotedCommentIds: string[]
-  downvotedCommentIds: string[]
-  pendingCommentVotes: Record<string, 'up' | 'down'>
+  pendingCommentVotes: Record<string, boolean>
 
   getEffectiveStatus: (event: Event) => Event['status']
   banUser: (userId: string) => void
@@ -126,7 +124,6 @@ export const useStore = create<StoreState>()(
       anonVotedEvents: {},
       companyLastVisit: {},
       upvotedCommentIds: [],
-      downvotedCommentIds: [],
       pendingCommentVotes: {},
 
       setTheme: (theme) => set({ theme }),
@@ -169,7 +166,6 @@ export const useStore = create<StoreState>()(
             anonVotedEvents: fullState.anonVotedEvents,
             companyLastVisit: fullState.companyLastVisit,
             upvotedCommentIds: fullState.upvotedCommentIds,
-            downvotedCommentIds: fullState.downvotedCommentIds,
           }
           localStorage.setItem('layoff-bets-store-v7', JSON.stringify(stateToSave))
 
@@ -946,8 +942,7 @@ export const useStore = create<StoreState>()(
         const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
         const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
         if (!voterId || pendingCommentVotes[commentId]) return
-        // Independent toggle, same as chat message reactions: no mutual exclusion with downvote,
-        // no restriction on voting on your own content.
+        // Toggle, same as chat message reactions: no restriction on voting on your own content.
         const alreadyUpvoted = upvotedCommentIds.includes(commentId)
         const upDelta = alreadyUpvoted ? -1 : 1
         // Optimistic local update
@@ -959,63 +954,19 @@ export const useStore = create<StoreState>()(
           upvotedCommentIds: alreadyUpvoted
             ? s.upvotedCommentIds.filter(id => id !== commentId)
             : [...s.upvotedCommentIds, commentId],
-          pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'up' },
+          pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: true },
         }))
-        // Reconcile with the server's authoritative per-user record (only the upvote side — downvotes are untouched)
+        // Reconcile with the server's authoritative per-user record
         api.upvoteComment(commentId, voterId)
           .then(({ comment, upvoted }) => {
             set(s => {
               const nextPending = { ...s.pendingCommentVotes }
               delete nextPending[commentId]
               return {
-                comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes, downvotes: comment.downvotes } : c),
+                comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes } : c),
                 upvotedCommentIds: upvoted
                   ? (s.upvotedCommentIds.includes(commentId) ? s.upvotedCommentIds : [...s.upvotedCommentIds, commentId])
                   : s.upvotedCommentIds.filter(id => id !== commentId),
-                pendingCommentVotes: nextPending,
-              }
-            })
-          })
-          .catch(() => {
-            set(s => {
-              const nextPending = { ...s.pendingCommentVotes }
-              delete nextPending[commentId]
-              return { pendingCommentVotes: nextPending }
-            })
-          })
-      },
-
-      downvoteComment: (commentId) => {
-        const { currentUser, users, downvotedCommentIds, pendingCommentVotes } = get()
-        const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
-        const voterId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
-        if (!voterId || pendingCommentVotes[commentId]) return
-        // Independent toggle, same as chat message reactions: no mutual exclusion with upvote,
-        // no restriction on voting on your own content.
-        const alreadyDownvoted = downvotedCommentIds.includes(commentId)
-        const downDelta = alreadyDownvoted ? -1 : 1
-        // Optimistic local update
-        set(s => ({
-          comments: s.comments.map(c => c.id === commentId ? {
-            ...c,
-            downvotes: Math.max(0, (c.downvotes ?? 0) + downDelta),
-          } : c),
-          downvotedCommentIds: alreadyDownvoted
-            ? s.downvotedCommentIds.filter(id => id !== commentId)
-            : [...s.downvotedCommentIds, commentId],
-          pendingCommentVotes: { ...s.pendingCommentVotes, [commentId]: 'down' },
-        }))
-        // Reconcile with the server's authoritative per-user record (only the downvote side — upvotes are untouched)
-        api.downvoteComment(commentId, voterId)
-          .then(({ comment, downvoted }) => {
-            set(s => {
-              const nextPending = { ...s.pendingCommentVotes }
-              delete nextPending[commentId]
-              return {
-                comments: s.comments.map(c => c.id === commentId ? { ...c, upvotes: comment.upvotes, downvotes: comment.downvotes } : c),
-                downvotedCommentIds: downvoted
-                  ? (s.downvotedCommentIds.includes(commentId) ? s.downvotedCommentIds : [...s.downvotedCommentIds, commentId])
-                  : s.downvotedCommentIds.filter(id => id !== commentId),
                 pendingCommentVotes: nextPending,
               }
             })
@@ -1093,9 +1044,6 @@ export const useStore = create<StoreState>()(
             const newUpvotedCommentIds = voterId && serverData.commentUpvotesByUser?.[voterId]
               ? serverData.commentUpvotesByUser[voterId]
               : get().upvotedCommentIds
-            const newDownvotedCommentIds = voterId && serverData.commentDownvotesByUser?.[voterId]
-              ? serverData.commentDownvotesByUser[voterId]
-              : get().downvotedCommentIds
 
             // Merge bets: keep server bets as source of truth, but preserve local bets not yet synced
             const serverBets = serverData.bets || []
@@ -1132,7 +1080,6 @@ export const useStore = create<StoreState>()(
               anonVotedEvents: serverData.anonVotedEvents || {},
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
               upvotedCommentIds: newUpvotedCommentIds,
-              downvotedCommentIds: newDownvotedCommentIds,
             })
           }
         } catch (error) {
@@ -1160,7 +1107,6 @@ export const useStore = create<StoreState>()(
         anonVotedEvents: s.anonVotedEvents,
         companyLastVisit: s.companyLastVisit,
         upvotedCommentIds: s.upvotedCommentIds,
-        downvotedCommentIds: s.downvotedCommentIds,
         hiddenCompanyIds: s.hiddenCompanyIds,
       }),
       onRehydrateStorage: () => (state) => {

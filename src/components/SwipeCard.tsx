@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 
 interface HintConfig {
   label: string
@@ -9,6 +10,7 @@ interface SwipeCardProps {
   onSwipeYes: () => void
   onSwipeNo: () => void
   disabled?: boolean
+  loading?: boolean
   children: React.ReactNode
   cardClassName?: string
   onClick?: () => void
@@ -19,7 +21,7 @@ interface SwipeCardProps {
 
 const THRESHOLD = 80
 
-export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClassName = '', onClick, demoActive, rightHint, leftHint }: SwipeCardProps) => {
+export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, loading, children, cardClassName = '', onClick, demoActive, rightHint, leftHint }: SwipeCardProps) => {
   const [dx, setDx] = useState(0)
   const [active, setActive] = useState(false)
   const startX = useRef(0)
@@ -32,6 +34,7 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
 
   const progress = Math.min(Math.abs(dx) / THRESHOLD, 1)
   const isRight = dx > 0
+  const isDisabled = disabled || loading
 
   useEffect(() => {
     if (!demoActive) return
@@ -85,7 +88,7 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
   }
 
   const onTouchMove = (e: React.TouchEvent) => {
-    if (disabled) return
+    if (isDisabled) return
     const newDx = e.touches[0].clientX - startX.current
     const newDy = e.touches[0].clientY - startY.current
     if (!dirLocked.current) {
@@ -110,7 +113,7 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
   }
 
   const onMouseDown = (e: React.MouseEvent) => {
-    if (disabled || e.button !== 0) return
+    if (isDisabled || e.button !== 0) return
     demoCancelled.current = true
     if (demoRaf.current) cancelAnimationFrame(demoRaf.current)
     isMouseDown.current = true
@@ -122,7 +125,7 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
   }
 
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!isMouseDown.current || disabled) return
+    if (!isMouseDown.current || isDisabled) return
     const newDx = e.clientX - startX.current
     const newDy = e.clientY - startY.current
     if (!dirLocked.current) {
@@ -188,12 +191,12 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
       </div>
 
       <div
-        className={cardClassName}
+        className={`relative ${cardClassName}`}
         style={{
           transform: `translateX(${dx}px) rotate(${rotation}deg)`,
           transition: active ? 'none' : 'transform 0.22s cubic-bezier(0.25,0.46,0.45,0.94)',
           willChange: 'transform',
-          cursor: disabled ? 'default' : 'grab',
+          cursor: isDisabled ? 'default' : 'grab',
           WebkitTapHighlightColor: 'transparent',
         }}
         onTouchStart={onTouchStart}
@@ -206,6 +209,11 @@ export const SwipeCard = ({ onSwipeYes, onSwipeNo, disabled, children, cardClass
         onClick={() => { if (!didSwipe.current) onClick?.() }}
       >
         {children}
+        {loading && (
+          <div className="absolute inset-0 rounded-xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-[1px] flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400 dark:text-slate-500" />
+          </div>
+        )}
       </div>
     </div>
   )
