@@ -11,6 +11,7 @@ import { CompanyChat } from '../components/CompanyChat'
 import { AddCompanyModal } from '../components/AddCompanyModal'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
+import { ProbabilityBar } from '../components/ProbabilityBar'
 import { useSwipePending } from '../hooks/useSwipePending'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
@@ -106,7 +107,7 @@ export const Home = () => {
 
   // Get the user ID (for anonymous users, find their server-side ID)
   const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
-  const { pendingEventId, startPending } = useSwipePending(bets)
+  const { pendingEventId, justResolvedEventId, startPending } = useSwipePending(bets)
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
@@ -684,12 +685,7 @@ export const Home = () => {
                               <span className="inline-block align-middle ml-1 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                             )}
                           </p>
-                          <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                            <div
-                              className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
+                          <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === e.id} />
                           <div className="flex justify-between items-center text-xs">
                             {dominant === 'yes'
                               ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>

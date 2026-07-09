@@ -10,6 +10,7 @@ import { CompanyChat } from '../components/CompanyChat'
 import { ChatFAB } from '../components/ChatFAB'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
+import { ProbabilityBar } from '../components/ProbabilityBar'
 import { useSwipePending } from '../hooks/useSwipePending'
 import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
@@ -66,7 +67,7 @@ export const CompanyPage = () => {
     const stored = localStorage.getItem('anonCoinsSpent')
     return stored ? parseInt(stored) : 0
   })
-  const { pendingEventId, startPending } = useSwipePending(bets)
+  const { pendingEventId, justResolvedEventId, startPending } = useSwipePending(bets)
   const [toast, setToast] = useState('')
   const [toastExiting, setToastExiting] = useState(false)
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
@@ -641,12 +642,7 @@ export const CompanyPage = () => {
                             )}
                           </div>
                         </div>
-                        <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                          <div
-                            className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
+                        <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id} />
                         <div className="flex justify-between items-center text-xs">
                           {dominant === 'yes'
                             ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>

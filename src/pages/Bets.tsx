@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
 import { EmptyState } from '../components/EmptyState'
+import { ProbabilityBar } from '../components/ProbabilityBar'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 import { useSwipePending } from '../hooks/useSwipePending'
@@ -34,7 +35,7 @@ export const Bets = () => {
   const favoriteCompanyIds = useStore(s => s.favoriteCompanyIds)
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const users = useStore(s => s.users)
-  const { pendingEventId, startPending } = useSwipePending(bets)
+  const { pendingEventId, justResolvedEventId, startPending } = useSwipePending(bets)
   const [toast, setToast] = useState('')
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -307,12 +308,7 @@ export const Bets = () => {
                               {BetTag}
                             </div>
                             <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
-                            <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
-                              <div
-                                className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
+                            <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id} />
                             <div className="flex justify-between items-center text-xs">
                               {dominant === 'yes'
                                 ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
