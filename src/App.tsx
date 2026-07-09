@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
-import { X, Search as SearchIcon } from 'lucide-react'
+import { X, Search as SearchIcon, MessageSquare } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
@@ -44,8 +44,10 @@ const useCountdown = (targetDate: string) => {
 }
 
 const GATE_SCROLL_PX_PER_SEC = 12 // a very slow ambient drift
+// Each row drifts at a slightly different pace so they don't all move in lockstep.
+const GATE_ROW_SPEED_FACTORS = [1, 0.78, 1.25]
 
-const CompanyRow = ({ row, selectedCompanyId, onSelectCompany }: { row: { id: string; name: string }[]; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
+const CompanyRow = ({ row, speedFactor, selectedCompanyId, onSelectCompany }: { row: { id: string; name: string }[]; speedFactor: number; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
   const trackRef = useRef<HTMLDivElement>(null)
   const [duration, setDuration] = useState(40)
   const [paused, setPaused] = useState(false)
@@ -54,8 +56,8 @@ const CompanyRow = ({ row, selectedCompanyId, onSelectCompany }: { row: { id: st
     if (!trackRef.current) return
     // The track renders the row twice back-to-back; one set's width is exactly half of it.
     const setWidth = trackRef.current.scrollWidth / 2
-    if (setWidth > 0) setDuration(setWidth / GATE_SCROLL_PX_PER_SEC)
-  }, [row])
+    if (setWidth > 0) setDuration(setWidth / (GATE_SCROLL_PX_PER_SEC * speedFactor))
+  }, [row, speedFactor])
 
   const pause = () => setPaused(true)
   const resume = () => setPaused(false)
@@ -109,7 +111,13 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
   return (
     <div className="space-y-2">
       {rows.map((row, rowIdx) => (
-        <CompanyRow key={rowIdx} row={row} selectedCompanyId={selectedCompanyId} onSelectCompany={onSelectCompany} />
+        <CompanyRow
+          key={rowIdx}
+          row={row}
+          speedFactor={GATE_ROW_SPEED_FACTORS[rowIdx % GATE_ROW_SPEED_FACTORS.length]}
+          selectedCompanyId={selectedCompanyId}
+          onSelectCompany={onSelectCompany}
+        />
       ))}
     </div>
   )
@@ -497,9 +505,15 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* Tagline */}
         <div className="flex justify-center mb-10">
           <div className="text-center">
-            <div className="flex items-baseline justify-center gap-1 mb-2">
-              <span className="text-2xl font-semibold text-gray-600 dark:text-slate-300 tracking-tight">Layoff</span>
-              <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">Live</span>
+            <div className="flex items-center justify-center gap-1.5 mb-2">
+              <div className="relative w-6 h-6 flex-shrink-0">
+                <MessageSquare className="absolute left-0 top-0 w-4 h-4 text-gray-500 dark:text-slate-400 opacity-80" strokeWidth={2.5} />
+                <MessageSquare className="absolute right-0 bottom-0 w-4 h-4 text-blue-600 dark:text-blue-400 opacity-80 -scale-x-100" strokeWidth={2.5} />
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-semibold text-gray-600 dark:text-slate-300 tracking-tight">Layoff</span>
+                <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">Live</span>
+              </div>
             </div>
             <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
           </div>
