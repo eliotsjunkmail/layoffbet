@@ -43,92 +43,58 @@ const useCountdown = (targetDate: string) => {
   return tick
 }
 
-const CompanyScroller = ({ letter, scrollDirection, speed, selectedCompanyId, onSelectCompany, prioritizeCompany }: { letter: string; scrollDirection: 'left' | 'right'; speed: number; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void; prioritizeCompany?: string }) => {
-  const companies = useStore(s => s.companies)
+const CompanyRow = ({ row, selectedCompanyId, onSelectCompany }: { row: { id: string; name: string }[]; selectedCompanyId?: string; onSelectCompany?: (companyId: string) => void }) => {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState(0)
-
-  const filtered = (() => {
-    const all = companies.filter(c => c.name.toUpperCase().startsWith(letter)).sort((a, b) => a.name.localeCompare(b.name))
-    if (!prioritizeCompany) return all
-    const priority = all.find(c => c.name.toUpperCase().includes(prioritizeCompany.toUpperCase()))
-    if (!priority) return all
-    return [all[0], priority, ...all.slice(1).filter(c => c.id !== priority.id)]
-  })()
+  const pausedRef = useRef(false)
+  // scrollLeft rounds to whole pixels, so a sub-pixel-per-frame speed needs its own
+  // float accumulator — repeatedly nudging the rounded property directly never accumulates.
+  const offsetRef = useRef(0)
 
   useEffect(() => {
-    if (!scrollRef.current) return
     const el = scrollRef.current
-    // If we're prioritizing a company, start at the beginning to show it
-    if (prioritizeCompany) {
-      el.scrollLeft = 0
-    } else if (scrollDirection === 'right') {
-      el.scrollLeft = el.scrollWidth - el.clientWidth
-    } else {
-      el.scrollLeft = 0
-    }
-  }, [scrollDirection, prioritizeCompany])
-
-  useEffect(() => {
-    if (!scrollRef.current || isDragging || selectedCompanyId) return
-    const scroll = () => {
-      if (!scrollRef.current) return
-      const el = scrollRef.current
-      const scrollSpeed = scrollDirection === 'left' ? speed : -speed
-      el.scrollLeft += scrollSpeed
-      if (scrollDirection === 'left' && el.scrollLeft >= el.scrollWidth - el.clientWidth) {
-        el.scrollLeft = 0
-      } else if (scrollDirection === 'right' && el.scrollLeft <= 0) {
-        el.scrollLeft = el.scrollWidth - el.clientWidth
+    if (!el || row.length === 0) return
+    let raf: number
+    const speed = 0.2 // px per frame — a very slow ambient drift
+    const tick = () => {
+      if (!pausedRef.current) {
+        offsetRef.current += speed
+        const half = el.scrollWidth / 2
+        if (half > 0 && offsetRef.current >= half) offsetRef.current -= half
+        el.scrollLeft = offsetRef.current
       }
+      raf = requestAnimationFrame(tick)
     }
-    const interval = setInterval(scroll, 30)
-    return () => clearInterval(interval)
-  }, [scrollDirection, speed, isDragging, selectedCompanyId])
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [row.length])
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('[data-company-pill]')) return
-    setIsDragging(true)
-    setDragStart(e.clientX - (scrollRef.current?.scrollLeft || 0))
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scrollRef.current) return
-    scrollRef.current.scrollLeft = e.clientX - dragStart
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const handlePillClick = (companyId: string) => {
-    onSelectCompany?.(companyId)
-  }
+  const pause = () => { pausedRef.current = true }
+  const resume = () => { pausedRef.current = false }
 
   return (
     <div
       ref={scrollRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
+      className="overflow-x-auto pb-2 scrollbar-hide"
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onTouchStart={pause}
+      onTouchEnd={resume}
     >
-      {filtered.map(c => (
-        <button
-          key={c.id}
-          data-company-pill
-          onClick={() => handlePillClick(c.id)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none ${
-            selectedCompanyId === c.id
-              ? 'bg-blue-600 border-blue-500 text-white'
-              : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
-          }`}
-        >
-          {c.name}
-        </button>
-      ))}
+      <div className="flex gap-2 w-max">
+        {[...row, ...row].map((c, i) => (
+          <button
+            key={`${c.id}-${i}`}
+            onClick={() => onSelectCompany?.(c.id)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none ${
+              selectedCompanyId === c.id
+                ? 'bg-blue-600 border-blue-500 text-white'
+                : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
+            }`}
+          >
+            {c.name}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -151,23 +117,7 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
   return (
     <div className="space-y-2">
       {rows.map((row, rowIdx) => (
-        <div key={rowIdx} className="overflow-x-auto pb-2 scrollbar-hide">
-          <div className="flex gap-2">
-            {row.map(c => (
-              <button
-                key={c.id}
-                onClick={() => onSelectCompany?.(c.id)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm whitespace-nowrap border transition-colors cursor-pointer appearance-none user-select-none ${
-                  selectedCompanyId === c.id
-                    ? 'bg-blue-600 border-blue-500 text-white'
-                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CompanyRow key={rowIdx} row={row} selectedCompanyId={selectedCompanyId} onSelectCompany={onSelectCompany} />
       ))}
     </div>
   )
