@@ -204,6 +204,161 @@ app.post('/api/admin/import', async (req, res) => {
   }
 })
 
+// ===== CSV EXPORT / OVERRIDE-IMPORT =====
+// Row-level export + upsert-by-id import, distinct from /api/admin/import above (which
+// creates new rows resolved by natural keys like company name or username, and never updates).
+const csvEscape = (value) => {
+  const s = value === null || value === undefined ? '' : String(value)
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+  return s
+}
+
+const toCSV = (rows, fields) => {
+  const lines = [fields.join(',')]
+  for (const row of rows) {
+    lines.push(fields.map(f => csvEscape(row[f])).join(','))
+  }
+  return lines.join('\n')
+}
+
+const ADMIN_CSV_ENTITIES = {
+  companies: {
+    getAll: () => db.getCompanies(),
+    create: (data) => db.createCompany(data),
+    update: (id, data) => db.updateCompany(id, data),
+    idPrefix: 'comp-',
+    fields: ['id', 'name', 'slug', 'description', 'industry', 'color', 'viewCount', 'createdAt'],
+    numberFields: ['viewCount'],
+    booleanFields: [],
+    requiredForCreate: ['name'],
+    beforeCreate: (data) => ({ slug: data.slug || slugify(data.name || ''), viewCount: data.viewCount ?? 0, ...data }),
+  },
+  users: {
+    getAll: () => db.getUsers(),
+    create: (data) => db.createUser(data),
+    update: (id, data) => db.updateUser(id, data),
+    idPrefix: 'user-',
+    fields: ['id', 'username', 'password', 'coins', 'isAdmin', 'isAnonymous', 'displayName', 'anonymousNumber', 'createdAt', 'lastCoinsDate', 'shareCount'],
+    numberFields: ['coins', 'anonymousNumber', 'shareCount'],
+    booleanFields: ['isAdmin', 'isAnonymous'],
+    requiredForCreate: ['username'],
+    beforeCreate: (data) => ({ coins: data.coins ?? 100, lastCoinsDate: data.lastCoinsDate || new Date().toISOString().split('T')[0], ...data }),
+  },
+  events: {
+    getAll: () => db.getEvents(),
+    create: (data) => db.createEvent(data),
+    update: (id, data) => db.updateEvent(id, data),
+    idPrefix: 'evt-',
+    fields: ['id', 'companyId', 'companyName', 'title', 'description', 'expiresAt', 'status', 'creatorId', 'creatorName', 'yesPool', 'noPool', 'outcome', 'createdAt', 'viewCount', 'shareCount'],
+    numberFields: ['yesPool', 'noPool', 'viewCount', 'shareCount'],
+    booleanFields: [],
+    requiredForCreate: ['companyId', 'companyName', 'title', 'expiresAt'],
+    beforeCreate: (data) => ({ status: data.status || 'active', yesPool: data.yesPool ?? 0, noPool: data.noPool ?? 0, ...data }),
+  },
+  bets: {
+    getAll: () => db.getBets(),
+    create: (data) => db.createBet(data),
+    update: (id, data) => db.updateBet(id, data),
+    idPrefix: 'bet-',
+    fields: ['id', 'eventId', 'userId', 'side', 'amount', 'createdAt'],
+    numberFields: ['amount'],
+    booleanFields: [],
+    requiredForCreate: ['eventId', 'userId', 'side', 'amount'],
+    beforeCreate: (data) => data,
+  },
+  comments: {
+    getAll: () => db.getComments(),
+    create: (data) => db.createComment(data),
+    update: (id, data) => db.updateComment(id, data),
+    idPrefix: 'cmt-',
+    fields: ['id', 'eventId', 'companyId', 'userId', 'content', 'createdAt', 'editedAt', 'upvotes', 'displayName'],
+    numberFields: ['upvotes'],
+    booleanFields: [],
+    requiredForCreate: ['userId', 'content'],
+    beforeCreate: (data) => ({ upvotes: data.upvotes ?? 0, ...data }),
+  },
+}
+
+const requireAdmin = async (req) => {
+  const { username, password } = req.body
+  if (!username || !password) return null
+  const user = await db.getUserByUsername(username)
+  if (!user || user.password !== password || !user.isAdmin) return null
+  return user
+}
+
+app.post('/api/admin/export', async (req, res) => {
+  try {
+    const admin = await requireAdmin(req)
+    if (!admin) return res.status(403).json({ error: 'Admin access required' })
+    const { entity } = req.body
+    const config = ADMIN_CSV_ENTITIES[entity]
+    if (!config) return res.status(400).json({ error: `Unknown entity "${entity}"` })
+
+    const rows = await config.getAll()
+    const csv = toCSV(rows, config.fields)
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.send(csv)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/admin/csv-import', async (req, res) => {
+  try {
+    const admin = await requireAdmin(req)
+    if (!admin) return res.status(403).json({ error: 'Admin access required' })
+    const { entity, rows } = req.body
+    const config = ADMIN_CSV_ENTITIES[entity]
+    if (!config) return res.status(400).json({ error: `Unknown entity "${entity}"` })
+    if (!Array.isArray(rows) || rows.length === 0) return res.status(400).json({ error: 'No rows to import' })
+
+    const existing = await config.getAll()
+    const existingIds = new Set(existing.map(r => r.id))
+
+    let updated = 0
+    let created = 0
+    const errors = []
+
+    for (let i = 0; i < rows.length; i++) {
+      const raw = rows[i]
+      const rowNum = i + 2 // account for the header row
+      try {
+        // Only fields present with a non-empty value are applied — blank cells are left
+        // untouched on update instead of clearing the existing value.
+        const data = {}
+        for (const field of config.fields) {
+          if (field === 'id') continue
+          const value = raw[field]
+          if (value === undefined || value === null || value === '') continue
+          if (config.numberFields.includes(field)) data[field] = Number(value)
+          else if (config.booleanFields.includes(field)) data[field] = value === 'true' || value === '1' || value === true
+          else data[field] = value
+        }
+
+        const id = (raw.id || '').trim()
+        if (id && existingIds.has(id)) {
+          await config.update(id, data)
+          updated++
+        } else {
+          for (const requiredField of config.requiredForCreate) {
+            if (!data[requiredField]) throw new Error(`missing required field "${requiredField}"`)
+          }
+          const newId = id || `${config.idPrefix}${crypto.randomBytes(8).toString('hex')}`
+          await config.create(config.beforeCreate({ id: newId, createdAt: data.createdAt || new Date().toISOString(), ...data }))
+          created++
+        }
+      } catch (err) {
+        errors.push(`Row ${rowNum}: ${err.message}`)
+      }
+    }
+
+    res.json({ updated, created, errors })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/admin/delete-excess-bets', async (req, res) => {
   try {
     const { username, password, keepCount } = req.body

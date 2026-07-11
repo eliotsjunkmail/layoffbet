@@ -162,6 +162,142 @@ const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNo
   )
 }
 
+// Full CSV parser (handles quoted fields spanning multiple lines, e.g. multi-line comment
+// content) — used only by CSVOverrideBox below, since parseCSVLine above only handles a
+// single already-split line and would corrupt embedded newlines.
+const parseCSVFull = (text: string): string[][] => {
+  const rows: string[][] = []
+  let row: string[] = []
+  let field = ''
+  let inQuotes = false
+  let i = 0
+  while (i < text.length) {
+    const ch = text[i]
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue }
+        inQuotes = false; i++; continue
+      }
+      field += ch; i++; continue
+    } else {
+      if (ch === '"') { inQuotes = true; i++; continue }
+      if (ch === ',') { row.push(field); field = ''; i++; continue }
+      if (ch === '\r') { i++; continue }
+      if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue }
+      field += ch; i++; continue
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row) }
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''))
+}
+
+const CSVOverrideBox = ({ entity, label, username, password }: {
+  entity: string
+  label: string
+  username: string
+  password: string
+}) => {
+  const [file, setFile] = useState<File | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [results, setResults] = useState<{ updated: number; created: number; errors: string[] } | null>(null)
+
+  const doExport = async () => {
+    setExporting(true)
+    try {
+      const response = await fetch('/api/admin/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity, username, password }),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Export failed')
+      }
+      const text = await response.text()
+      const blob = new Blob([text], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${entity}_export.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setResults({ updated: 0, created: 0, errors: [err instanceof Error ? err.message : 'Export failed'] })
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const doImport = async () => {
+    if (!file) return
+    setImporting(true)
+    setResults(null)
+    try {
+      const text = await file.text()
+      const parsed = parseCSVFull(text)
+      if (parsed.length < 2) throw new Error('CSV must have a header row and at least one data row')
+      const headers = parsed[0].map(h => h.trim())
+      const rows = parsed.slice(1).map(cells => {
+        const obj: Record<string, string> = {}
+        headers.forEach((h, i) => { obj[h] = (cells[i] ?? '').trim() })
+        return obj
+      })
+      const response = await fetch('/api/admin/csv-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity, rows, username, password }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Import failed')
+      setResults(result)
+      if (result.updated > 0 || result.created > 0) setTimeout(() => window.location.reload(), 1500)
+    } catch (err) {
+      setResults({ updated: 0, created: 0, errors: [err instanceof Error ? err.message : 'Import failed'] })
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-4">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Export &amp; Override via CSV</h3>
+      <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
+        Export all {label} to CSV, edit the file (e.g. change a name), then re-import it — rows are matched by <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">id</code> and updated in place. Blank cells are left unchanged. Rows with a blank or unrecognized id are created as new.
+      </p>
+      <div className="flex flex-wrap gap-2 mb-3">
+        <button
+          onClick={doExport}
+          disabled={exporting}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : `Export ${label}`}
+        </button>
+        <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+          <Upload className="w-4 h-4" />
+          {file ? file.name : 'Choose edited CSV'}
+          <input type="file" accept=".csv" className="sr-only" onChange={e => setFile(e.target.files?.[0] || null)} />
+        </label>
+        {file && (
+          <button
+            onClick={doImport}
+            disabled={importing}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          >
+            {importing ? 'Importing...' : 'Import / Override'}
+          </button>
+        )}
+      </div>
+      {results && (
+        <div className={`rounded-lg p-3 text-sm ${results.errors.length > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
+          <div className="font-medium">{results.updated} updated, {results.created} created</div>
+          {results.errors.map((e, i) => <div key={i} className="text-xs mt-1">{e}</div>)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export const Admin = () => {
   const currentUser = useStore(s => s.currentUser)
   const users = useStore(s => s.users)
@@ -451,6 +587,12 @@ export const Admin = () => {
               username={currentUser.username || ''}
               password={currentUser.password || ''}
             />
+            <CSVOverrideBox
+              entity="users"
+              label="users"
+              username={currentUser.username || ''}
+              password={currentUser.password || ''}
+            />
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -504,6 +646,12 @@ export const Admin = () => {
                 'bet,Acme Corp,Will there be layoffs in Q3?,agarcia,no,10',
               ]}
               resultNoun="bet"
+              username={currentUser.username || ''}
+              password={currentUser.password || ''}
+            />
+            <CSVOverrideBox
+              entity="bets"
+              label="bets"
               username={currentUser.username || ''}
               password={currentUser.password || ''}
             />
@@ -562,6 +710,12 @@ export const Admin = () => {
                 'comment,Acme Corp,Will there be layoffs in Q3?,,Management has been evasive about headcount plans',
               ]}
               resultNoun="comment"
+              username={currentUser.username || ''}
+              password={currentUser.password || ''}
+            />
+            <CSVOverrideBox
+              entity="comments"
+              label="comments"
               username={currentUser.username || ''}
               password={currentUser.password || ''}
             />
@@ -636,6 +790,12 @@ export const Admin = () => {
                   'event,BNY,Will tech division see layoffs?,"Banking sector consolidation underway",60,',
                 ]}
                 resultNoun="event"
+                username={currentUser.username || ''}
+                password={currentUser.password || ''}
+              />
+              <CSVOverrideBox
+                entity="events"
+                label="events"
                 username={currentUser.username || ''}
                 password={currentUser.password || ''}
               />
@@ -852,6 +1012,12 @@ export const Admin = () => {
                   'company,Globex Inc,Multinational conglomerate,Technology,#7C3AED',
                 ]}
                 resultNoun="company"
+                username={currentUser.username || ''}
+                password={currentUser.password || ''}
+              />
+              <CSVOverrideBox
+                entity="companies"
+                label="companies"
                 username={currentUser.username || ''}
                 password={currentUser.password || ''}
               />
