@@ -35,6 +35,7 @@ const JS_TO_DB = {
   anonId: 'anon_id',
   suggestedBy: 'suggested_by',
   contentType: 'content_type',
+  isWarnActNotice: 'is_warn_act_notice',
 }
 
 const DB_TO_JS = Object.fromEntries(Object.entries(JS_TO_DB).map(([k, v]) => [v, k]))

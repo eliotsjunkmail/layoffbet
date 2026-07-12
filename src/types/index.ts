@@ -42,6 +42,7 @@ export interface Event {
   createdAt: string
   viewCount: number
   shareCount: number
+  isWarnActNotice?: boolean
 }
 
 export interface Bet {

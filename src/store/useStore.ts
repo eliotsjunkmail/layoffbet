@@ -738,6 +738,8 @@ export const useStore = create<StoreState>()(
           viewCount: 0,
           shareCount: 0,
           createdAt: new Date().toISOString(),
+          // User-created events are never a WARN Act notice source — only admins can mark that.
+          isWarnActNotice: false,
         }
 
         set(s => ({ events: [event, ...s.events] }))

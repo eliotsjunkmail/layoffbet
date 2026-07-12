@@ -516,21 +516,23 @@ export const CompanyPage = () => {
             </div>
           </div>
 
-          <div>
-            <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
-              {expandDescription ? (
-                <>
-                  <p>{company.description}</p>
-                  <button onClick={() => setExpandDescription(false)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium mt-2">Show less</button>
-                </>
-              ) : (
-                <div className="flex gap-1 items-baseline">
-                  <span className="truncate sm:block">{company.description.split('.')[0]}.</span>
-                  <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium whitespace-nowrap flex-shrink-0 sm:flex-shrink">More</button>
-                </div>
-              )}
+          {company.description && company.description.trim() && (
+            <div>
+              <div className="text-gray-600 dark:text-slate-300 text-sm leading-snug mb-5">
+                {expandDescription ? (
+                  <>
+                    <p>{company.description}</p>
+                    <button onClick={() => setExpandDescription(false)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium mt-2">Show less</button>
+                  </>
+                ) : (
+                  <div className="flex gap-1 items-baseline">
+                    <span className="truncate sm:block">{company.description.split('.')[0]}.</span>
+                    <button onClick={() => setExpandDescription(true)} className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium whitespace-nowrap flex-shrink-0 sm:flex-shrink">More</button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Past events — desktop only in left column */}
           <div className="hidden sm:block">

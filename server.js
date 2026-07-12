@@ -114,6 +114,7 @@ app.post('/api/admin/import', async (req, res) => {
           yesPool: 0,
           noPool: 0,
           createdAt: new Date().toISOString(),
+          isWarnActNotice: false,
         })
         events.push(event)
         currentEventId = event.id
@@ -249,11 +250,34 @@ const ADMIN_CSV_ENTITIES = {
     create: (data) => db.createEvent(data),
     update: (id, data) => db.updateEvent(id, data),
     idPrefix: 'evt-',
-    fields: ['id', 'companyId', 'companyName', 'title', 'description', 'expiresAt', 'status', 'creatorId', 'creatorName', 'yesPool', 'noPool', 'outcome', 'createdAt', 'viewCount', 'shareCount'],
+    fields: ['id', 'companyId', 'companyName', 'title', 'description', 'expiresAt', 'status', 'creatorId', 'creatorName', 'yesPool', 'noPool', 'outcome', 'createdAt', 'viewCount', 'shareCount', 'isWarnActNotice'],
     numberFields: ['yesPool', 'noPool', 'viewCount', 'shareCount'],
-    booleanFields: [],
-    requiredForCreate: ['companyId', 'companyName', 'title', 'expiresAt'],
-    beforeCreate: (data) => ({ status: data.status || 'active', yesPool: data.yesPool ?? 0, noPool: data.noPool ?? 0, ...data }),
+    booleanFields: ['isWarnActNotice'],
+    requiredForCreate: ['companyName', 'title', 'expiresAt'],
+    beforeCreate: (data) => ({ status: data.status || 'active', yesPool: data.yesPool ?? 0, noPool: data.noPool ?? 0, isWarnActNotice: data.isWarnActNotice ?? false, ...data }),
+    // If the row's companyId doesn't match an existing company, resolve (or create) it by
+    // companyName instead — so uploading events for a company that doesn't exist yet works.
+    resolveRefs: async (data) => {
+      const companies = await db.getCompanies()
+      if (data.companyId && companies.find(c => c.id === data.companyId)) return data
+      if (data.companyName) {
+        let company = companies.find(c => c.name.toLowerCase() === data.companyName.trim().toLowerCase())
+        if (!company) {
+          company = await db.createCompany({
+            id: 'comp-' + crypto.randomBytes(8).toString('hex'),
+            name: data.companyName.trim(),
+            slug: slugify(data.companyName),
+            description: '',
+            industry: '',
+            color: '#1E7A8C',
+            createdAt: new Date().toISOString(),
+          })
+        }
+        data.companyId = company.id
+        data.companyName = company.name
+      }
+      return data
+    },
   },
   bets: {
     getAll: () => db.getBets(),
@@ -335,6 +359,8 @@ app.post('/api/admin/csv-import', async (req, res) => {
           else if (config.booleanFields.includes(field)) data[field] = value === 'true' || value === '1' || value === true
           else data[field] = value
         }
+
+        if (config.resolveRefs) await config.resolveRefs(data)
 
         const id = (raw.id || '').trim()
         if (id && existingIds.has(id)) {

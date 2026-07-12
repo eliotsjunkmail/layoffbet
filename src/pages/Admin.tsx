@@ -325,9 +325,9 @@ export const Admin = () => {
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
-  const [editEventForm, setEditEventForm] = useState({ title: '', description: '', expiresAt: '' })
+  const [editEventForm, setEditEventForm] = useState({ title: '', description: '', expiresAt: '', isWarnActNotice: false })
   const [showAddEventForm, setShowAddEventForm] = useState(false)
-  const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '' })
+  const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false })
   const [filterCompanyId, setFilterCompanyId] = useState('')
 
   if (!currentUser || !currentUser.isAdmin) {
@@ -454,7 +454,7 @@ export const Admin = () => {
     const d = new Date(event.expiresAt)
     const pad = (n: number) => n.toString().padStart(2, '0')
     const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-    setEditEventForm({ title: event.title, description: event.description || '', expiresAt: local })
+    setEditEventForm({ title: event.title, description: event.description || '', expiresAt: local, isWarnActNotice: !!event.isWarnActNotice })
   }
 
   const saveEditEvent = async (eventId: string) => {
@@ -464,7 +464,7 @@ export const Admin = () => {
       const response = await fetch(`/api/events/${eventId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editEventForm.title.trim(), description: editEventForm.description.trim(), expiresAt: new Date(editEventForm.expiresAt).toISOString() }),
+        body: JSON.stringify({ title: editEventForm.title.trim(), description: editEventForm.description.trim(), expiresAt: new Date(editEventForm.expiresAt).toISOString(), isWarnActNotice: editEventForm.isWarnActNotice }),
       })
       if (!response.ok) {
         const data = await response.json()
@@ -502,6 +502,7 @@ export const Admin = () => {
           yesPool: 0,
           noPool: 0,
           createdAt: new Date().toISOString(),
+          isWarnActNotice: newEvent.isWarnActNotice,
         }),
       })
       if (!response.ok) {
@@ -509,7 +510,7 @@ export const Admin = () => {
         throw new Error(data.error || 'Failed to create event')
       }
       setMessage({ type: 'success', text: 'Event created' })
-      setNewEvent({ companyId: '', title: '', description: '', expiresAt: '' })
+      setNewEvent({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false })
       setShowAddEventForm(false)
       setTimeout(() => { setMessage(null); window.location.reload() }, 1000)
     } catch (err) {
@@ -865,6 +866,18 @@ export const Admin = () => {
                         required
                       />
                     </div>
+                    <label className="flex items-center justify-between cursor-pointer bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Source is a WARN Act notice</span>
+                      <input
+                        type="checkbox"
+                        checked={newEvent.isWarnActNotice}
+                        onChange={e => setNewEvent({ ...newEvent, isWarnActNotice: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${newEvent.isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                        <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${newEvent.isWarnActNotice ? 'translate-x-5' : ''}`} />
+                      </div>
+                    </label>
                     <div className="flex gap-2 pt-2">
                       <button
                         type="submit"
@@ -894,6 +907,7 @@ export const Admin = () => {
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Title</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase hidden sm:table-cell">Description</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Status</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">WARN Act</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Expires</th>
                         <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Actions</th>
                       </tr>
@@ -931,6 +945,25 @@ export const Admin = () => {
                                 status === 'resolved' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
                                 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                               }`}>{status}</span>
+                            </td>
+                            <td className="px-2 py-3">
+                              {isEditing ? (
+                                <label className="inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={editEventForm.isWarnActNotice}
+                                    onChange={e => setEditEventForm(f => ({ ...f, isWarnActNotice: e.target.checked }))}
+                                    className="sr-only"
+                                  />
+                                  <div className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${editEventForm.isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${editEventForm.isWarnActNotice ? 'translate-x-4' : ''}`} />
+                                  </div>
+                                </label>
+                              ) : (
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${event.isWarnActNotice ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>
+                                  {event.isWarnActNotice ? 'Yes' : 'No'}
+                                </span>
+                              )}
                             </td>
                             <td className="px-2 py-3 text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">
                               {isEditing ? (
