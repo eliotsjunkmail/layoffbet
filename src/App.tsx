@@ -178,7 +178,10 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   )
 
   const filtered = search.trim()
-    ? visible.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    ? visible.filter(c => {
+        const q = search.toLowerCase()
+        return c.name.toLowerCase().includes(q) || c.aliases?.some(alias => alias.toLowerCase().includes(q))
+      })
     : visible
 
   const displayed = showAll || search.trim() ? filtered : filtered.slice(0, PICK_LIMIT)
