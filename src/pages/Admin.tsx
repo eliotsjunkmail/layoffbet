@@ -328,8 +328,8 @@ export const Admin = () => {
   const [merging, setMerging] = useState(false)
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
-  const [editingEventId, setEditingEventId] = useState<string | null>(null)
-  const [editEventForm, setEditEventForm] = useState({ title: '', description: '', expiresAt: '', isWarnActNotice: false })
+  const [bulkEditingEvents, setBulkEditingEvents] = useState(false)
+  const [bulkEventForms, setBulkEventForms] = useState<Record<string, { title: string; description: string; expiresAt: string; isWarnActNotice: boolean }>>({})
   const [showAddEventForm, setShowAddEventForm] = useState(false)
   const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false })
   const [filterCompanyId, setFilterCompanyId] = useState('')
@@ -482,32 +482,69 @@ export const Admin = () => {
     localStorage.setItem(ADS_ENABLED_KEY, next ? 'true' : 'false')
   }
 
-  const startEditEvent = (event: typeof events[0]) => {
-    setEditingEventId(event.id)
-    const d = new Date(event.expiresAt)
+  const toDatetimeLocalValue = (iso: string) => {
+    const d = new Date(iso)
     const pad = (n: number) => n.toString().padStart(2, '0')
-    const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-    setEditEventForm({ title: event.title, description: event.description || '', expiresAt: local, isWarnActNotice: !!event.isWarnActNotice })
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
-  const saveEditEvent = async (eventId: string) => {
-    if (!editEventForm.title.trim()) return
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/events/${eventId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editEventForm.title.trim(), description: editEventForm.description.trim(), expiresAt: new Date(editEventForm.expiresAt).toISOString(), isWarnActNotice: editEventForm.isWarnActNotice }),
-      })
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to update event')
+  const startBulkEditEvents = (eventsToEdit: typeof events) => {
+    const forms: typeof bulkEventForms = {}
+    eventsToEdit.forEach(event => {
+      forms[event.id] = {
+        title: event.title,
+        description: event.description || '',
+        expiresAt: toDatetimeLocalValue(event.expiresAt),
+        isWarnActNotice: !!event.isWarnActNotice,
       }
-      setEditingEventId(null)
-      setMessage({ type: 'success', text: 'Event updated' })
-      setTimeout(() => { setMessage(null); window.location.reload() }, 1000)
-    } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update event' })
+    })
+    setBulkEventForms(forms)
+    setBulkEditingEvents(true)
+  }
+
+  const cancelBulkEditEvents = () => {
+    setBulkEditingEvents(false)
+    setBulkEventForms({})
+  }
+
+  const saveBulkEditEvents = async (eventsToSave: typeof events) => {
+    setLoading(true)
+    const errors: string[] = []
+    let updated = 0
+    try {
+      for (const event of eventsToSave) {
+        const form = bulkEventForms[event.id]
+        if (!form) continue
+        const newExpiresAt = new Date(form.expiresAt).toISOString()
+        const changed = form.title.trim() !== event.title
+          || form.description.trim() !== (event.description || '')
+          || newExpiresAt !== event.expiresAt
+          || form.isWarnActNotice !== !!event.isWarnActNotice
+        if (!changed) continue
+        if (!form.title.trim()) { errors.push(`"${event.title}": title is required`); continue }
+        try {
+          const response = await fetch(`/api/events/${event.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: form.title.trim(), description: form.description.trim(), expiresAt: newExpiresAt, isWarnActNotice: form.isWarnActNotice }),
+          })
+          if (!response.ok) {
+            const data = await response.json()
+            throw new Error(data.error || 'Failed to update')
+          }
+          updated++
+        } catch (err) {
+          errors.push(`"${event.title}": ${err instanceof Error ? err.message : 'failed'}`)
+        }
+      }
+      setBulkEditingEvents(false)
+      setBulkEventForms({})
+      if (errors.length > 0) {
+        setMessage({ type: 'error', text: `Updated ${updated} event${updated === 1 ? '' : 's'}, ${errors.length} failed: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '…' : ''}` })
+      } else {
+        setMessage({ type: 'success', text: updated > 0 ? `Updated ${updated} event${updated === 1 ? '' : 's'}` : 'No changes to save' })
+        setTimeout(() => { setMessage(null); if (updated > 0) window.location.reload() }, 1200)
+      }
     } finally {
       setLoading(false)
     }
@@ -563,8 +600,8 @@ export const Admin = () => {
   ]
 
   return (
-    <Layout>
-      <div className="max-w-6xl mx-auto px-0 py-2">
+    <Layout fullWidth>
+      <div className="w-full px-0 py-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3 px-4">Admin Panel</h1>
 
         {message && (
@@ -835,21 +872,52 @@ export const Admin = () => {
               />
 
               {/* Add Event Form */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
                 <select
                   value={filterCompanyId}
                   onChange={e => setFilterCompanyId(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                  disabled={bulkEditingEvents}
+                  className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 disabled:opacity-50"
                 >
                   <option value="">All companies</option>
                   {sortedCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <button
-                  onClick={() => setShowAddEventForm(!showAddEventForm)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Add Event
-                </button>
+                <div className="flex items-center gap-2">
+                  {bulkEditingEvents ? (
+                    <>
+                      <button
+                        onClick={() => saveBulkEditEvents(displayedEvents)}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <Check className="w-4 h-4" /> {loading ? 'Saving...' : 'Save All'}
+                      </button>
+                      <button
+                        onClick={cancelBulkEditEvents}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-300 dark:bg-slate-700 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-400 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
+                      >
+                        <X className="w-4 h-4" /> Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => startBulkEditEvents(displayedEvents)}
+                        disabled={displayedEvents.length === 0}
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                      >
+                        <Pencil className="w-4 h-4" /> Edit All
+                      </button>
+                      <button
+                        onClick={() => setShowAddEventForm(!showAddEventForm)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        <Plus className="w-4 h-4" /> Add Event
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {showAddEventForm && (
@@ -947,26 +1015,26 @@ export const Admin = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                       {displayedEvents.map(event => {
-                        const isEditing = editingEventId === event.id
+                        const isEditing = bulkEditingEvents
+                        const form = bulkEventForms[event.id]
                         const status = getEffectiveStatus(event)
                         return (
                           <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                             <td className="px-2 py-3 text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{event.companyName}</td>
                             <td className="px-2 py-3 text-sm text-gray-900 dark:text-white max-w-[180px]">
-                              {isEditing ? (
+                              {isEditing && form ? (
                                 <input
-                                  value={editEventForm.title}
-                                  onChange={e => setEditEventForm(f => ({ ...f, title: e.target.value }))}
+                                  value={form.title}
+                                  onChange={e => setBulkEventForms(f => ({ ...f, [event.id]: { ...f[event.id], title: e.target.value } }))}
                                   className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
-                                  autoFocus
                                 />
                               ) : <span className="truncate block">{event.title}</span>}
                             </td>
                             <td className="px-2 py-3 text-sm text-gray-500 dark:text-slate-400 max-w-[160px] hidden sm:table-cell">
-                              {isEditing ? (
+                              {isEditing && form ? (
                                 <input
-                                  value={editEventForm.description}
-                                  onChange={e => setEditEventForm(f => ({ ...f, description: e.target.value }))}
+                                  value={form.description}
+                                  onChange={e => setBulkEventForms(f => ({ ...f, [event.id]: { ...f[event.id], description: e.target.value } }))}
                                   placeholder="Description"
                                   className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
                                 />
@@ -980,16 +1048,16 @@ export const Admin = () => {
                               }`}>{status}</span>
                             </td>
                             <td className="px-2 py-3">
-                              {isEditing ? (
+                              {isEditing && form ? (
                                 <label className="inline-flex items-center cursor-pointer">
                                   <input
                                     type="checkbox"
-                                    checked={editEventForm.isWarnActNotice}
-                                    onChange={e => setEditEventForm(f => ({ ...f, isWarnActNotice: e.target.checked }))}
+                                    checked={form.isWarnActNotice}
+                                    onChange={e => setBulkEventForms(f => ({ ...f, [event.id]: { ...f[event.id], isWarnActNotice: e.target.checked } }))}
                                     className="sr-only"
                                   />
-                                  <div className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${editEventForm.isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
-                                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${editEventForm.isWarnActNotice ? 'translate-x-4' : ''}`} />
+                                  <div className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${form.isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${form.isWarnActNotice ? 'translate-x-4' : ''}`} />
                                   </div>
                                 </label>
                               ) : (
@@ -999,35 +1067,21 @@ export const Admin = () => {
                               )}
                             </td>
                             <td className="px-2 py-3 text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">
-                              {isEditing ? (
+                              {isEditing && form ? (
                                 <input
                                   type="datetime-local"
-                                  value={editEventForm.expiresAt}
-                                  onChange={e => setEditEventForm(f => ({ ...f, expiresAt: e.target.value }))}
+                                  value={form.expiresAt}
+                                  onChange={e => setBulkEventForms(f => ({ ...f, [event.id]: { ...f[event.id], expiresAt: e.target.value } }))}
                                   className="bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-xs text-gray-900 dark:text-white focus:outline-none"
                                 />
                               ) : new Date(event.expiresAt).toLocaleDateString()}
                             </td>
                             <td className="sticky right-0 px-2 py-3 text-right bg-white dark:bg-slate-800 z-10">
                               <div className="flex items-center justify-end gap-1">
-                                {isEditing ? (
-                                  <>
-                                    <button onClick={() => saveEditEvent(event.id)} disabled={loading} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50">
-                                      <Check className="w-3.5 h-3.5" /> Save
-                                    </button>
-                                    <button onClick={() => setEditingEventId(null)} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-                                      <X className="w-3.5 h-3.5" /> Cancel
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button onClick={() => startEditEvent(event)} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                                      <Pencil className="w-3.5 h-3.5" /> Edit
-                                    </button>
-                                    <button onClick={() => deleteItem('events', event.id)} disabled={loading} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50">
-                                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                                    </button>
-                                  </>
+                                {!isEditing && (
+                                  <button onClick={() => deleteItem('events', event.id)} disabled={loading} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50">
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                  </button>
                                 )}
                               </div>
                             </td>
