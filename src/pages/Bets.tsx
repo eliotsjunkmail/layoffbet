@@ -6,12 +6,14 @@ import { Layout } from '../components/Layout'
 import { SwipeCard } from '../components/SwipeCard'
 import { EmptyState } from '../components/EmptyState'
 import { ProbabilityBar } from '../components/ProbabilityBar'
+import { WarnNoticeTag } from '../components/WarnNoticeTag'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 import { useSwipePending } from '../hooks/useSwipePending'
 import { api } from '../services/api'
 
-const barProps = (yesPool: number, noPool: number) => {
+const barProps = (yesPool: number, noPool: number, isWarnActNotice?: boolean) => {
+  if (isWarnActNotice) return { dominant: 'yes' as const, pct: 100 }
   const total = yesPool + noPool
   if (total === 0) return { dominant: 'yes' as const, pct: 50 }
   const yesPct = Math.round((yesPool / total) * 100)
@@ -71,6 +73,7 @@ export const Bets = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
+    if (events.find(e => e.id === eventId)?.isWarnActNotice) return
     const betAmount = 10
 
     if (currentUser) {
@@ -281,7 +284,7 @@ export const Bets = () => {
 
                   <div className="space-y-2.5">
                     {items.map(({ event, bet }) => {
-                      const { dominant, pct } = barProps(event.yesPool, event.noPool)
+                      const { dominant, pct } = barProps(event.yesPool, event.noPool, event.isWarnActNotice)
                       const eventBetCount = bets.filter(b => b.eventId === event.id).length
 
                       const BetTag = (
@@ -299,6 +302,7 @@ export const Bets = () => {
                           <SwipeCard
                             onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                             onSwipeNo={() => handleSwipeBet(event.id, 'no')}
+                            disabled={event.isWarnActNotice}
                             demoActive={false}
                             loading={pendingEventId === event.id}
                             onClick={() => navigate(`/event/${event.id}`)}
@@ -307,7 +311,10 @@ export const Bets = () => {
                             <div className={`mb-2 ${bet.side === 'no' ? 'flex justify-end' : ''}`}>
                               {BetTag}
                             </div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">
+                              {event.isWarnActNotice && <WarnNoticeTag className="mr-1.5" />}
+                              {event.title}
+                            </p>
                             <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id} />
                             <div className="flex justify-between items-center text-xs">
                               {dominant === 'yes'
@@ -315,9 +322,11 @@ export const Bets = () => {
                                 : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
                               }
                               <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
-                              {dominant === 'no'
-                                ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                                : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                              {event.isWarnActNotice
+                                ? <span />
+                                : dominant === 'no'
+                                  ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                                  : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
                               }
                             </div>
                           </SwipeCard>
@@ -353,7 +362,7 @@ export const Bets = () => {
 
                   <div className="space-y-2.5">
                     {items.map(({ event, status, bet }) => {
-                      const { dominant, pct } = barProps(event.yesPool, event.noPool)
+                      const { dominant, pct } = barProps(event.yesPool, event.noPool, event.isWarnActNotice)
                       const won = status === 'resolved' && event.outcome === bet.side
                       const lost = status === 'resolved' && event.outcome !== null && event.outcome !== bet.side
 
@@ -379,7 +388,10 @@ export const Bets = () => {
                                 {status === 'expired' && <span className="text-amber-600 dark:text-amber-400">Expired</span>}
                               </span>
                             </div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">{event.title}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">
+                              {event.isWarnActNotice && <WarnNoticeTag className="mr-1.5" />}
+                              {event.title}
+                            </p>
                             <div className="relative h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                               <div
                                 className={`absolute h-full rounded-full ${dominant === 'yes' ? 'left-0 bg-emerald-500' : 'right-0 bg-rose-500'}`}

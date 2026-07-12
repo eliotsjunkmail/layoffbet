@@ -4,6 +4,7 @@ import { TrendingUp, Clock, Star, PlusCircle, ChevronDown, SearchX } from 'lucid
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { EmptyState } from '../components/EmptyState'
+import { WarnNoticeTag } from '../components/WarnNoticeTag'
 import { getProbability, timeUntil } from '../utils/odds'
 
 export const Feed = () => {
@@ -108,7 +109,7 @@ export const Feed = () => {
       ) : (
         <div className="space-y-3">
           {sorted.map(event => {
-            const prob = getProbability(event.yesPool, event.noPool)
+            const prob = event.isWarnActNotice ? { yes: 100, no: 0 } : getProbability(event.yesPool, event.noPool)
             const userBet = bets.find(b => b.eventId === event.id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
             return (
               <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">
@@ -122,7 +123,10 @@ export const Feed = () => {
                     <span className="text-xs font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug mb-3 line-clamp-2">{event.title}</p>
+                <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug mb-3 line-clamp-2">
+                  {event.isWarnActNotice && <WarnNoticeTag className="mr-1.5" />}
+                  {event.title}
+                </p>
                 <div className="h-1.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden mb-1.5">
                   <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${prob.yes}%` }} />
                 </div>

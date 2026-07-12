@@ -7,6 +7,7 @@ import { AuthModal } from '../components/AuthModal'
 import { EmptyState } from '../components/EmptyState'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
+import { WarnNoticeTag } from '../components/WarnNoticeTag'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 
@@ -70,7 +71,7 @@ export const EventDetail = () => {
   if (!event || hiddenCompanyIds.includes(event.companyId)) return <Navigate to="/" replace />
 
   const status = getEffectiveStatus(event)
-  const prob = getProbability(event.yesPool, event.noPool)
+  const prob = event.isWarnActNotice ? { yes: 100, no: 0 } : getProbability(event.yesPool, event.noPool)
   const eventComments = comments.filter(c => c.eventId === id).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   const userBet = bets.find(b => b.eventId === id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
   const totalPool = event.yesPool + event.noPool
@@ -84,6 +85,7 @@ export const EventDetail = () => {
   const canPlaceGuestBet = !currentUser && remainingGuestCoins >= betAmount
 
   const handleBet = (side: 'yes' | 'no') => {
+    if (event.isWarnActNotice) return
     const movement = betMovementStr(event.yesPool, event.noPool, side, betAmount)
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
@@ -261,11 +263,16 @@ export const EventDetail = () => {
                 </span>
               </div>
             )}
-            <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">{event.title}</h1>
+            <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">
+              {event.isWarnActNotice && <WarnNoticeTag className="mr-2 align-baseline" />}
+              {event.title}
+            </h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
             <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-slate-500">
               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {status === 'active' ? timeUntil(event.expiresAt) : `Expired ${formatDate(event.expiresAt)}`}</span>
-              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {bets.filter(b => b.eventId === id).length} bettors</span>
+              {!event.isWarnActNotice && (
+                <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {bets.filter(b => b.eventId === id).length} bettors</span>
+              )}
             </div>
           </div>
 
@@ -296,7 +303,11 @@ export const EventDetail = () => {
           </div>
 
           {/* Place bet */}
-          {status === 'active' && (
+          {event.isWarnActNotice ? (
+            <div className="flex items-center gap-2 justify-center rounded-xl py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm font-medium text-center">
+              This is a confirmed WARN Act notice — betting is disabled.
+            </div>
+          ) : status === 'active' && (
             <div>
               {userBet ? (
                 <div>
