@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search as SearchIcon, Eye, SearchX, Building2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -28,6 +28,13 @@ export const Search = () => {
   const [toast, setToast] = useState('')
 
   const q = query.toLowerCase().trim()
+
+  // Company data (including aliases from recent merges) is otherwise only refreshed by
+  // the app-wide 5s background sync — fetch fresh on mount so search never lags behind it.
+  useEffect(() => {
+    syncCommentsFromServer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
 
