@@ -79,7 +79,7 @@ interface StoreState {
   deleteEvent: (eventId: string) => void
 
   addCompany: (name: string, description: string, industry: string) => void
-  updateCompany: (id: string, name: string, description: string, industry: string) => void
+  updateCompany: (id: string, name: string, description: string, industry: string, aliases?: string[]) => void
   deleteCompany: (id: string) => void
 
   addComment: (eventId: string, content: string) => { ok: boolean; error?: string; pending?: boolean; reason?: string }
@@ -821,9 +821,9 @@ export const useStore = create<StoreState>()(
         set(s => ({ companies: [...s.companies, company] }))
       },
 
-      updateCompany: (id, name, description, industry) => {
+      updateCompany: (id, name, description, industry, aliases) => {
         set(s => ({
-          companies: s.companies.map(c => c.id === id ? { ...c, name: name.trim(), description: description.trim(), industry: industry.trim() } : c),
+          companies: s.companies.map(c => c.id === id ? { ...c, name: name.trim(), description: description.trim(), industry: industry.trim(), ...(aliases !== undefined ? { aliases } : {}) } : c),
           events: s.events.map(e => e.companyId === id ? { ...e, companyName: name.trim() } : e),
         }))
       },

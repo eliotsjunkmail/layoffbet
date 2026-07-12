@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
-import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload } from 'lucide-react'
+import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
 
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const ADS_ENABLED_KEY = 'lb-ads-enabled'
@@ -321,7 +321,11 @@ export const Admin = () => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newCompany, setNewCompany] = useState({ name: '', description: '', industry: '', color: '#003DA5' })
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', description: '', industry: '' })
+  const [editForm, setEditForm] = useState({ name: '', description: '', industry: '', aliases: '' })
+  const [showMergeForm, setShowMergeForm] = useState(false)
+  const [mergePrimaryId, setMergePrimaryId] = useState('')
+  const [mergeDuplicateIds, setMergeDuplicateIds] = useState<string[]>([])
+  const [merging, setMerging] = useState(false)
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
@@ -405,23 +409,24 @@ export const Admin = () => {
 
   const startEditCompany = (company: typeof companies[0]) => {
     setEditingCompanyId(company.id)
-    setEditForm({ name: company.name, description: company.description || '', industry: company.industry || '' })
+    setEditForm({ name: company.name, description: company.description || '', industry: company.industry || '', aliases: (company.aliases || []).join('; ') })
   }
 
   const saveEditCompany = async (companyId: string) => {
     if (!editForm.name.trim()) return
     setLoading(true)
     try {
+      const aliases = editForm.aliases.split(';').map(a => a.trim()).filter(Boolean)
       const response = await fetch(`/api/companies/${companyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editForm.name.trim(), description: editForm.description.trim(), industry: editForm.industry.trim() }),
+        body: JSON.stringify({ name: editForm.name.trim(), description: editForm.description.trim(), industry: editForm.industry.trim(), aliases }),
       })
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data.error || 'Failed to update company')
       }
-      updateCompany(companyId, editForm.name.trim(), editForm.description.trim(), editForm.industry.trim())
+      updateCompany(companyId, editForm.name.trim(), editForm.description.trim(), editForm.industry.trim(), aliases)
       setEditingCompanyId(null)
       setMessage({ type: 'success', text: 'Company updated' })
       setTimeout(() => setMessage(null), 2000)
@@ -429,6 +434,34 @@ export const Admin = () => {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update company' })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const mergeCompanies = async () => {
+    if (!mergePrimaryId || mergeDuplicateIds.length === 0) return
+    setMerging(true)
+    try {
+      const response = await fetch('/api/admin/companies/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          primaryCompanyId: mergePrimaryId,
+          duplicateCompanyIds: mergeDuplicateIds,
+          username: currentUser.username,
+          password: currentUser.password,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to merge companies')
+      setMessage({ type: 'success', text: `Merged ${mergeDuplicateIds.length} compan${mergeDuplicateIds.length === 1 ? 'y' : 'ies'} into ${data.company.name}` })
+      setShowMergeForm(false)
+      setMergePrimaryId('')
+      setMergeDuplicateIds([])
+      setTimeout(() => { setMessage(null); window.location.reload() }, 1200)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to merge companies' })
+    } finally {
+      setMerging(false)
     }
   }
 
@@ -1068,13 +1101,78 @@ export const Admin = () => {
                   </div>
                   <span className="ml-3 text-sm font-medium text-gray-700 dark:text-slate-300">Only companies with activity</span>
                 </label>
-                <button
-                  onClick={() => setShowAddForm(!showAddForm)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Add Company
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { setShowMergeForm(!showMergeForm); setShowAddForm(false) }}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Merge className="w-4 h-4" /> Merge Companies
+                  </button>
+                  <button
+                    onClick={() => { setShowAddForm(!showAddForm); setShowMergeForm(false) }}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Company
+                  </button>
+                </div>
               </div>
+
+              {showMergeForm && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Merge Companies</h3>
+                  <p className="text-xs text-gray-600 dark:text-slate-400 mb-4">
+                    Combine duplicate company records (e.g. "BNY Mellon" and "The Bank of New York") into one.
+                    Events, comments and chat from the duplicates move onto the primary company, and each duplicate's
+                    name is saved as an alias so future uploads under that name resolve to the same company.
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Primary company (kept)</label>
+                      <select
+                        value={mergePrimaryId}
+                        onChange={e => { setMergePrimaryId(e.target.value); setMergeDuplicateIds(ids => ids.filter(id => id !== e.target.value)) }}
+                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="">Select a company…</option>
+                        {sortedCompanies(companies).map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Duplicate companies (merged in, then deleted)</label>
+                      <div className="max-h-48 overflow-y-auto bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg divide-y divide-gray-100 dark:divide-slate-700">
+                        {sortedCompanies(companies).filter(c => c.id !== mergePrimaryId).map(c => (
+                          <label key={c.id} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 dark:text-white cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={mergeDuplicateIds.includes(c.id)}
+                              onChange={e => setMergeDuplicateIds(ids => e.target.checked ? [...ids, c.id] : ids.filter(id => id !== c.id))}
+                            />
+                            {c.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={mergeCompanies}
+                        disabled={merging || !mergePrimaryId || mergeDuplicateIds.length === 0}
+                        className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {merging ? 'Merging…' : `Merge ${mergeDuplicateIds.length || ''} into primary`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowMergeForm(false); setMergePrimaryId(''); setMergeDuplicateIds([]) }}
+                        className="flex-1 px-4 py-2 bg-gray-300 dark:bg-slate-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-400 dark:hover:bg-slate-600 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {showAddForm && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
@@ -1152,6 +1250,7 @@ export const Admin = () => {
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Name</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Description</th>
                         <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Industry</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Aliases</th>
                         <th className="px-2 py-2 text-center text-xs font-medium text-gray-600 dark:text-slate-300 uppercase">Events</th>
                         <th className="sticky right-0 px-2 py-2 text-right text-xs font-medium text-gray-600 dark:text-slate-300 uppercase bg-gray-50 dark:bg-slate-700/50 z-10">Actions</th>
                       </tr>
@@ -1214,6 +1313,16 @@ export const Admin = () => {
                               className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
                             />
                           ) : company.industry || '—'}
+                        </td>
+                        <td className="px-2 py-3 text-sm text-gray-600 dark:text-slate-400 max-w-[160px]">
+                          {isEditing ? (
+                            <input
+                              value={editForm.aliases}
+                              onChange={e => setEditForm(f => ({ ...f, aliases: e.target.value }))}
+                              placeholder="Alias 1; Alias 2"
+                              className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
+                            />
+                          ) : <span className="truncate block">{(company.aliases || []).join('; ') || '—'}</span>}
                         </td>
                         <td className="px-2 py-3 text-center text-sm text-gray-600 dark:text-slate-400">{activeEventsCount}</td>
                         <td className="sticky right-0 px-2 py-3 text-right bg-white dark:bg-slate-800 z-10">

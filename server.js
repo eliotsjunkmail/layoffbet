@@ -79,7 +79,10 @@ app.post('/api/admin/import', async (req, res) => {
     let created = 0
     let currentEventId = null
 
-    const findCompany = (name) => companies.find(c => c.name.toLowerCase() === (name || '').toLowerCase())
+    const findCompany = (name) => {
+      const n = (name || '').toLowerCase()
+      return companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n))
+    }
     const findEvent = (companyId, title) => events.find(e => e.companyId === companyId && e.title.toLowerCase() === (title || '').toLowerCase())
     const findUser = (uname) => users.find(u => u.username && u.username.toLowerCase() === (uname || '').toLowerCase())
 
@@ -228,9 +231,10 @@ const ADMIN_CSV_ENTITIES = {
     create: (data) => db.createCompany(data),
     update: (id, data) => db.updateCompany(id, data),
     idPrefix: 'comp-',
-    fields: ['id', 'name', 'slug', 'description', 'industry', 'color', 'viewCount', 'createdAt'],
+    fields: ['id', 'name', 'slug', 'description', 'industry', 'color', 'viewCount', 'createdAt', 'aliases'],
     numberFields: ['viewCount'],
     booleanFields: [],
+    arrayFields: ['aliases'],
     requiredForCreate: ['name'],
     beforeCreate: (data) => ({ slug: data.slug || slugify(data.name || ''), viewCount: data.viewCount ?? 0, ...data }),
   },
@@ -261,7 +265,8 @@ const ADMIN_CSV_ENTITIES = {
       const companies = await db.getCompanies()
       if (data.companyId && companies.find(c => c.id === data.companyId)) return data
       if (data.companyName) {
-        let company = companies.find(c => c.name.toLowerCase() === data.companyName.trim().toLowerCase())
+        const n = data.companyName.trim().toLowerCase()
+        let company = companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n))
         if (!company) {
           company = await db.createCompany({
             id: 'comp-' + crypto.randomBytes(8).toString('hex'),
@@ -320,7 +325,15 @@ app.post('/api/admin/export', async (req, res) => {
     if (!config) return res.status(400).json({ error: `Unknown entity "${entity}"` })
 
     const rows = await config.getAll()
-    const csv = toCSV(rows, config.fields)
+    const arrayFields = config.arrayFields || []
+    const csvRows = arrayFields.length
+      ? rows.map(row => {
+          const copy = { ...row }
+          for (const f of arrayFields) copy[f] = Array.isArray(row[f]) ? row[f].join('; ') : (row[f] || '')
+          return copy
+        })
+      : rows
+    const csv = toCSV(csvRows, config.fields)
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
     res.send(csv)
   } catch (err) {
@@ -357,6 +370,7 @@ app.post('/api/admin/csv-import', async (req, res) => {
           if (value === undefined || value === null || value === '') continue
           if (config.numberFields.includes(field)) data[field] = Number(value)
           else if (config.booleanFields.includes(field)) data[field] = value === 'true' || value === '1' || value === true
+          else if (config.arrayFields && config.arrayFields.includes(field)) data[field] = String(value).split(';').map(s => s.trim()).filter(Boolean)
           else data[field] = value
         }
 
@@ -1027,6 +1041,22 @@ app.delete('/api/companies/:id', async (req, res) => {
   try {
     await db.deleteCompany(req.params.id)
     res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/admin/companies/merge', async (req, res) => {
+  try {
+    const admin = await requireAdmin(req)
+    if (!admin) return res.status(403).json({ error: 'Admin access required' })
+    const { primaryCompanyId, duplicateCompanyIds } = req.body
+    if (!primaryCompanyId) return res.status(400).json({ error: 'primaryCompanyId required' })
+    if (!Array.isArray(duplicateCompanyIds) || duplicateCompanyIds.length === 0) {
+      return res.status(400).json({ error: 'duplicateCompanyIds required' })
+    }
+    const merged = await db.mergeCompanies(primaryCompanyId, duplicateCompanyIds)
+    res.json({ company: merged })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

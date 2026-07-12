@@ -174,6 +174,54 @@ export const db = {
     throwOnError(error, 'deleteCompany')
   },
 
+  // Reassigns all content (events, comments, chat, favorites) from duplicateIds onto
+  // primaryId, records each duplicate's name (and its own aliases) as an alias of the
+  // primary, then deletes the duplicate company rows.
+  async mergeCompanies(primaryId, duplicateIds) {
+    const { data: primaryRow, error: primaryErr } = await supabase.from('companies').select('*').eq('id', primaryId).maybeSingle()
+    throwOnError(primaryErr, 'mergeCompanies:fetchPrimary')
+    if (!primaryRow) throw new Error('Primary company not found')
+    const primary = fromDb(primaryRow)
+    const newAliases = new Set(primary.aliases || [])
+
+    for (const dupId of duplicateIds) {
+      if (!dupId || dupId === primaryId) continue
+      const { data: dupRow, error: dupErr } = await supabase.from('companies').select('*').eq('id', dupId).maybeSingle()
+      throwOnError(dupErr, 'mergeCompanies:fetchDuplicate')
+      if (!dupRow) continue
+      const dup = fromDb(dupRow)
+
+      newAliases.add(dup.name)
+      for (const alias of (dup.aliases || [])) newAliases.add(alias)
+
+      // Move real content over to the primary company
+      await supabase.from('events').update({ company_id: primaryId, company_name: primary.name }).eq('company_id', dupId)
+      await supabase.from('comments').update({ company_id: primaryId }).eq('company_id', dupId)
+      await supabase.from('chat_messages').update({ company_id: primaryId }).eq('company_id', dupId)
+      await supabase.from('moderation_queue').update({ company_id: primaryId, company_name: primary.name }).eq('company_id', dupId)
+
+      // Merge favorites row-by-row to avoid unique-constraint conflicts with users who
+      // already favorited the primary company under both names.
+      const { data: favRows } = await supabase.from('favorites').select('user_id').eq('company_id', dupId)
+      for (const fav of (favRows || [])) {
+        await supabase.from('favorites').upsert({ user_id: fav.user_id, company_id: primaryId })
+      }
+      await supabase.from('favorites').delete().eq('company_id', dupId)
+
+      // Ephemeral per-company state — drop rather than merge (chat topic, anon chat
+      // handles, and hidden flag are all safe to reset for the folded-in company)
+      await supabase.from('chat_settings').delete().eq('company_id', dupId)
+      await supabase.from('user_chat_names').delete().eq('company_id', dupId)
+      await supabase.from('hidden_company_ids').delete().eq('company_id', dupId)
+
+      await supabase.from('companies').delete().eq('id', dupId)
+    }
+
+    const { data, error } = await supabase.from('companies').update({ aliases: Array.from(newAliases) }).eq('id', primaryId).select().maybeSingle()
+    throwOnError(error, 'mergeCompanies:updatePrimary')
+    return fromDb(data)
+  },
+
   // ===== EVENTS =====
   async getEvents() {
     const { data, error } = await supabase.from('events').select('*').order('created_at')
