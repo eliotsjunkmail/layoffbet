@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
+import { DuplicateCompaniesModal } from '../components/DuplicateCompaniesModal'
 
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const ADS_ENABLED_KEY = 'lb-ads-enabled'
@@ -328,6 +329,7 @@ export const Admin = () => {
   const [merging, setMerging] = useState(false)
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
+  const [showDuplicatesModal, setShowDuplicatesModal] = useState(false)
   const [bulkEditingEvents, setBulkEditingEvents] = useState(false)
   const [bulkEventForms, setBulkEventForms] = useState<Record<string, { title: string; description: string; expiresAt: string; isWarnActNotice: boolean }>>({})
   const [showAddEventForm, setShowAddEventForm] = useState(false)
@@ -1443,9 +1445,35 @@ export const Admin = () => {
                 </div>
               </button>
             </div>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Duplicate Companies</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
+                Scan companies for likely duplicates (e.g. "ADP" and "Automatic Data Processing") so you can merge them or dismiss the suggestion.
+              </p>
+              <button
+                onClick={() => setShowDuplicatesModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-900 dark:text-white text-sm font-medium rounded-xl transition-colors"
+              >
+                <Merge className="w-4 h-4" /> Review Potential Duplicates
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {showDuplicatesModal && (
+        <DuplicateCompaniesModal
+          companies={companies}
+          username={currentUser.username || ''}
+          password={currentUser.password || ''}
+          onClose={() => setShowDuplicatesModal(false)}
+          onMerged={() => {
+            setShowDuplicatesModal(false)
+            setMessage({ type: 'success', text: 'Companies merged' })
+            setTimeout(() => { setMessage(null); window.location.reload() }, 1000)
+          }}
+        />
+      )}
     </Layout>
   )
 }
