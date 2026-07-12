@@ -277,37 +277,35 @@ export const EventDetail = () => {
           </div>
 
           {/* Odds */}
-          <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5">
-            <div className="flex justify-between items-end mb-2">
-              <div>
-                <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{prob.yes}%</div>
-                <div className="text-xs text-gray-400 dark:text-slate-400">YES probability</div>
+          {!event.isWarnActNotice && (
+            <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5">
+              <div className="flex justify-between items-end mb-2">
+                <div>
+                  <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{prob.yes}%</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-400">YES probability</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-black text-rose-600 dark:text-rose-400">{prob.no}%</div>
+                  <div className="text-xs text-gray-400 dark:text-slate-400">NO probability</div>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-3xl font-black text-rose-600 dark:text-rose-400">{prob.no}%</div>
-                <div className="text-xs text-gray-400 dark:text-slate-400">NO probability</div>
+              <div className="h-3 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${prob.yes}%` }} />
               </div>
-            </div>
-            <div className="h-3 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${prob.yes}%` }} />
-            </div>
-            <div className="mt-2 text-center text-xs text-gray-400 dark:text-slate-500">
-              Total pool: <span className="text-gray-700 dark:text-slate-300 font-medium">{totalPool} Coins</span>
-            </div>
-            {status === 'resolved' && event.outcome && (
-              <div className={`mt-3 flex items-center gap-2 justify-center rounded-xl py-2.5 ${event.outcome === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
-                <CheckCircle className="w-4 h-4" />
-                <span className="font-semibold text-sm">Resolved: {event.outcome.toUpperCase()}</span>
+              <div className="mt-2 text-center text-xs text-gray-400 dark:text-slate-500">
+                Total pool: <span className="text-gray-700 dark:text-slate-300 font-medium">{totalPool} Coins</span>
               </div>
-            )}
-          </div>
+              {status === 'resolved' && event.outcome && (
+                <div className={`mt-3 flex items-center gap-2 justify-center rounded-xl py-2.5 ${event.outcome === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="font-semibold text-sm">Resolved: {event.outcome.toUpperCase()}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Place bet */}
-          {event.isWarnActNotice ? (
-            <div className="flex items-center gap-2 justify-center rounded-xl py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm font-medium text-center">
-              This is a confirmed WARN Act notice — betting is disabled.
-            </div>
-          ) : status === 'active' && (
+          {!event.isWarnActNotice && status === 'active' && (
             <div>
               {userBet ? (
                 <div>
@@ -357,7 +355,7 @@ export const EventDetail = () => {
           )}
 
           {/* Admin / Creator resolve */}
-          {(isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
+          {!event.isWarnActNotice && (isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
             <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5">
               <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-3">
                 {isAdmin ? 'Admin: Resolve Event' : 'Resolve Your Event'}

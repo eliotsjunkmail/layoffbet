@@ -654,18 +654,22 @@ export const CompanyPage = () => {
                           </div>
                         </div>
                         <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id} />
-                        <div className="flex justify-between items-center text-xs">
-                          {dominant === 'yes'
-                            ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
-                            : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
-                          }
-                          <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
-                          {event.isWarnActNotice
-                            ? <span />
-                            : dominant === 'no'
-                              ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                        <div className="flex items-center text-xs">
+                          <div className="flex-1">
+                            {dominant === 'yes'
+                              ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">YES {pct}%</span>
                               : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
-                          }
+                            }
+                          </div>
+                          <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
+                          <div className="flex-1 flex justify-end">
+                            {event.isWarnActNotice
+                              ? null
+                              : dominant === 'no'
+                                ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                                : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                            }
+                          </div>
                         </div>
                       </SwipeCard>
                       <div className="mt-2">
