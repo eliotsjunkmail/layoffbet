@@ -304,6 +304,13 @@ export const Home = () => {
     return map
   }, [events, getEffectiveStatus])
 
+  const companiesWithActiveBets = useMemo(() =>
+    companies
+      .filter(c => !hiddenCompanyIds.includes(c.id) && (activeEventsByCompany[c.id] ?? 0) > 0)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [companies, hiddenCompanyIds, activeEventsByCompany]
+  )
+
   const topEventByCompany = useMemo(() => {
     const map: Record<string, typeof events[0]> = {}
     events.forEach(e => {
@@ -782,34 +789,46 @@ export const Home = () => {
 
         {/* Industry filter + Browse — hidden once user has favorites */}
 
-        {/* Active bets pills for all users without favorites */}
-        {!hasFavorites && (() => {
-          const companiesWithActiveBets = companies
-            .filter(c => !hiddenCompanyIds.includes(c.id) && (activeEventsByCompany[c.id] ?? 0) > 0)
-            .sort((a, b) => a.name.localeCompare(b.name))
-
-          return companiesWithActiveBets.length > 0 ? (
-            <div className="mb-4 mt-4">
-              <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
-              <div className="flex flex-wrap gap-2">
-                {companiesWithActiveBets.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => navigate(`/${c.slug}`)}
-                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
-                  >
-                    {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
-                  </button>
-                ))}
-              </div>
+        {/* Active bets pills — for users without favorites, shown here above the ad */}
+        {!hasFavorites && companiesWithActiveBets.length > 0 && (
+          <div className="mb-4 mt-4">
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+            <div className="flex flex-wrap gap-2">
+              {companiesWithActiveBets.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => navigate(`/${c.slug}`)}
+                  className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+                >
+                  {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
+                </button>
+              ))}
             </div>
-          ) : null
-        })()}
+          </div>
+        )}
       </div>
 
       <div className="max-w-2xl mx-auto px-4 mt-12 mb-12">
         <AdBanner />
       </div>
+
+      {/* Active bets pills — for users with favorites, shown below the ad instead */}
+      {hasFavorites && companiesWithActiveBets.length > 0 && (
+        <div className="max-w-2xl mx-auto px-4 mb-12">
+          <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+          <div className="flex flex-wrap gap-2">
+            {companiesWithActiveBets.map(c => (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/${c.slug}`)}
+                className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+              >
+                {c.name} <span className="font-semibold">({activeEventsByCompany[c.id]})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-100 text-gray-900 dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-50 pointer-events-none">
