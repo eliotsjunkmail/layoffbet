@@ -81,12 +81,17 @@ app.post('/api/admin/import', async (req, res) => {
 
     const findCompany = (name) => {
       const n = (name || '').toLowerCase()
-      return companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n))
+      const s = slugify(name || '')
+      // Slug equality catches near-duplicate names (punctuation/whitespace variants like
+      // "Acme Corp" vs "Acme Corp.") that would otherwise slip past the exact name/alias
+      // check above and then crash on the DB's unique slug constraint when created.
+      return companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n) || c.slug === s)
     }
     const findEvent = (companyId, title) => events.find(e => e.companyId === companyId && e.title.toLowerCase() === (title || '').toLowerCase())
     const findUser = (uname) => users.find(u => u.username && u.username.toLowerCase() === (uname || '').toLowerCase())
 
     for (const item of items) {
+      try {
       if (item.type === 'event') {
         currentEventId = null
         if (!item.company || !item.title) { errors.push(`Skipped event: missing company or title`); continue }
@@ -206,6 +211,11 @@ app.post('/api/admin/import', async (req, res) => {
         await db.adjustEventPool(event.id, side === 'yes' ? amount : 0, side === 'no' ? amount : 0)
         created++
       }
+      } catch (err) {
+        // One bad row (e.g. a slug collision, or any other unexpected DB error) no longer
+        // aborts the whole batch — everything else still imports, and this row is reported.
+        errors.push(`Skipped ${item.type || 'item'}: ${err.message}`)
+      }
     }
 
     res.json({ created, errors })
@@ -272,7 +282,11 @@ const ADMIN_CSV_ENTITIES = {
       if (data.companyId && companies.find(c => c.id === data.companyId)) return data
       if (data.companyName) {
         const n = data.companyName.trim().toLowerCase()
-        let company = companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n))
+        const s = slugify(data.companyName)
+        // Slug equality catches near-duplicate names (punctuation/whitespace variants)
+        // that would otherwise slip past the exact name/alias check and then crash on
+        // the DB's unique slug constraint when created.
+        let company = companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n) || c.slug === s)
         if (!company) {
           company = await db.createCompany({
             id: 'comp-' + crypto.randomBytes(8).toString('hex'),
