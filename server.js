@@ -103,6 +103,12 @@ app.post('/api/admin/import', async (req, res) => {
           })
           companies.push(company)
         }
+        const existingEvent = findEvent(company.id, item.title)
+        if (existingEvent) {
+          errors.push(`Skipped event: "${item.title}" already exists for ${company.name}`)
+          currentEventId = existingEvent.id
+          continue
+        }
         const expiresAt = new Date(Date.now() + (item.expiresDays || 30) * 24 * 60 * 60 * 1000).toISOString()
         const event = await db.createEvent({
           id: 'evt-' + crypto.randomBytes(8).toString('hex'),
@@ -283,6 +289,11 @@ const ADMIN_CSV_ENTITIES = {
       }
       return data
     },
+    // Rows with a blank/unrecognized id are only created if no event with the same
+    // company + title already exists — prevents accidental duplicates from re-uploading
+    // a WARN data dump that overlaps with events already in the system.
+    duplicateCheck: (data, existingRows) =>
+      existingRows.find(r => r.companyId === data.companyId && (r.title || '').trim().toLowerCase() === (data.title || '').trim().toLowerCase()),
   },
   bets: {
     getAll: () => db.getBets(),
@@ -352,6 +363,7 @@ app.post('/api/admin/csv-import', async (req, res) => {
 
     const existing = await config.getAll()
     const existingIds = new Set(existing.map(r => r.id))
+    const existingRows = existing.slice()
 
     let updated = 0
     let created = 0
@@ -381,11 +393,19 @@ app.post('/api/admin/csv-import', async (req, res) => {
           await config.update(id, data)
           updated++
         } else {
+          if (config.duplicateCheck) {
+            const dup = config.duplicateCheck(data, existingRows)
+            if (dup) {
+              errors.push(`Row ${rowNum}: skipped — matches existing "${dup.title || dup.name || dup.id}"`)
+              continue
+            }
+          }
           for (const requiredField of config.requiredForCreate) {
             if (!data[requiredField]) throw new Error(`missing required field "${requiredField}"`)
           }
           const newId = id || `${config.idPrefix}${crypto.randomBytes(8).toString('hex')}`
-          await config.create(config.beforeCreate({ id: newId, createdAt: data.createdAt || new Date().toISOString(), ...data }))
+          const createdRow = await config.create(config.beforeCreate({ id: newId, createdAt: data.createdAt || new Date().toISOString(), ...data }))
+          existingRows.push(createdRow || { id: newId, ...data })
           created++
         }
       } catch (err) {

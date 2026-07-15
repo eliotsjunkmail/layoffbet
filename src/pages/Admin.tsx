@@ -286,7 +286,8 @@ const CSVOverrideBox = ({ entity, label, username, password, askWarnActNotice }:
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4 mb-4">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Export &amp; Override via CSV</h3>
       <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
-        Export all {label} to CSV, edit the file (e.g. change a name), then re-import it — rows are matched by <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">id</code> and updated in place. Blank cells are left unchanged. Rows with a blank or unrecognized id are created as new.
+        Export all {label} to CSV, edit the file (e.g. change a name), then re-import it — rows are matched by <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">id</code> and updated in place. Blank cells are left unchanged. Rows with a blank or unrecognized id are created as new
+        {entity === 'events' ? <> — unless the title already matches an existing event for that company, in which case the row is skipped instead of creating a duplicate.</> : '.'}
       </p>
       <div className="flex flex-wrap gap-2 mb-3">
         <button
@@ -889,6 +890,7 @@ export const Admin = () => {
                   <>
                     CSV format: rows of type <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">event</code> or <code className="bg-gray-100 dark:bg-slate-700 px-1 rounded">comment</code>.
                     Each comment row belongs to the event above it. If a company doesn't exist yet, it's created automatically.
+                    Rows with a title matching an existing event for that company are skipped.
                   </>
                 }
                 sampleFileName="events_sample.csv"
