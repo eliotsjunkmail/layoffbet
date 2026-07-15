@@ -109,7 +109,7 @@ export const Feed = () => {
       ) : (
         <div className="space-y-3">
           {sorted.map(event => {
-            const prob = event.isWarnActNotice ? { yes: 100, no: 0 } : getProbability(event.yesPool, event.noPool)
+            const prob = getProbability(event.yesPool, event.noPool)
             const userBet = bets.find(b => b.eventId === event.id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
             return (
               <Link key={event.id} to={`/event/${event.id}`} className="block bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all">

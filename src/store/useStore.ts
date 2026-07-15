@@ -209,7 +209,7 @@ export const useStore = create<StoreState>()(
         const { events, anonVotedEvents, getEffectiveStatus } = get()
         const existing = anonVotedEvents[eventId]
         const event = events.find(e => e.id === eventId)
-        if (!event || getEffectiveStatus(event) !== 'active' || event.isWarnActNotice) return false
+        if (!event || getEffectiveStatus(event) !== 'active') return false
         set(s => ({
           anonVotedEvents: {
             ...s.anonVotedEvents,
@@ -501,7 +501,6 @@ export const useStore = create<StoreState>()(
         const event = events.find(e => e.id === eventId)
         if (!event) return false
         if (get().getEffectiveStatus(event) !== 'active') return false
-        if (event.isWarnActNotice) return false
 
         const existing = bets.find(b => b.eventId === eventId && b.userId === userId)
 

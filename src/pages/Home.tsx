@@ -14,6 +14,7 @@ import { CommentVotes } from '../components/CommentVotes'
 import { ProbabilityBar } from '../components/ProbabilityBar'
 import { WarnNoticeTag } from '../components/WarnNoticeTag'
 import { useSwipePending } from '../hooks/useSwipePending'
+import { useAnimateOnce } from '../hooks/useAnimateOnce'
 import { getProbability, betMovementStr, timeUntil } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 import { api } from '../services/api'
@@ -26,8 +27,7 @@ const fmtViews = (n: number) => {
   return String(n)
 }
 
-const barProps = (yesPool: number, noPool: number, isWarnActNotice?: boolean) => {
-  if (isWarnActNotice) return { dominant: 'yes' as const, pct: 100 }
+const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
   if (total === 0) return { dominant: 'yes' as const, pct: 50 }
   const yesPct = Math.round((yesPool / total) * 100)
@@ -110,6 +110,7 @@ export const Home = () => {
   // Get the user ID (for anonymous users, find their server-side ID)
   const anonUser = !currentUser ? companies.length > 0 ? users.find(u => u.isAnonymous) : null : null
   const { pendingEventId, justResolvedEventId, startPending } = useSwipePending(bets)
+  const shouldAnimateWarnReveal = useAnimateOnce(useMemo(() => events.filter(e => e.isWarnActNotice).map(e => e.id), [events]))
 
   const [query, setQuery] = useState('')
   const [industry, setIndustry] = useState('All')
@@ -403,7 +404,6 @@ export const Home = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    if (events.find(e => e.id === eventId)?.isWarnActNotice) return
     const betAmount = 10
 
     // Use placeBet for both logged-in and anonymous users
@@ -647,7 +647,7 @@ export const Home = () => {
               {activeEvents.length > 0 ? (
                 <div className="space-y-2.5">
                   {activeEvents.map((e, eIdx) => {
-                    const { dominant, pct } = barProps(e.yesPool, e.noPool, e.isWarnActNotice)
+                    const { dominant, pct } = barProps(e.yesPool, e.noPool)
                     const userBet = currentUser
                       ? bets.find(b => b.eventId === e.id && b.userId === currentUser.id)
                       : anonUser ? bets.find(b => b.eventId === e.id && b.userId === anonUser.id && !b.id.startsWith('pending-'))
@@ -661,7 +661,7 @@ export const Home = () => {
                         <SwipeCard
                           onSwipeYes={() => handleSwipeBet(e.id, 'yes')}
                           onSwipeNo={() => handleSwipeBet(e.id, 'no')}
-                          disabled={e.isWarnActNotice}
+                          disabled={false}
                           loading={pendingEventId === e.id}
                           onClick={() => navigate(`/event/${e.id}`)}
                           demoActive={!hasPlacedFirstBet && cIdx === 0 && eIdx === 0}
@@ -696,7 +696,7 @@ export const Home = () => {
                               <span className="inline-block align-middle ml-1 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                             )}
                           </p>
-                          <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === e.id} />
+                          <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === e.id || (e.isWarnActNotice && shouldAnimateWarnReveal(e.id))} />
                           <div className="flex items-center text-xs">
                             <div className="flex-1">
                               {dominant === 'yes'
@@ -706,11 +706,9 @@ export const Home = () => {
                             </div>
                             <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(e.expiresAt)}</span>
                             <div className="flex-1 flex justify-end">
-                              {e.isWarnActNotice
-                                ? null
-                                : dominant === 'no'
-                                  ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                                  : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                              {dominant === 'no'
+                                ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                                : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
                               }
                             </div>
                           </div>

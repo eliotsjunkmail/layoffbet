@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
 import { Building2, Clock, Users, X, Send, Trash2, CheckCircle, Share2, Check, Edit2, MessageSquare } from 'lucide-react'
 import confetti from 'canvas-confetti'
@@ -8,6 +8,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
 import { WarnNoticeTag } from '../components/WarnNoticeTag'
+import { useAnimateOnce } from '../hooks/useAnimateOnce'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 
@@ -68,10 +69,37 @@ export const EventDetail = () => {
     return () => { document.title = 'Layoff Live' }
   }, [event])
 
+  // WARN notice events get a one-time reveal animation for the odds bar when the page
+  // first loads, instead of snapping straight to the current percentage.
+  const shouldAnimateWarnReveal = useAnimateOnce(useMemo(() => event?.isWarnActNotice ? [event.id] : [], [event?.id, event?.isWarnActNotice]))
+  const revealAnimate = !!event && event.isWarnActNotice && shouldAnimateWarnReveal(event.id)
+  const [oddsBarWidth, setOddsBarWidth] = useState(0)
+  const [oddsBarTransitioning, setOddsBarTransitioning] = useState(false)
+
+  useEffect(() => {
+    if (!event) return
+    const targetPct = getProbability(event.yesPool, event.noPool).yes
+    if (!revealAnimate) {
+      setOddsBarTransitioning(false)
+      setOddsBarWidth(targetPct)
+      return
+    }
+    setOddsBarTransitioning(false)
+    setOddsBarWidth(0)
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setOddsBarTransitioning(true)
+        setOddsBarWidth(targetPct)
+      })
+    })
+    return () => cancelAnimationFrame(raf1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealAnimate, event?.yesPool, event?.noPool])
+
   if (!event || hiddenCompanyIds.includes(event.companyId)) return <Navigate to="/" replace />
 
   const status = getEffectiveStatus(event)
-  const prob = event.isWarnActNotice ? { yes: 100, no: 0 } : getProbability(event.yesPool, event.noPool)
+  const prob = getProbability(event.yesPool, event.noPool)
   const eventComments = comments.filter(c => c.eventId === id).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   const userBet = bets.find(b => b.eventId === id && b.userId === currentUser?.id && !b.id.startsWith('pending-'))
   const totalPool = event.yesPool + event.noPool
@@ -85,7 +113,6 @@ export const EventDetail = () => {
   const canPlaceGuestBet = !currentUser && remainingGuestCoins >= betAmount
 
   const handleBet = (side: 'yes' | 'no') => {
-    if (event.isWarnActNotice) return
     const movement = betMovementStr(event.yesPool, event.noPool, side, betAmount)
     const confettiColor = side === 'yes' ? '#22c55e' : '#d1206a'
 
@@ -270,42 +297,41 @@ export const EventDetail = () => {
             <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
             <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-slate-500">
               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {status === 'active' ? timeUntil(event.expiresAt) : `Expired ${formatDate(event.expiresAt)}`}</span>
-              {!event.isWarnActNotice && (
-                <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {bets.filter(b => b.eventId === id).length} bettors</span>
-              )}
+              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {bets.filter(b => b.eventId === id).length} bettors</span>
             </div>
           </div>
 
           {/* Odds */}
-          {!event.isWarnActNotice && (
-            <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5">
-              <div className="flex justify-between items-end mb-2">
-                <div>
-                  <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{prob.yes}%</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-400">YES probability</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-black text-rose-600 dark:text-rose-400">{prob.no}%</div>
-                  <div className="text-xs text-gray-400 dark:text-slate-400">NO probability</div>
-                </div>
+          <div className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5">
+            <div className="flex justify-between items-end mb-2">
+              <div>
+                <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{prob.yes}%</div>
+                <div className="text-xs text-gray-400 dark:text-slate-400">YES probability</div>
               </div>
-              <div className="h-3 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${prob.yes}%` }} />
+              <div className="text-right">
+                <div className="text-3xl font-black text-rose-600 dark:text-rose-400">{prob.no}%</div>
+                <div className="text-xs text-gray-400 dark:text-slate-400">NO probability</div>
               </div>
-              <div className="mt-2 text-center text-xs text-gray-400 dark:text-slate-500">
-                Total pool: <span className="text-gray-700 dark:text-slate-300 font-medium">{totalPool} Coins</span>
-              </div>
-              {status === 'resolved' && event.outcome && (
-                <div className={`mt-3 flex items-center gap-2 justify-center rounded-xl py-2.5 ${event.outcome === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="font-semibold text-sm">Resolved: {event.outcome.toUpperCase()}</span>
-                </div>
-              )}
             </div>
-          )}
+            <div className="h-3 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
+              <div
+                className={`h-full bg-emerald-500 rounded-full ${oddsBarTransitioning ? 'transition-all duration-700 ease-out' : ''}`}
+                style={{ width: `${oddsBarWidth}%` }}
+              />
+            </div>
+            <div className="mt-2 text-center text-xs text-gray-400 dark:text-slate-500">
+              Total pool: <span className="text-gray-700 dark:text-slate-300 font-medium">{totalPool} Coins</span>
+            </div>
+            {status === 'resolved' && event.outcome && (
+              <div className={`mt-3 flex items-center gap-2 justify-center rounded-xl py-2.5 ${event.outcome === 'yes' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300'}`}>
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-semibold text-sm">Resolved: {event.outcome.toUpperCase()}</span>
+              </div>
+            )}
+          </div>
 
           {/* Place bet */}
-          {!event.isWarnActNotice && status === 'active' && (
+          {status === 'active' && (
             <div>
               {userBet ? (
                 <div>
@@ -355,7 +381,7 @@ export const EventDetail = () => {
           )}
 
           {/* Admin / Creator resolve */}
-          {!event.isWarnActNotice && (isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
+          {(isAdmin || isCreator) && (status === 'active' || status === 'expired') && (
             <div className="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5">
               <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-3">
                 {isAdmin ? 'Admin: Resolve Event' : 'Resolve Your Event'}

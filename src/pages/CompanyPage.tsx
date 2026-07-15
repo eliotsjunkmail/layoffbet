@@ -13,13 +13,13 @@ import { CommentVotes } from '../components/CommentVotes'
 import { ProbabilityBar } from '../components/ProbabilityBar'
 import { WarnNoticeTag } from '../components/WarnNoticeTag'
 import { useSwipePending } from '../hooks/useSwipePending'
+import { useAnimateOnce } from '../hooks/useAnimateOnce'
 import { getProbability, timeUntil, formatDate, betMovementStr, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
 import { AdBanner } from '../components/AdBanner'
 import { api } from '../services/api'
 
-const barProps = (yesPool: number, noPool: number, isWarnActNotice?: boolean) => {
-  if (isWarnActNotice) return { dominant: 'yes' as const, pct: 100 }
+const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
   if (total === 0) return { dominant: 'yes' as const, pct: 50 }
   const yesPct = Math.round((yesPool / total) * 100)
@@ -70,6 +70,7 @@ export const CompanyPage = () => {
     return stored ? parseInt(stored) : 0
   })
   const { pendingEventId, justResolvedEventId, startPending } = useSwipePending(bets)
+  const shouldAnimateWarnReveal = useAnimateOnce(useMemo(() => events.filter(e => e.isWarnActNotice).map(e => e.id), [events]))
   const [toast, setToast] = useState('')
   const [toastExiting, setToastExiting] = useState(false)
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({})
@@ -314,7 +315,6 @@ export const CompanyPage = () => {
   }, [currentUser, bets, events, getEffectiveStatus])
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    if (events.find(e => e.id === eventId)?.isWarnActNotice) return
     const betAmount = 10
 
     if (currentUser) {
@@ -465,7 +465,7 @@ export const CompanyPage = () => {
       </div>
       <div className="space-y-3">
         {past.map(event => {
-          const prob = event.isWarnActNotice ? { yes: 100, no: 0 } : getProbability(event.yesPool, event.noPool)
+          const prob = getProbability(event.yesPool, event.noPool)
           const s = getEffectiveStatus(event)
           return (
             <Link key={event.id} to={`/event/${event.id}`} className="block bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all">
@@ -552,7 +552,7 @@ export const CompanyPage = () => {
             <section className="mb-6">
               <div className="space-y-3">
                 {active.map((event, idx) => {
-                  const { dominant, pct } = barProps(event.yesPool, event.noPool, event.isWarnActNotice)
+                  const { dominant, pct } = barProps(event.yesPool, event.noPool)
                   const anonVote = anonVotedEvents[event.id]
                   const anonCount = anonVote?.count ?? 0
                   const exhausted = !currentUser && anonCount >= 10
@@ -566,7 +566,7 @@ export const CompanyPage = () => {
                       <SwipeCard
                         onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                         onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                        disabled={exhausted || event.isWarnActNotice}
+                        disabled={exhausted}
                         loading={pendingEventId === event.id}
                         onClick={() => navigate(`/event/${event.id}`)}
                         demoActive={false}
@@ -653,7 +653,7 @@ export const CompanyPage = () => {
                             )}
                           </div>
                         </div>
-                        <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id} />
+                        <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id || (event.isWarnActNotice && shouldAnimateWarnReveal(event.id))} />
                         <div className="flex items-center text-xs">
                           <div className="flex-1">
                             {dominant === 'yes'
@@ -663,11 +663,9 @@ export const CompanyPage = () => {
                           </div>
                           <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap">{timeUntil(event.expiresAt)}</span>
                           <div className="flex-1 flex justify-end">
-                            {event.isWarnActNotice
-                              ? null
-                              : dominant === 'no'
-                                ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                                : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                            {dominant === 'no'
+                              ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                              : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
                             }
                           </div>
                         </div>

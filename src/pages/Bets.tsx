@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { CheckCircle, Clock, ChevronRight, ChevronLeft, X, Dices } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -10,10 +10,10 @@ import { WarnNoticeTag } from '../components/WarnNoticeTag'
 import { timeUntil, betMovementStr } from '../utils/odds'
 import { AdBanner } from '../components/AdBanner'
 import { useSwipePending } from '../hooks/useSwipePending'
+import { useAnimateOnce } from '../hooks/useAnimateOnce'
 import { api } from '../services/api'
 
-const barProps = (yesPool: number, noPool: number, isWarnActNotice?: boolean) => {
-  if (isWarnActNotice) return { dominant: 'yes' as const, pct: 100 }
+const barProps = (yesPool: number, noPool: number) => {
   const total = yesPool + noPool
   if (total === 0) return { dominant: 'yes' as const, pct: 50 }
   const yesPct = Math.round((yesPool / total) * 100)
@@ -38,6 +38,7 @@ export const Bets = () => {
   const companyLastVisit = useStore(s => s.companyLastVisit)
   const users = useStore(s => s.users)
   const { pendingEventId, justResolvedEventId, startPending } = useSwipePending(bets)
+  const shouldAnimateWarnReveal = useAnimateOnce(useMemo(() => events.filter(e => e.isWarnActNotice).map(e => e.id), [events]))
   const [toast, setToast] = useState('')
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
@@ -73,7 +74,6 @@ export const Bets = () => {
   }
 
   const handleSwipeBet = (eventId: string, side: 'yes' | 'no') => {
-    if (events.find(e => e.id === eventId)?.isWarnActNotice) return
     const betAmount = 10
 
     if (currentUser) {
@@ -284,7 +284,7 @@ export const Bets = () => {
 
                   <div className="space-y-2.5">
                     {items.map(({ event, bet }) => {
-                      const { dominant, pct } = barProps(event.yesPool, event.noPool, event.isWarnActNotice)
+                      const { dominant, pct } = barProps(event.yesPool, event.noPool)
                       const eventBetCount = bets.filter(b => b.eventId === event.id).length
 
                       const BetTag = (
@@ -302,7 +302,6 @@ export const Bets = () => {
                           <SwipeCard
                             onSwipeYes={() => handleSwipeBet(event.id, 'yes')}
                             onSwipeNo={() => handleSwipeBet(event.id, 'no')}
-                            disabled={event.isWarnActNotice}
                             demoActive={false}
                             loading={pendingEventId === event.id}
                             onClick={() => navigate(`/event/${event.id}`)}
@@ -315,7 +314,7 @@ export const Bets = () => {
                               {event.isWarnActNotice && <WarnNoticeTag className="mr-1.5" />}
                               {event.title}
                             </p>
-                            <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id} />
+                            <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === event.id || (event.isWarnActNotice && shouldAnimateWarnReveal(event.id))} />
                             <div className="flex items-center text-xs">
                               <div className="flex-1">
                                 {dominant === 'yes'
@@ -325,11 +324,9 @@ export const Bets = () => {
                               </div>
                               <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full whitespace-nowrap"><Clock className="w-3 h-3" />{timeUntil(event.expiresAt)}</span>
                               <div className="flex-1 flex justify-end">
-                                {event.isWarnActNotice
-                                  ? null
-                                  : dominant === 'no'
-                                    ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
-                                    : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
+                                {dominant === 'no'
+                                  ? <span className="text-rose-600 dark:text-rose-400 font-semibold">NO {pct}%</span>
+                                  : <span className="text-gray-400 dark:text-slate-500">{eventBetCount} bet{eventBetCount === 1 ? '' : 's'}</span>
                                 }
                               </div>
                             </div>
@@ -366,7 +363,7 @@ export const Bets = () => {
 
                   <div className="space-y-2.5">
                     {items.map(({ event, status, bet }) => {
-                      const { dominant, pct } = barProps(event.yesPool, event.noPool, event.isWarnActNotice)
+                      const { dominant, pct } = barProps(event.yesPool, event.noPool)
                       const won = status === 'resolved' && event.outcome === bet.side
                       const lost = status === 'resolved' && event.outcome !== null && event.outcome !== bet.side
 
