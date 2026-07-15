@@ -117,7 +117,7 @@ app.post('/api/admin/import', async (req, res) => {
           yesPool: 0,
           noPool: 0,
           createdAt: new Date().toISOString(),
-          isWarnActNotice: false,
+          isWarnActNotice: !!item.isWarnActNotice,
         })
         events.push(event)
         currentEventId = event.id

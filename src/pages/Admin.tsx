@@ -29,7 +29,7 @@ const parseCSVLine = (line: string): string[] => {
   return result
 }
 
-const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNoun, username, password }: {
+const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNoun, username, password, askWarnActNotice }: {
   title: string
   description: React.ReactNode
   sampleFileName: string
@@ -37,10 +37,12 @@ const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNo
   resultNoun: string
   username: string
   password: string
+  askWarnActNotice?: boolean
 }) => {
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<{ created: number; errors: string[] } | null>(null)
+  const [tagWarnAct, setTagWarnAct] = useState(false)
 
   const downloadSample = () => {
     const blob = new Blob([sampleRows.join('\n')], { type: 'text/csv' })
@@ -76,6 +78,7 @@ const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNo
             title: getCol(row, 'title'),
             description: getCol(row, 'description'),
             expiresDays: parseInt(getCol(row, 'expires_days') || '30', 10) || 30,
+            isWarnActNotice: askWarnActNotice ? tagWarnAct : false,
           })
         } else if (type === 'comment') {
           items.push({
@@ -153,6 +156,20 @@ const CSVImportBox = ({ title, description, sampleFileName, sampleRows, resultNo
           </button>
         )}
       </div>
+      {file && askWarnActNotice && (
+        <label className="flex items-center justify-between cursor-pointer bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 mb-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Tag all imported events as WARN Act notices</span>
+          <input
+            type="checkbox"
+            checked={tagWarnAct}
+            onChange={e => setTagWarnAct(e.target.checked)}
+            className="sr-only"
+          />
+          <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${tagWarnAct ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${tagWarnAct ? 'translate-x-5' : ''}`} />
+          </div>
+        </label>
+      )}
       {results && (
         <div className={`rounded-lg p-3 text-sm ${results.errors.length > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
           <div className="font-medium">{results.created} {resultNoun}{results.created === 1 ? '' : 's'} created</div>
@@ -192,16 +209,18 @@ const parseCSVFull = (text: string): string[][] => {
   return rows.filter(r => !(r.length === 1 && r[0].trim() === ''))
 }
 
-const CSVOverrideBox = ({ entity, label, username, password }: {
+const CSVOverrideBox = ({ entity, label, username, password, askWarnActNotice }: {
   entity: string
   label: string
   username: string
   password: string
+  askWarnActNotice?: boolean
 }) => {
   const [file, setFile] = useState<File | null>(null)
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [results, setResults] = useState<{ updated: number; created: number; errors: string[] } | null>(null)
+  const [tagWarnAct, setTagWarnAct] = useState(false)
 
   const doExport = async () => {
     setExporting(true)
@@ -242,6 +261,9 @@ const CSVOverrideBox = ({ entity, label, username, password }: {
       const rows = parsed.slice(1).map(cells => {
         const obj: Record<string, string> = {}
         headers.forEach((h, i) => { obj[h] = (cells[i] ?? '').trim() })
+        // Blanket-tag every row as a WARN Act notice when the admin opted in, rather
+        // than requiring the CSV to already carry an isWarnActNotice column/value.
+        if (askWarnActNotice && tagWarnAct) obj.isWarnActNotice = 'true'
         return obj
       })
       const response = await fetch('/api/admin/csv-import', {
@@ -289,6 +311,23 @@ const CSVOverrideBox = ({ entity, label, username, password }: {
           </button>
         )}
       </div>
+      {file && askWarnActNotice && (
+        <label className="flex items-center justify-between cursor-pointer bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 mb-3">
+          <div>
+            <span className="text-sm font-medium text-gray-700 dark:text-slate-300 block">Tag all imported events as WARN Act notices</span>
+            <span className="text-xs text-gray-500 dark:text-slate-400">Off leaves each row's own WARN Act value (or the existing one, if the cell is blank) untouched.</span>
+          </div>
+          <input
+            type="checkbox"
+            checked={tagWarnAct}
+            onChange={e => setTagWarnAct(e.target.checked)}
+            className="sr-only"
+          />
+          <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${tagWarnAct ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${tagWarnAct ? 'translate-x-5' : ''}`} />
+          </div>
+        </label>
+      )}
       {results && (
         <div className={`rounded-lg p-3 text-sm ${results.errors.length > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
           <div className="font-medium">{results.updated} updated, {results.created} created</div>
@@ -865,12 +904,14 @@ export const Admin = () => {
                 resultNoun="event"
                 username={currentUser.username || ''}
                 password={currentUser.password || ''}
+                askWarnActNotice
               />
               <CSVOverrideBox
                 entity="events"
                 label="events"
                 username={currentUser.username || ''}
                 password={currentUser.password || ''}
+                askWarnActNotice
               />
 
               {/* Add Event Form */}
