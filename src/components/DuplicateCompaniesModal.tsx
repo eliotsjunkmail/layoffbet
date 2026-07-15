@@ -1,22 +1,7 @@
 import { useMemo, useState } from 'react'
 import { X, Merge, EyeOff } from 'lucide-react'
 import type { Company } from '../types'
-import { findPotentialDuplicateGroups, dedupePairKey } from '../utils/companyDuplicates'
-
-const DISMISSED_PAIRS_KEY = 'lb-dismissed-duplicate-pairs'
-
-const loadDismissedPairs = (): Set<string> => {
-  try {
-    const raw = localStorage.getItem(DISMISSED_PAIRS_KEY)
-    return new Set(raw ? JSON.parse(raw) : [])
-  } catch {
-    return new Set()
-  }
-}
-
-const saveDismissedPairs = (pairs: Set<string>) => {
-  localStorage.setItem(DISMISSED_PAIRS_KEY, JSON.stringify(Array.from(pairs)))
-}
+import { findPotentialDuplicateGroups, dedupePairKey, loadDismissedPairs, saveDismissedPairs } from '../utils/companyDuplicates'
 
 export const DuplicateCompaniesModal = ({
   companies, username, password, onClose, onMerged,

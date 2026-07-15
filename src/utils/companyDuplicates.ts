@@ -125,3 +125,18 @@ export const findPotentialDuplicateGroups = (companies: Company[], dismissedPair
 }
 
 export const dedupePairKey = (idA: string, idB: string) => [idA, idB].sort().join('|')
+
+const DISMISSED_PAIRS_KEY = 'lb-dismissed-duplicate-pairs'
+
+export const loadDismissedPairs = (): Set<string> => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_PAIRS_KEY)
+    return new Set(raw ? JSON.parse(raw) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+export const saveDismissedPairs = (pairs: Set<string>) => {
+  localStorage.setItem(DISMISSED_PAIRS_KEY, JSON.stringify(Array.from(pairs)))
+}

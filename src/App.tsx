@@ -722,6 +722,7 @@ import { ContentGuidelines } from './pages/ContentGuidelines'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
 import { CompanySuggestionsAlert } from './components/CompanySuggestionsAlert'
 import { ModerationQueueAlert } from './components/ModerationQueueAlert'
+import { CompanyDuplicatesAlert } from './components/CompanyDuplicatesAlert'
 
 const Protected = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
@@ -837,6 +838,7 @@ export const App = () => (
     <DataSync />
     <CompanySuggestionsAlert />
     <ModerationQueueAlert />
+    <CompanyDuplicatesAlert />
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
