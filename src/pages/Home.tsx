@@ -312,6 +312,11 @@ export const Home = () => {
     [companies, hiddenCompanyIds, activeEventsByCompany]
   )
 
+  const totalActiveBets = useMemo(() =>
+    companiesWithActiveBets.reduce((sum, c) => sum + (activeEventsByCompany[c.id] ?? 0), 0),
+    [companiesWithActiveBets, activeEventsByCompany]
+  )
+
   const topEventByCompany = useMemo(() => {
     const map: Record<string, typeof events[0]> = {}
     events.forEach(e => {
@@ -832,7 +837,7 @@ export const Home = () => {
         {/* Active bets pills — for users without favorites, shown here above the ad */}
         {!hasFavorites && companiesWithActiveBets.length > 0 && (
           <div className="mb-4 mt-4">
-            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+            <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets ({totalActiveBets})</p>
             <div className="flex flex-wrap gap-2">
               {companiesWithActiveBets.map(c => (
                 <button
@@ -855,7 +860,7 @@ export const Home = () => {
       {/* Active bets pills — for users with favorites, shown below the ad instead */}
       {hasFavorites && companiesWithActiveBets.length > 0 && (
         <div className="max-w-2xl mx-auto px-4 mb-12">
-          <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets</p>
+          <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wide mb-2">Active bets ({totalActiveBets})</p>
           <div className="flex flex-wrap gap-2">
             {companiesWithActiveBets.map(c => (
               <button
