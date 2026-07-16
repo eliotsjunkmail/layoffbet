@@ -89,6 +89,7 @@ interface StoreState {
   recordShare: (eventId: string) => void
   upvotedCommentIds: string[]
   pendingCommentVotes: Record<string, boolean>
+  latestUpvoteAtByComment: Record<string, string>
 
   getEffectiveStatus: (event: Event) => Event['status']
   banUser: (userId: string) => void
@@ -125,6 +126,7 @@ export const useStore = create<StoreState>()(
       companyLastVisit: {},
       upvotedCommentIds: [],
       pendingCommentVotes: {},
+      latestUpvoteAtByComment: {},
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -1082,6 +1084,7 @@ export const useStore = create<StoreState>()(
               anonVotedEvents: serverData.anonVotedEvents || {},
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
               upvotedCommentIds: newUpvotedCommentIds,
+              latestUpvoteAtByComment: serverData.latestUpvoteAtByComment || {},
             })
           }
         } catch (error) {
@@ -1110,6 +1113,7 @@ export const useStore = create<StoreState>()(
         companyLastVisit: s.companyLastVisit,
         upvotedCommentIds: s.upvotedCommentIds,
         hiddenCompanyIds: s.hiddenCompanyIds,
+        latestUpvoteAtByComment: s.latestUpvoteAtByComment,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return

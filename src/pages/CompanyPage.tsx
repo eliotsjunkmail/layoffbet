@@ -53,6 +53,7 @@ export const CompanyPage = () => {
   const removeAnonymousVote = useStore(s => s.removeAnonymousVote)
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const comments = useStore(s => s.comments)
+  const latestUpvoteAtByComment = useStore(s => s.latestUpvoteAtByComment)
   const addComment = useStore(s => s.addComment)
   const editComment = useStore(s => s.editComment)
   const deleteComment = useStore(s => s.deleteComment)
@@ -398,12 +399,32 @@ export const CompanyPage = () => {
     if (!b) return 2
     return b.side === 'yes' ? 0 : 1
   }
+  // Most recent bet/comment/comment-upvote timestamp for an event, for the "recency of activity" sort
+  const lastActivityAt = (eventId: string) => {
+    let latest = 0
+    const bump = (iso: string | undefined) => {
+      if (!iso) return
+      const t = new Date(iso).getTime()
+      if (t > latest) latest = t
+    }
+    bets.forEach(b => { if (b.eventId === eventId) bump(b.createdAt) })
+    comments.forEach(cmt => {
+      if (cmt.eventId !== eventId) return
+      bump(cmt.editedAt || cmt.createdAt)
+      bump(latestUpvoteAtByComment[cmt.id])
+    })
+    if (latest === 0) {
+      const event = companyEvents.find(e => e.id === eventId)
+      if (event) latest = new Date(event.createdAt).getTime()
+    }
+    return latest
+  }
   const active = companyEvents
     .filter(e => getEffectiveStatus(e) === 'active')
     .sort((a, b) => {
       const diff = betOrder(a.id) - betOrder(b.id)
       if (diff !== 0) return diff
-      return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
+      return lastActivityAt(b.id) - lastActivityAt(a.id)
     })
   const past = companyEvents.filter(e => ['expired', 'resolved', 'archived'].includes(getEffectiveStatus(e)))
 

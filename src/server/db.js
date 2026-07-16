@@ -542,9 +542,17 @@ export const db = {
     }
 
     const commentUpvotesByUser = {}
+    // Latest upvote timestamp per comment (across all users) — feeds the "recency of
+    // activity" event sort on Home/CompanyPage, alongside bets and comments. Falls back
+    // to skipping a comment's upvotes for that purpose if created_at isn't present yet
+    // (e.g. the column was added after this table already had rows).
+    const latestUpvoteAtByComment = {}
     for (const u of (upvoteRows || [])) {
       if (!commentUpvotesByUser[u.user_id]) commentUpvotesByUser[u.user_id] = []
       commentUpvotesByUser[u.user_id].push(u.comment_id)
+      if (u.created_at && (!latestUpvoteAtByComment[u.comment_id] || u.created_at > latestUpvoteAtByComment[u.comment_id])) {
+        latestUpvoteAtByComment[u.comment_id] = u.created_at
+      }
     }
 
     return {
@@ -560,6 +568,7 @@ export const db = {
       hiddenCompanyIds,
       anonVotedEvents: {},
       commentUpvotesByUser,
+      latestUpvoteAtByComment,
       companySuggestions,
       moderationQueue,
     }

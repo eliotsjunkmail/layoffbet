@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, TrendingUp, Eye, ArrowRight, Star, X, Send, Check, ChevronRight, Share2, Loader2 } from 'lucide-react'
 import { SwipeCard } from '../components/SwipeCard'
 import { useStore } from '../store/useStore'
+import type { Event } from '../types'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { AdBanner } from '../components/AdBanner'
@@ -98,6 +99,7 @@ export const Home = () => {
   const anonVotedEvents = useStore(s => s.anonVotedEvents)
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
+  const latestUpvoteAtByComment = useStore(s => s.latestUpvoteAtByComment)
   const addComment = useStore(s => s.addComment)
   const recordUserShare = useStore(s => s.recordUserShare)
   const companyLastVisit = useStore(s => s.companyLastVisit)
@@ -304,6 +306,24 @@ export const Home = () => {
     })
     return map
   }, [events, getEffectiveStatus])
+
+  // Most recent bet/comment/comment-upvote timestamp per event, for the "recency of activity" sort
+  const lastActivityAtMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    const bump = (eventId: string | undefined, iso: string | undefined) => {
+      if (!eventId || !iso) return
+      const t = new Date(iso).getTime()
+      if (!map[eventId] || t > map[eventId]) map[eventId] = t
+    }
+    bets.forEach(b => bump(b.eventId, b.createdAt))
+    comments.forEach(cmt => {
+      bump(cmt.eventId, cmt.editedAt || cmt.createdAt)
+      bump(cmt.eventId, latestUpvoteAtByComment[cmt.id])
+    })
+    return map
+  }, [bets, comments, latestUpvoteAtByComment])
+
+  const lastActivityAt = (event: Event) => lastActivityAtMap[event.id] ?? new Date(event.createdAt).getTime()
 
   const companiesWithActiveBets = useMemo(() =>
     companies
@@ -657,7 +677,7 @@ export const Home = () => {
             .sort((a, b) => {
               const diff = betOrder(a.id) - betOrder(b.id)
               if (diff !== 0) return diff
-              return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
+              return lastActivityAt(b) - lastActivityAt(a)
             })
           return (
             <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
