@@ -9,7 +9,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 
 app.use(cors())
-app.use(express.json())
+// Default 100kb limit is too small for bulk CSV imports (e.g. a large WARN Act data
+// dump converted to JSON) — raised so those requests don't get rejected before the
+// route handler (and its error handling) ever runs.
+app.use(express.json({ limit: '25mb' }))
 
 // ===== INIT =====
 app.post('/api/init', async (req, res) => {
@@ -1190,6 +1193,9 @@ app.get(/^(?!\/api\/).*$/, (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err)
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return res.status(413).json({ error: 'Upload too large — try splitting the CSV into smaller files.' })
+  }
   res.status(500).json({ error: 'Internal server error' })
 })
 
