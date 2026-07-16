@@ -440,11 +440,53 @@ export const Home = () => {
     }
   }
 
-  // Get the top favorited company for chat FAB (first in displayed favorites)
-  const topFavoritedCompany = useMemo(() => {
+  // Defaults the chat FAB to the first favorited company; scrolledCompanyId (set below)
+  // overrides this once a company section has scrolled up past the FAB.
+  const defaultFavoritedCompany = useMemo(() => {
     if (favorites.length === 0) return null
     return favorites[0]
   }, [favorites])
+
+  const [scrolledCompanyId, setScrolledCompanyId] = useState<string | null>(null)
+
+  const topFavoritedCompany = useMemo(() => {
+    if (scrolledCompanyId) {
+      const match = favorites.find(c => c.id === scrolledCompanyId)
+      if (match) return match
+    }
+    return defaultFavoritedCompany
+  }, [scrolledCompanyId, favorites, defaultFavoritedCompany])
+
+  // Track which favorited company's section has scrolled up past the chat FAB, so the
+  // FAB (and the chat it opens) always matches whatever company is currently in view
+  // instead of staying pinned to the first favorite.
+  useEffect(() => {
+    if (favorites.length <= 1) { setScrolledCompanyId(null); return }
+    let rafId: number | null = null
+    const computeActive = () => {
+      rafId = null
+      const fabThreshold = window.innerHeight - 70
+      const sections = document.querySelectorAll('[data-company-section]')
+      let activeId: string | null = null
+      for (const el of sections) {
+        if (el.getBoundingClientRect().top <= fabThreshold) {
+          activeId = el.getAttribute('data-company-section')
+        } else {
+          break
+        }
+      }
+      setScrolledCompanyId(activeId)
+    }
+    const onScroll = () => {
+      if (rafId == null) rafId = requestAnimationFrame(computeActive)
+    }
+    computeActive()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (rafId != null) cancelAnimationFrame(rafId)
+    }
+  }, [favorites.length])
 
   // Load chat display name when topFavoritedCompany changes
   useEffect(() => {
@@ -613,7 +655,7 @@ export const Home = () => {
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
-            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
+            <section key={c.id} data-company-section={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
               <div className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
