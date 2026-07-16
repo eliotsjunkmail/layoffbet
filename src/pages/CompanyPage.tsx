@@ -493,12 +493,11 @@ export const CompanyPage = () => {
   return (
     <>
     <Layout fullWidth>
-      <div className="max-w-md sm:max-w-5xl mx-auto w-full px-4 py-6">
-      {/* 2-column layout on desktop */}
-      <div className="sm:grid sm:grid-cols-[320px_1fr] sm:gap-8 sm:items-start">
+      <div className="max-w-md sm:max-w-2xl mx-auto w-full px-4 py-6">
+      {/* Single-column layout on all screen sizes: title/description, then events below */}
+      <div>
 
-        {/* LEFT COLUMN: title + description + past events */}
-        <div className="sm:sticky sm:top-20">
+        <div>
           <div className="flex items-center gap-2 mb-2">
             <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors flex-shrink-0 p-1">
               <ChevronLeft className="w-6 h-6" />
@@ -540,14 +539,9 @@ export const CompanyPage = () => {
               </div>
             </div>
           )}
-
-          {/* Past events — desktop only in left column */}
-          <div className="hidden sm:block">
-            <PastEventsSection />
-          </div>
         </div>
 
-        {/* RIGHT COLUMN: active predictions */}
+        {/* Active predictions, below the title/description */}
         <div>
           {active.length > 0 && (
             <section className="mb-6">
@@ -777,10 +771,7 @@ export const CompanyPage = () => {
             </section>
           )}
 
-          {/* Past events — mobile only (desktop renders in left column) */}
-          <div className="sm:hidden">
-            <PastEventsSection />
-          </div>
+          <PastEventsSection />
 
           {companyEvents.length === 0 && (
             <EmptyState
@@ -795,7 +786,7 @@ export const CompanyPage = () => {
           )}
         </div>
 
-      </div>{/* end 2-col grid */}
+      </div>
 
       {/* Copied toast */}
       {shareCopied && (
