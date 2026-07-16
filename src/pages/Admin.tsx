@@ -389,6 +389,15 @@ export const Admin = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newEvent.isWarnActNotice, newEvent.companyId, newEvent.warnState, newEvent.warnWorkerCount, newEvent.warnByDate, companies])
 
+  // Defaults "Expires at" to the WARN notice's "by" date at 11:59 PM — still editable
+  // afterward, this just sets it whenever the By date changes.
+  useEffect(() => {
+    if (!newEvent.isWarnActNotice || !newEvent.warnByDate) return
+    const defaultExpiresAt = `${newEvent.warnByDate}T23:59`
+    setNewEvent(prev => prev.expiresAt === defaultExpiresAt ? prev : { ...prev, expiresAt: defaultExpiresAt })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newEvent.isWarnActNotice, newEvent.warnByDate])
+
   if (!currentUser || !currentUser.isAdmin) {
     return (
       <Layout>
