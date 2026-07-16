@@ -655,8 +655,8 @@ export const Home = () => {
               return (b.yesPool + b.noPool) - (a.yesPool + a.noPool)
             })
           return (
-            <section key={c.id} data-company-section={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
-              <div className="flex items-center justify-between mb-3">
+            <section key={c.id} className={`mb-2 ${cIdx > 0 ? 'pt-6 border-t border-gray-200 dark:border-slate-800' : 'pt-1'}`}>
+              <div data-company-section={c.id} className="flex items-center justify-between mb-3">
                 <Link to={`/${c.slug}`} className="flex items-center gap-2 group min-w-0">
                   <span className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{c.name}</span>
                   <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600 group-hover:text-blue-500 transition-colors flex-shrink-0" />
