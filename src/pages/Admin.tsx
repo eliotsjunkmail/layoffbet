@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
@@ -373,8 +373,21 @@ export const Admin = () => {
   const [bulkEditingEvents, setBulkEditingEvents] = useState(false)
   const [bulkEventForms, setBulkEventForms] = useState<Record<string, { title: string; description: string; expiresAt: string; isWarnActNotice: boolean }>>({})
   const [showAddEventForm, setShowAddEventForm] = useState(false)
-  const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false })
+  const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false, warnState: '', warnWorkerCount: '', warnByDate: '' })
   const [filterCompanyId, setFilterCompanyId] = useState('')
+
+  // While "Source is a WARN Act notice" is on, the title is generated from the
+  // structured fields below instead of typed freely: "[company] layoff in [state] of
+  // [count] workers by [date]".
+  useEffect(() => {
+    if (!newEvent.isWarnActNotice) return
+    const company = companies.find(c => c.id === newEvent.companyId)
+    if (!company || !newEvent.warnState.trim() || !newEvent.warnWorkerCount || !newEvent.warnByDate) return
+    const formattedDate = new Date(`${newEvent.warnByDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const generatedTitle = `${company.name} layoff in ${newEvent.warnState.trim()} of ${newEvent.warnWorkerCount} workers by ${formattedDate}`
+    setNewEvent(prev => prev.title === generatedTitle ? prev : { ...prev, title: generatedTitle })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newEvent.isWarnActNotice, newEvent.companyId, newEvent.warnState, newEvent.warnWorkerCount, newEvent.warnByDate, companies])
 
   if (!currentUser || !currentUser.isAdmin) {
     return (
@@ -622,7 +635,7 @@ export const Admin = () => {
         throw new Error(data.error || 'Failed to create event')
       }
       setMessage({ type: 'success', text: 'Event created' })
-      setNewEvent({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false })
+      setNewEvent({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false, warnState: '', warnWorkerCount: '', warnByDate: '' })
       setShowAddEventForm(false)
       setTimeout(() => { setMessage(null); window.location.reload() }, 1000)
     } catch (err) {
@@ -981,17 +994,75 @@ export const Admin = () => {
                         {sortedCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Title *</label>
+                    <label className="flex items-center justify-between cursor-pointer bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Source is a WARN Act notice</span>
                       <input
-                        type="text"
-                        value={newEvent.title}
-                        onChange={e => setNewEvent({ ...newEvent, title: e.target.value })}
-                        placeholder="e.g. Will there be layoffs in Q3?"
-                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-                        required
+                        type="checkbox"
+                        checked={newEvent.isWarnActNotice}
+                        onChange={e => setNewEvent({ ...newEvent, isWarnActNotice: e.target.checked })}
+                        className="sr-only"
                       />
-                    </div>
+                      <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${newEvent.isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+                        <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${newEvent.isWarnActNotice ? 'translate-x-5' : ''}`} />
+                      </div>
+                    </label>
+                    {newEvent.isWarnActNotice ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">State *</label>
+                            <input
+                              type="text"
+                              value={newEvent.warnState}
+                              onChange={e => setNewEvent({ ...newEvent, warnState: e.target.value })}
+                              placeholder="e.g. New Jersey"
+                              className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1"># Workers *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={newEvent.warnWorkerCount}
+                              onChange={e => setNewEvent({ ...newEvent, warnWorkerCount: e.target.value })}
+                              placeholder="e.g. 140"
+                              className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">By date *</label>
+                          <input
+                            type="date"
+                            value={newEvent.warnByDate}
+                            onChange={e => setNewEvent({ ...newEvent, warnByDate: e.target.value })}
+                            className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Title (generated)</label>
+                          <div className="w-full bg-gray-100 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-gray-600 dark:text-slate-400 text-sm italic">
+                            {newEvent.title || 'Fill in company, state, workers, and date above'}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Title *</label>
+                        <input
+                          type="text"
+                          value={newEvent.title}
+                          onChange={e => setNewEvent({ ...newEvent, title: e.target.value })}
+                          placeholder="e.g. Will there be layoffs in Q3?"
+                          className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description</label>
                       <input
@@ -1012,22 +1083,10 @@ export const Admin = () => {
                         required
                       />
                     </div>
-                    <label className="flex items-center justify-between cursor-pointer bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Source is a WARN Act notice</span>
-                      <input
-                        type="checkbox"
-                        checked={newEvent.isWarnActNotice}
-                        onChange={e => setNewEvent({ ...newEvent, isWarnActNotice: e.target.checked })}
-                        className="sr-only"
-                      />
-                      <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${newEvent.isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
-                        <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${newEvent.isWarnActNotice ? 'translate-x-5' : ''}`} />
-                      </div>
-                    </label>
                     <div className="flex gap-2 pt-2">
                       <button
                         type="submit"
-                        disabled={loading || !newEvent.companyId || !newEvent.title.trim() || !newEvent.expiresAt}
+                        disabled={loading || !newEvent.companyId || !newEvent.expiresAt || (newEvent.isWarnActNotice ? (!newEvent.warnState.trim() || !newEvent.warnWorkerCount || !newEvent.warnByDate || !newEvent.title.trim()) : !newEvent.title.trim())}
                         className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {loading ? 'Creating...' : 'Create Event'}
