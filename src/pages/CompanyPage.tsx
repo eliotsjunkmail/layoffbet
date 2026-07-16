@@ -492,7 +492,8 @@ export const CompanyPage = () => {
 
   return (
     <>
-    <Layout>
+    <Layout fullWidth>
+      <div className="max-w-md sm:max-w-5xl mx-auto w-full px-4 py-6">
       {/* 2-column layout on desktop */}
       <div className="sm:grid sm:grid-cols-[320px_1fr] sm:gap-8 sm:items-start">
 
@@ -826,6 +827,7 @@ export const CompanyPage = () => {
         <AdBanner />
       </div>
 
+      </div>
     </Layout>
 
     {/* Community Chat - positioned outside Layout for correct fixed positioning */}
