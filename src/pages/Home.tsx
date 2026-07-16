@@ -538,7 +538,7 @@ export const Home = () => {
               What's really happening at work
             </h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base max-w-sm mx-auto">
-              Anonymous prediction markets for work
+              See it coming
             </p>
           </div>
 
