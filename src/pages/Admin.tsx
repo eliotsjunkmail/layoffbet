@@ -1697,6 +1697,9 @@ export const Admin = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" /> {deletingNonWarn ? 'Deleting...' : 'Delete All Non-WARN Events'}
+                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                    {events.filter(e => !e.isWarnActNotice).length}
+                  </span>
                 </button>
               </div>
 
@@ -1710,6 +1713,9 @@ export const Admin = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" /> {deletingNonAdminUsers ? 'Deleting...' : 'Delete All Non-Admin Users'}
+                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                    {users.filter(u => !u.isAdmin).length}
+                  </span>
                 </button>
               </div>
 
@@ -1723,6 +1729,9 @@ export const Admin = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" /> {deletingAllComments ? 'Deleting...' : 'Delete All Comments'}
+                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                    {comments.length}
+                  </span>
                 </button>
               </div>
 
@@ -1736,6 +1745,9 @@ export const Admin = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" /> {deletingAllChat ? 'Deleting...' : 'Delete All Chat Topics & Messages'}
+                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                    {chatMessages.length}
+                  </span>
                 </button>
               </div>
 
@@ -1749,6 +1761,9 @@ export const Admin = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" /> {deletingAllBets ? 'Deleting...' : 'Delete All Bets'}
+                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                    {bets.length}
+                  </span>
                 </button>
               </div>
             </div>
