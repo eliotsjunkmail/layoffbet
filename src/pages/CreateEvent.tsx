@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronLeft, Calendar } from 'lucide-react'
 import { useStore } from '../store/useStore'
@@ -7,6 +7,7 @@ import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { checkContentModeration } from '../utils/moderation'
 
 export const CreateEvent = () => {
+  const currentUser = useStore(s => s.currentUser)
   const companies = useStore(s => s.companies)
   const createEvent = useStore(s => s.createEvent)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
@@ -34,13 +35,45 @@ export const CreateEvent = () => {
   const [moderationWarning, setModerationWarning] = useState<string | null>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
+  // Admin-only: mark this as a sourced WARN Act notice instead of a personal prediction.
+  // The title is generated from these fields rather than typed freely, matching the Admin
+  // panel's own "Add New Event" form.
+  const [isWarnActNotice, setIsWarnActNotice] = useState(false)
+  const [warnState, setWarnState] = useState('')
+  const [warnWorkerCount, setWarnWorkerCount] = useState('')
+  const [warnByDate, setWarnByDate] = useState('')
+
   const selectedCompany = companies.find(c => c.id === companyId)
   const titlePlaceholder = selectedCompany ? `e.g. ${selectedCompany.name} will announce layoffs this quarter` : "e.g. Company will announce layoffs this quarter"
+
+  useEffect(() => {
+    if (!isWarnActNotice) return
+    if (!selectedCompany || !warnState.trim() || !warnWorkerCount || !warnByDate) return
+    const formattedDate = new Date(`${warnByDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const generatedTitle = `${selectedCompany.name} layoff in ${warnState.trim()} of ${warnWorkerCount} workers by ${formattedDate}`
+    setTitle(prev => prev === generatedTitle ? prev : generatedTitle)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWarnActNotice, selectedCompany, warnState, warnWorkerCount, warnByDate])
+
+  // Defaults "Expiration Date" to the WARN notice's "by" date — still editable afterward.
+  useEffect(() => {
+    if (!isWarnActNotice || !warnByDate) return
+    setExpiresAt(prev => prev === warnByDate ? prev : warnByDate)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWarnActNotice, warnByDate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (!companyId) return setError('Select a company.')
+
+    if (isWarnActNotice) {
+      if (!warnState.trim() || !warnWorkerCount || !warnByDate) return setError('Fill in state, worker count, and by-date.')
+      if (!expiresAt) return setError('Set an expiration date.')
+      await submitWarnEvent()
+      return
+    }
+
     if (!title.trim() || title.trim().length < 10) return setError('Title must be at least 10 characters.')
     if (!expiresAt) return setError('Set an expiration date.')
     if (!side) return setError('Choose YES or NO for your prediction.')
@@ -51,6 +84,42 @@ export const CreateEvent = () => {
       return
     }
     await submitEvent()
+  }
+
+  // Admin-only path: a WARN Act notice is a sourced fact, not a personal stake, so it's
+  // created directly (like the Admin panel's own form) instead of going through
+  // createEvent's coin-cost-and-place-a-bet flow.
+  const submitWarnEvent = async () => {
+    const company = companies.find(c => c.id === companyId)
+    if (!company || !currentUser) return
+    try {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId,
+          companyName: company.name,
+          title: title.trim(),
+          description: description.trim(),
+          expiresAt: new Date(expiresAt).toISOString(),
+          status: 'active',
+          creatorId: currentUser.id,
+          creatorName: currentUser.username,
+          yesPool: 0,
+          noPool: 0,
+          createdAt: new Date().toISOString(),
+          isWarnActNotice: true,
+        }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create event')
+      }
+      const newEvent = await response.json()
+      navigate(`/${company.slug}`, { state: { newEventId: newEvent.id, showToast: true } })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create event')
+    }
   }
 
   const submitEvent = async () => {
@@ -85,11 +154,51 @@ export const CreateEvent = () => {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Prediction Title</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={titlePlaceholder} maxLength={120} className={inputCls} />
-          <div className="text-right text-xs text-gray-400 dark:text-slate-600 mt-1">{title.length}/120</div>
-        </div>
+        {currentUser?.isAdmin && (
+          <label className="flex items-center justify-between cursor-pointer bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-3">
+            <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Source is a WARN Act notice</span>
+            <input
+              type="checkbox"
+              checked={isWarnActNotice}
+              onChange={e => setIsWarnActNotice(e.target.checked)}
+              className="sr-only"
+            />
+            <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isWarnActNotice ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'}`}>
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${isWarnActNotice ? 'translate-x-5' : ''}`} />
+            </div>
+          </label>
+        )}
+
+        {isWarnActNotice ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">State</label>
+                <input type="text" value={warnState} onChange={e => setWarnState(e.target.value)} placeholder="e.g. New Jersey" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5"># Workers</label>
+                <input type="number" min="1" value={warnWorkerCount} onChange={e => setWarnWorkerCount(e.target.value)} placeholder="e.g. 140" className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">By date</label>
+              <input type="date" value={warnByDate} onChange={e => setWarnByDate(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Title (generated)</label>
+              <div className="w-full bg-gray-100 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600 rounded-xl px-4 py-3 text-gray-600 dark:text-slate-400 text-sm italic">
+                {title || 'Fill in company, state, workers, and date above'}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div>
+            <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Prediction Title</label>
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={titlePlaceholder} maxLength={120} className={inputCls} />
+            <div className="text-right text-xs text-gray-400 dark:text-slate-600 mt-1">{title.length}/120</div>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Description <span className="text-gray-400 dark:text-slate-500">(optional)</span></label>
@@ -111,34 +220,36 @@ export const CreateEvent = () => {
           <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 2 years from today</div>
         </div>
 
-        <div>
-          <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Your Prediction <span className="text-rose-500">*</span></label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setSide('yes')}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
-                side === 'yes'
-                  ? 'bg-green-500 text-white border-green-600'
-                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-green-500 dark:hover:border-green-500'
-              }`}
-            >
-              YES - 10 coins
-            </button>
-            <button
-              type="button"
-              onClick={() => setSide('no')}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
-                side === 'no'
-                  ? 'bg-red-500 text-white border-red-600'
-                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500'
-              }`}
-            >
-              NO - 10 coins
-            </button>
+        {!isWarnActNotice && (
+          <div>
+            <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">Your Prediction <span className="text-rose-500">*</span></label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setSide('yes')}
+                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
+                  side === 'yes'
+                    ? 'bg-green-500 text-white border-green-600'
+                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-green-500 dark:hover:border-green-500'
+                }`}
+              >
+                YES - 10 coins
+              </button>
+              <button
+                type="button"
+                onClick={() => setSide('no')}
+                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all border-2 ${
+                  side === 'no'
+                    ? 'bg-red-500 text-white border-red-600'
+                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-300 dark:border-slate-700 hover:border-red-500 dark:hover:border-red-500'
+                }`}
+              >
+                NO - 10 coins
+              </button>
+            </div>
+            <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Creating a prediction costs 10 coins and places that bet</div>
           </div>
-          <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">Creating a prediction costs 10 coins and places that bet</div>
-        </div>
+        )}
 
         {error && (
           <div className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 rounded-xl px-4 py-3 text-rose-600 dark:text-rose-300 text-sm">
@@ -156,7 +267,7 @@ export const CreateEvent = () => {
         </div>
 
         <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors shadow-md shadow-blue-200 dark:shadow-blue-900/30">
-          Create Prediction
+          {isWarnActNotice ? 'Create Event' : 'Create Prediction'}
         </button>
       </form>
 
