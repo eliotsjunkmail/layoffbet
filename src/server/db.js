@@ -66,13 +66,34 @@ const throwOnError = (error, ctx) => {
   }
 }
 
+// Supabase/PostgREST caps any single request at the project's configured max-rows (1000 by
+// default) no matter what .limit() the client asks for — so tables that can grow past that
+// have to be paged with .range() across multiple requests to actually return everything.
+const PAGE_SIZE = 1000
+const fetchAllRows = async (buildQuery, ctx, { maxTotal = 20000, safe = false } = {}) => {
+  const all = []
+  let offset = 0
+  while (offset < maxTotal) {
+    const to = Math.min(offset + PAGE_SIZE, maxTotal) - 1
+    const { data, error } = await buildQuery().range(offset, to)
+    if (error) {
+      // "safe" tables were added after initial launch — a missing table degrades to
+      // whatever was already paged in instead of failing the whole sync.
+      if (safe) break
+      throwOnError(error, ctx)
+    }
+    if (!data || data.length === 0) break
+    all.push(...data)
+    if (data.length < (to - offset + 1)) break
+    offset += data.length
+  }
+  return all
+}
+
 export const db = {
   // ===== USERS =====
   async getUsers() {
-    // Explicit limit overrides Supabase/PostgREST's default 1000-row cap, which would
-    // otherwise silently truncate results once the table grows past that.
-    const { data, error } = await supabase.from('users').select('*').order('created_at').limit(20000)
-    throwOnError(error, 'getUsers')
+    const data = await fetchAllRows(() => supabase.from('users').select('*').order('created_at'), 'getUsers')
     return (data || []).map(fromDb)
   },
 
@@ -154,8 +175,7 @@ export const db = {
 
   // ===== COMPANIES =====
   async getCompanies() {
-    const { data, error } = await supabase.from('companies').select('*').order('created_at').limit(20000)
-    throwOnError(error, 'getCompanies')
+    const data = await fetchAllRows(() => supabase.from('companies').select('*').order('created_at'), 'getCompanies')
     return (data || []).map(fromDb)
   },
 
@@ -226,8 +246,7 @@ export const db = {
 
   // ===== EVENTS =====
   async getEvents() {
-    const { data, error } = await supabase.from('events').select('*').order('created_at').limit(20000)
-    throwOnError(error, 'getEvents')
+    const data = await fetchAllRows(() => supabase.from('events').select('*').order('created_at'), 'getEvents')
     return (data || []).map(fromDb)
   },
 
@@ -260,8 +279,7 @@ export const db = {
 
   // ===== BETS =====
   async getBets() {
-    const { data, error } = await supabase.from('bets').select('*').order('created_at').limit(20000)
-    throwOnError(error, 'getBets')
+    const data = await fetchAllRows(() => supabase.from('bets').select('*').order('created_at'), 'getBets')
     return (data || []).map(fromDb)
   },
 
@@ -296,8 +314,7 @@ export const db = {
 
   // ===== COMMENTS =====
   async getComments() {
-    const { data, error } = await supabase.from('comments').select('*').order('created_at').limit(20000)
-    throwOnError(error, 'getComments')
+    const data = await fetchAllRows(() => supabase.from('comments').select('*').order('created_at'), 'getComments')
     return (data || []).map(fromDb)
   },
 
@@ -381,8 +398,7 @@ export const db = {
 
   // ===== CHAT MESSAGES =====
   async getChatMessages(companyId) {
-    const { data, error } = await supabase.from('chat_messages').select('*').eq('company_id', companyId).order('created_at').limit(20000)
-    throwOnError(error, 'getChatMessages')
+    const data = await fetchAllRows(() => supabase.from('chat_messages').select('*').eq('company_id', companyId).order('created_at'), 'getChatMessages')
     return (data || []).map(fromDb)
   },
 
@@ -434,8 +450,7 @@ export const db = {
 
   // ===== HIDDEN COMPANIES =====
   async getHiddenCompanyIds() {
-    const { data, error } = await supabase.from('hidden_company_ids').select('company_id').limit(20000)
-    throwOnError(error, 'getHiddenCompanyIds')
+    const data = await fetchAllRows(() => supabase.from('hidden_company_ids').select('company_id'), 'getHiddenCompanyIds')
     return (data || []).map(r => r.company_id)
   },
 
@@ -522,14 +537,14 @@ export const db = {
       this.getHiddenCompanyIds(),
     ])
 
-    // These tables were added after initial launch — fetched defensively (no throwOnError)
+    // These tables were added after initial launch — fetched defensively (safe: true)
     // so a not-yet-migrated Supabase project degrades to empty data instead of failing the whole sync.
-    const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
-      supabase.from('chat_messages').select('*').order('created_at').limit(20000),
-      supabase.from('favorites').select('*').limit(20000),
-      supabase.from('comment_upvotes').select('*').limit(20000),
-      supabase.from('company_suggestions').select('*').order('created_at').limit(20000),
-      supabase.from('moderation_queue').select('*').order('created_at').limit(20000),
+    const [chatMsgRows, favRows, upvoteRows, suggestionRows, moderationRows] = await Promise.all([
+      fetchAllRows(() => supabase.from('chat_messages').select('*').order('created_at'), 'getAllSyncData:chatMessages', { safe: true }),
+      fetchAllRows(() => supabase.from('favorites').select('*'), 'getAllSyncData:favorites', { safe: true }),
+      fetchAllRows(() => supabase.from('comment_upvotes').select('*'), 'getAllSyncData:commentUpvotes', { safe: true }),
+      fetchAllRows(() => supabase.from('company_suggestions').select('*').order('created_at'), 'getAllSyncData:companySuggestions', { safe: true }),
+      fetchAllRows(() => supabase.from('moderation_queue').select('*').order('created_at'), 'getAllSyncData:moderationQueue', { safe: true }),
     ])
 
     const companySuggestions = (suggestionRows || []).map(fromDb)
@@ -603,13 +618,8 @@ export const db = {
   },
 
   async deleteExcessBets(keepCount = 2) {
-    const { data: allBets, error: fetchErr } = await supabase
-      .from('bets')
-      .select('id')
-      .order('created_at', { ascending: true })
-      .limit(20000)
+    const allBets = await fetchAllRows(() => supabase.from('bets').select('id').order('created_at', { ascending: true }), 'deleteExcessBets:fetchBets')
 
-    if (fetchErr) throwOnError(fetchErr, 'fetchBets')
     if (!allBets || allBets.length <= keepCount) return
 
     const betsToDelete = allBets.slice(keepCount).map(b => b.id)
