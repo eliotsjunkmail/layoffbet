@@ -684,4 +684,15 @@ export const db = {
     console.log(`[db] Deleted ${msgCount ?? 0} chat messages and ${settingsCount ?? 0} chat topics`)
     return { deletedMessages: msgCount ?? 0, deletedTopics: settingsCount ?? 0 }
   },
+
+  async deleteAllBets() {
+    const { error, count } = await supabase.from('bets').delete({ count: 'exact' }).neq('id', '')
+    throwOnError(error, 'deleteAllBets')
+    // Pool totals are a stored aggregate on each event, not derived live from the bets
+    // table, so they'd otherwise keep showing stale odds for bets that no longer exist.
+    const { error: resetErr } = await supabase.from('events').update({ yes_pool: 0, no_pool: 0 }).neq('id', '')
+    throwOnError(resetErr, 'deleteAllBets:resetPools')
+    console.log(`[db] Deleted ${count ?? 0} bets and reset all event pools`)
+    return { deleted: count ?? 0 }
+  },
 }

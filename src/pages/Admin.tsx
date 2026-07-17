@@ -372,6 +372,7 @@ export const Admin = () => {
   const [deletingNonAdminUsers, setDeletingNonAdminUsers] = useState(false)
   const [deletingAllComments, setDeletingAllComments] = useState(false)
   const [deletingAllChat, setDeletingAllChat] = useState(false)
+  const [deletingAllBets, setDeletingAllBets] = useState(false)
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false)
@@ -619,6 +620,28 @@ export const Admin = () => {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete chat' })
     } finally {
       setDeletingAllChat(false)
+    }
+  }
+
+  const deleteAllBets = async () => {
+    const count = bets.length
+    if (count === 0) { setMessage({ type: 'error', text: 'No bets to delete' }); setTimeout(() => setMessage(null), 2000); return }
+    if (!window.confirm(`Delete all ${count} bet${count === 1 ? '' : 's'} and reset every event's odds? This cannot be undone.`)) return
+    setDeletingAllBets(true)
+    try {
+      const response = await fetch('/api/admin/delete-all-bets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, password: currentUser.password }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to delete bets')
+      setMessage({ type: 'success', text: `Deleted ${data.deleted} bet${data.deleted === 1 ? '' : 's'}` })
+      setTimeout(() => { setMessage(null); window.location.reload() }, 1200)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete bets' })
+    } finally {
+      setDeletingAllBets(false)
     }
   }
 
@@ -1713,6 +1736,19 @@ export const Admin = () => {
                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" /> {deletingAllChat ? 'Deleting...' : 'Delete All Chat Topics & Messages'}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+                  Permanently delete every bet made by users and reset every event's odds back to 0.
+                </p>
+                <button
+                  onClick={deleteAllBets}
+                  disabled={deletingAllBets}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" /> {deletingAllBets ? 'Deleting...' : 'Delete All Bets'}
                 </button>
               </div>
             </div>
