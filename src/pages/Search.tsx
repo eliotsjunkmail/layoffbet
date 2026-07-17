@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Search as SearchIcon, Eye, SearchX, Building2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
 import { EmptyState } from '../components/EmptyState'
 import { AddCompanyModal } from '../components/AddCompanyModal'
+import { CompanyCreatedModal } from '../components/CompanyCreatedModal'
 import { getProbability } from '../utils/odds'
 import { api } from '../services/api'
 
@@ -16,6 +17,7 @@ const fmtViews = (n: number) => {
 }
 
 export const Search = () => {
+  const navigate = useNavigate()
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
@@ -25,6 +27,7 @@ export const Search = () => {
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   const [query, setQuery] = useState('')
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
+  const [createdCompany, setCreatedCompany] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState('')
 
   const q = query.toLowerCase().trim()
@@ -49,12 +52,12 @@ export const Search = () => {
     }
   }
 
-  const handleCompanyCreated = (companyId: string) => {
+  const handleCompanyCreated = (company: { id: string; name: string }) => {
     setShowAddCompanyModal(false)
     setQuery('')
-    toggleFavoriteCompany(companyId)
+    toggleFavoriteCompany(company.id)
     syncCommentsFromServer()
-    showToast('Company created')
+    setCreatedCompany(company)
   }
 
   const sentimentByCompany = useMemo(() => {
@@ -185,6 +188,14 @@ export const Search = () => {
           initialName={query.trim()}
           onClose={() => setShowAddCompanyModal(false)}
           onCreated={handleCompanyCreated}
+        />
+      )}
+
+      {createdCompany && (
+        <CompanyCreatedModal
+          companyName={createdCompany.name}
+          onClose={() => setCreatedCompany(null)}
+          onCreateEvent={() => navigate(`/admin?tab=events&newEventCompanyId=${createdCompany.id}`)}
         />
       )}
 

@@ -6,6 +6,7 @@ import { X, Search as SearchIcon, MessageSquare } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
+import { CompanyCreatedModal } from './components/CompanyCreatedModal'
 import type { ReactNode } from 'react'
 
 const API_BASE = ''
@@ -136,6 +137,7 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const [search, setSearch] = useState('')
   const [showAll, setShowAll] = useState(false)
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
+  const [createdCompany, setCreatedCompany] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState('')
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
@@ -151,12 +153,12 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
     }
   }
 
-  const handleCompanyCreated = (companyId: string) => {
+  const handleCompanyCreated = (company: { id: string; name: string }) => {
     setShowAddCompanyModal(false)
     setSearch('')
-    toggleFavoriteCompany(companyId)
+    toggleFavoriteCompany(company.id)
     syncCommentsFromServer()
-    showToast('Company created')
+    setCreatedCompany(company)
   }
 
   const activeByCompany = useMemo(() => {
@@ -265,6 +267,16 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
           initialName={search.trim()}
           onClose={() => setShowAddCompanyModal(false)}
           onCreated={handleCompanyCreated}
+        />
+      )}
+
+      {createdCompany && (
+        <CompanyCreatedModal
+          companyName={createdCompany.name}
+          onClose={() => setCreatedCompany(null)}
+          // No router context is mounted this early (this modal lives above BrowserRouter),
+          // so a full navigation is used instead of useNavigate.
+          onCreateEvent={() => { window.location.href = `/admin?tab=events&newEventCompanyId=${createdCompany.id}` }}
         />
       )}
 

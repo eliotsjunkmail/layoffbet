@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
@@ -340,6 +341,7 @@ const CSVOverrideBox = ({ entity, label, username, password, askWarnActNotice }:
 }
 
 export const Admin = () => {
+  const location = useLocation()
   const currentUser = useStore(s => s.currentUser)
   const users = useStore(s => s.users)
   const bets = useStore(s => s.bets)
@@ -352,7 +354,9 @@ export const Admin = () => {
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const updateCompany = useStore(s => s.updateCompany)
 
+  const preSelectedEventCompanyId = new URLSearchParams(location.search).get('newEventCompanyId')
   const [activeTab, setActiveTab] = useState<Tab>(() => {
+    if (preSelectedEventCompanyId) return 'events'
     const stored = localStorage.getItem('admin-active-tab')
     return (stored as Tab) || 'settings'
   })
@@ -378,8 +382,8 @@ export const Admin = () => {
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false)
   const [bulkEditingEvents, setBulkEditingEvents] = useState(false)
   const [bulkEventForms, setBulkEventForms] = useState<Record<string, { title: string; description: string; expiresAt: string; isWarnActNotice: boolean }>>({})
-  const [showAddEventForm, setShowAddEventForm] = useState(false)
-  const [newEvent, setNewEvent] = useState({ companyId: '', title: '', description: '', expiresAt: '', isWarnActNotice: false, warnState: '', warnWorkerCount: '', warnByDate: '' })
+  const [showAddEventForm, setShowAddEventForm] = useState(!!preSelectedEventCompanyId)
+  const [newEvent, setNewEvent] = useState({ companyId: preSelectedEventCompanyId || '', title: '', description: '', expiresAt: '', isWarnActNotice: false, warnState: '', warnWorkerCount: '', warnByDate: '' })
   const [filterCompanyId, setFilterCompanyId] = useState('')
 
   // While "Source is a WARN Act notice" is on, the title is generated from the

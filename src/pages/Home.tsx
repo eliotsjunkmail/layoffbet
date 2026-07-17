@@ -10,6 +10,7 @@ import { AdBanner } from '../components/AdBanner'
 import { ChatFAB } from '../components/ChatFAB'
 import { CompanyChat } from '../components/CompanyChat'
 import { AddCompanyModal } from '../components/AddCompanyModal'
+import { CompanyCreatedModal } from '../components/CompanyCreatedModal'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
 import { ProbabilityBar } from '../components/ProbabilityBar'
@@ -141,6 +142,7 @@ export const Home = () => {
   const [chatDisplayName, setChatDisplayName] = useState('')
   const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
+  const [createdCompany, setCreatedCompany] = useState<{ id: string; name: string } | null>(null)
   const [moderationWarning, setModerationWarning] = useState<{ eventId: string; reason: string; text: string } | null>(null)
   const updateCoins = useStore(s => s.updateCoins)
   const addCoin = useStore(s => s.addCoin)
@@ -217,13 +219,13 @@ export const Home = () => {
     }
   }
 
-  const handleCompanyCreated = (companyId: string) => {
+  const handleCompanyCreated = (company: { id: string; name: string }) => {
     setShowAddCompanyModal(false)
     setQuery('')
     setShowDropdown(false)
-    toggleFavoriteCompany(companyId)
+    toggleFavoriteCompany(company.id)
     syncCommentsFromServer()
-    showToast('Company created')
+    setCreatedCompany(company)
   }
 
   const userStats = useMemo(() => {
@@ -661,6 +663,14 @@ export const Home = () => {
             initialName={query}
             onClose={() => setShowAddCompanyModal(false)}
             onCreated={handleCompanyCreated}
+          />
+        )}
+
+        {createdCompany && (
+          <CompanyCreatedModal
+            companyName={createdCompany.name}
+            onClose={() => setCreatedCompany(null)}
+            onCreateEvent={() => navigate(`/admin?tab=events&newEventCompanyId=${createdCompany.id}`)}
           />
         )}
 

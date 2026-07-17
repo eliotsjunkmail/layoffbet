@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
-export const AddCompanyModal = ({ initialName, onClose, onCreated }: { initialName: string; onClose: () => void; onCreated: (companyId: string) => void }) => {
+export const AddCompanyModal = ({ initialName, onClose, onCreated }: { initialName: string; onClose: () => void; onCreated: (company: { id: string; name: string }) => void }) => {
   const currentUser = useStore(s => s.currentUser)
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState('')
@@ -31,7 +31,7 @@ export const AddCompanyModal = ({ initialName, onClose, onCreated }: { initialNa
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to create company')
-      onCreated(data.id)
+      onCreated({ id: data.id, name: data.name })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create company')
     } finally {
