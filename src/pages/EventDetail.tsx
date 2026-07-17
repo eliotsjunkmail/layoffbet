@@ -29,6 +29,8 @@ export const EventDetail = () => {
   const editComment = useStore(s => s.editComment)
   const deleteComment = useStore(s => s.deleteComment)
   const resolveEvent = useStore(s => s.resolveEvent)
+  const updateEvent = useStore(s => s.updateEvent)
+  const deleteEvent = useStore(s => s.deleteEvent)
   const getEffectiveStatus = useStore(s => s.getEffectiveStatus)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
 
@@ -42,6 +44,9 @@ export const EventDetail = () => {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingBet, setPendingBet] = useState<'yes' | 'no' | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
+  const [isEditingEvent, setIsEditingEvent] = useState(false)
+  const [editEventTitle, setEditEventTitle] = useState('')
+  const [editEventDesc, setEditEventDesc] = useState('')
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
     return stored ? parseInt(stored) : 50
@@ -245,6 +250,30 @@ export const EventDetail = () => {
     }
   }
 
+  const handleStartEditEvent = () => {
+    setEditEventTitle(event.title)
+    setEditEventDesc(event.description)
+    setIsEditingEvent(true)
+  }
+
+  const handleCancelEditEvent = () => {
+    setIsEditingEvent(false)
+  }
+
+  const handleSaveEventEdit = () => {
+    if (!editEventTitle.trim()) return
+    updateEvent(id!, { title: editEventTitle.trim(), description: editEventDesc.trim() })
+    setIsEditingEvent(false)
+    showToast('Prediction updated!')
+  }
+
+  const handleDeleteEvent = () => {
+    if (confirm('Are you sure you want to delete this prediction? This action cannot be undone.')) {
+      deleteEvent(id!)
+      showToast('Prediction deleted')
+    }
+  }
+
   const statusColors = {
     active: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
     expired: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
@@ -262,6 +291,24 @@ export const EventDetail = () => {
             {event.companyName}
           </Link>
           <div className="flex items-center gap-1">
+            {isAdmin && !isEditingEvent && (
+              <button
+                onClick={handleStartEditEvent}
+                title="Edit title & description"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={handleDeleteEvent}
+                title="Delete this prediction"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={handleShare}
               title="Share this prediction"
@@ -290,11 +337,47 @@ export const EventDetail = () => {
                 </span>
               </div>
             )}
-            <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">
-              {event.isWarnActNotice && <WarnNoticeTag className="mr-2 align-baseline" />}
-              {event.title}
-            </h1>
-            <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
+            {isEditingEvent ? (
+              <div className="mb-4 space-y-2">
+                <input
+                  type="text"
+                  value={editEventTitle}
+                  onChange={e => setEditEventTitle(e.target.value)}
+                  placeholder="Title"
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+                <textarea
+                  value={editEventDesc}
+                  onChange={e => setEditEventDesc(e.target.value)}
+                  placeholder="Description"
+                  rows={3}
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveEventEdit}
+                    disabled={!editEventTitle.trim()}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-2 transition-colors text-white text-sm font-medium"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEditEvent}
+                    className="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 rounded-xl px-3 py-2 transition-colors text-gray-700 dark:text-slate-300 text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-gray-900 dark:text-white font-bold text-xl leading-snug mb-3">
+                  {event.isWarnActNotice && <WarnNoticeTag className="mr-2 align-baseline" />}
+                  {event.title}
+                </h1>
+                <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-4">{event.description}</p>
+              </>
+            )}
             <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-slate-500">
               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {status === 'active' ? timeUntil(event.expiresAt) : `Expired ${formatDate(event.expiresAt)}`}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {bets.filter(b => b.eventId === id).length} bettors</span>

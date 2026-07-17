@@ -206,6 +206,27 @@ export const api = {
     return response.json()
   },
 
+  updateEvent: async (id: string, data: Record<string, unknown>) => {
+    const response = await fetch(`${API_BASE}/api/events/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to update event')
+    }
+    return response.json()
+  },
+
+  deleteEvent: async (id: string): Promise<void> => {
+    const response = await fetch(`${API_BASE}/api/events/${id}`, {
+      method: 'DELETE',
+    })
+    if (!response.ok) {
+      throw new Error('Failed to delete event')
+    }
+  },
+
   // Bets endpoints
   placeBet: async (bet: Omit<any, 'id' | 'createdAt'>) => {
     const response = await fetch(`${API_BASE}/api/bets`, {

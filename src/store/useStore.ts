@@ -73,10 +73,10 @@ interface StoreState {
   removeAnonymousVote: (eventId: string) => void
   getUserBet: (eventId: string) => Bet | undefined
   createEvent: (data: Omit<Event, 'id' | 'creatorId' | 'creatorName' | 'yesPool' | 'noPool' | 'outcome' | 'createdAt' | 'status' | 'viewCount' | 'shareCount'> & { initialSide?: 'yes' | 'no' }) => Promise<Event | false | { pending: true; reason: string }>
-  updateEvent: (eventId: string, data: { title: string; description: string; expiresAt: string; companyId: string; companyName: string }) => void
+  updateEvent: (eventId: string, data: Partial<Pick<Event, 'title' | 'description' | 'expiresAt' | 'companyId' | 'companyName'>>) => Promise<void>
   resolveEvent: (eventId: string, outcome: 'yes' | 'no') => void
   archiveEvent: (eventId: string) => void
-  deleteEvent: (eventId: string) => void
+  deleteEvent: (eventId: string) => Promise<void>
 
   addCompany: (name: string, description: string, industry: string) => void
   updateCompany: (id: string, name: string, description: string, industry: string, aliases?: string[]) => void
@@ -763,10 +763,15 @@ export const useStore = create<StoreState>()(
         return event
       },
 
-      updateEvent: (eventId, data) => {
+      updateEvent: async (eventId, data) => {
         set(s => ({
           events: s.events.map(e => e.id === eventId ? { ...e, ...data } : e),
         }))
+        try {
+          await api.updateEvent(eventId, data)
+        } catch (error) {
+          console.error('Failed to persist event update to server:', error)
+        }
       },
 
       resolveEvent: (eventId, outcome) => {
@@ -800,12 +805,17 @@ export const useStore = create<StoreState>()(
         set(s => ({ events: s.events.map(e => e.id === eventId ? { ...e, status: 'archived' } : e) }))
       },
 
-      deleteEvent: (eventId) => {
+      deleteEvent: async (eventId) => {
         set(s => ({
           events: s.events.filter(e => e.id !== eventId),
           bets: s.bets.filter(b => b.eventId !== eventId),
           comments: s.comments.filter(c => c.eventId !== eventId),
         }))
+        try {
+          await api.deleteEvent(eventId)
+        } catch (error) {
+          console.error('Failed to persist event deletion to server:', error)
+        }
       },
 
       addCompany: (name, description, industry) => {
