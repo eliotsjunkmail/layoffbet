@@ -464,6 +464,48 @@ app.post('/api/admin/delete-non-warn-events', async (req, res) => {
   }
 })
 
+app.post('/api/admin/delete-non-admin-users', async (req, res) => {
+  try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    const result = await db.deleteAllNonAdminUsers()
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/admin/delete-all-comments', async (req, res) => {
+  try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    const result = await db.deleteAllComments()
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/admin/delete-all-chat', async (req, res) => {
+  try {
+    const { username, password } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    const result = await db.deleteAllChatMessagesAndTopics()
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== USERS =====
 app.post('/api/users/register', async (req, res) => {
   try {

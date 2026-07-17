@@ -657,4 +657,31 @@ export const db = {
     console.log(`[db] Deleted ${ids.length} non-WARN events`)
     return { deleted: ids.length }
   },
+
+  async deleteAllNonAdminUsers() {
+    // Bets/comments from a deleted user are left in place — they still back an event's
+    // yes/no pool totals and public odds, which aren't recomputed from the bets table live.
+    const { error, count } = await supabase.from('users').delete({ count: 'exact' }).eq('is_admin', false)
+    throwOnError(error, 'deleteAllNonAdminUsers')
+    console.log(`[db] Deleted ${count ?? 0} non-admin users`)
+    return { deleted: count ?? 0 }
+  },
+
+  async deleteAllComments() {
+    const { error: upvoteErr } = await supabase.from('comment_upvotes').delete().neq('comment_id', '')
+    throwOnError(upvoteErr, 'deleteAllComments:upvotes')
+    const { error, count } = await supabase.from('comments').delete({ count: 'exact' }).neq('id', '')
+    throwOnError(error, 'deleteAllComments')
+    console.log(`[db] Deleted ${count ?? 0} comments`)
+    return { deleted: count ?? 0 }
+  },
+
+  async deleteAllChatMessagesAndTopics() {
+    const { error: msgErr, count: msgCount } = await supabase.from('chat_messages').delete({ count: 'exact' }).neq('id', '')
+    throwOnError(msgErr, 'deleteAllChatMessagesAndTopics:messages')
+    const { error: settingsErr, count: settingsCount } = await supabase.from('chat_settings').delete({ count: 'exact' }).neq('company_id', '')
+    throwOnError(settingsErr, 'deleteAllChatMessagesAndTopics:settings')
+    console.log(`[db] Deleted ${msgCount ?? 0} chat messages and ${settingsCount ?? 0} chat topics`)
+    return { deletedMessages: msgCount ?? 0, deletedTopics: settingsCount ?? 0 }
+  },
 }

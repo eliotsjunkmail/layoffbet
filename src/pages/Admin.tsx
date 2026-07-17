@@ -344,6 +344,7 @@ export const Admin = () => {
   const users = useStore(s => s.users)
   const bets = useStore(s => s.bets)
   const comments = useStore(s => s.comments)
+  const chatMessages = useStore(s => s.chatMessages)
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
@@ -368,6 +369,9 @@ export const Admin = () => {
   const [mergeDuplicateIds, setMergeDuplicateIds] = useState<string[]>([])
   const [merging, setMerging] = useState(false)
   const [deletingNonWarn, setDeletingNonWarn] = useState(false)
+  const [deletingNonAdminUsers, setDeletingNonAdminUsers] = useState(false)
+  const [deletingAllComments, setDeletingAllComments] = useState(false)
+  const [deletingAllChat, setDeletingAllChat] = useState(false)
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false)
@@ -549,6 +553,72 @@ export const Admin = () => {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete events' })
     } finally {
       setDeletingNonWarn(false)
+    }
+  }
+
+  const deleteAllNonAdminUsers = async () => {
+    const count = users.filter(u => !u.isAdmin).length
+    if (count === 0) { setMessage({ type: 'error', text: 'No non-admin users to delete' }); setTimeout(() => setMessage(null), 2000); return }
+    if (!window.confirm(`Delete all ${count} non-admin user${count === 1 ? '' : 's'}? This cannot be undone.`)) return
+    setDeletingNonAdminUsers(true)
+    try {
+      const response = await fetch('/api/admin/delete-non-admin-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, password: currentUser.password }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to delete users')
+      setMessage({ type: 'success', text: `Deleted ${data.deleted} user${data.deleted === 1 ? '' : 's'}` })
+      setTimeout(() => { setMessage(null); window.location.reload() }, 1200)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete users' })
+    } finally {
+      setDeletingNonAdminUsers(false)
+    }
+  }
+
+  const deleteAllComments = async () => {
+    const count = comments.length
+    if (count === 0) { setMessage({ type: 'error', text: 'No comments to delete' }); setTimeout(() => setMessage(null), 2000); return }
+    if (!window.confirm(`Delete all ${count} comment${count === 1 ? '' : 's'}? This cannot be undone.`)) return
+    setDeletingAllComments(true)
+    try {
+      const response = await fetch('/api/admin/delete-all-comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, password: currentUser.password }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to delete comments')
+      setMessage({ type: 'success', text: `Deleted ${data.deleted} comment${data.deleted === 1 ? '' : 's'}` })
+      setTimeout(() => { setMessage(null); window.location.reload() }, 1200)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete comments' })
+    } finally {
+      setDeletingAllComments(false)
+    }
+  }
+
+  const deleteAllChat = async () => {
+    const count = chatMessages.length
+    if (count === 0) { setMessage({ type: 'error', text: 'No chat messages to delete' }); setTimeout(() => setMessage(null), 2000); return }
+    if (!window.confirm(`Delete all ${count} chat message${count === 1 ? '' : 's'} and every company's chat topic? This cannot be undone.`)) return
+    setDeletingAllChat(true)
+    try {
+      const response = await fetch('/api/admin/delete-all-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, password: currentUser.password }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to delete chat')
+      setMessage({ type: 'success', text: `Deleted ${data.deletedMessages} chat message${data.deletedMessages === 1 ? '' : 's'} and ${data.deletedTopics} topic${data.deletedTopics === 1 ? '' : 's'}` })
+      setTimeout(() => { setMessage(null); window.location.reload() }, 1200)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete chat' })
+    } finally {
+      setDeletingAllChat(false)
     }
   }
 
@@ -1591,18 +1661,60 @@ export const Admin = () => {
                 <Merge className="w-4 h-4" /> Review Potential Duplicates
               </button>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-rose-200 dark:border-rose-900/50 p-5">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Danger Zone</h3>
-              <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-                Permanently delete every event that isn't tagged as a WARN Act notice, along with their bets and comments. WARN Act events are kept.
-              </p>
-              <button
-                onClick={deleteNonWarnEvents}
-                disabled={deletingNonWarn}
-                className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4" /> {deletingNonWarn ? 'Deleting...' : 'Delete All Non-WARN Events'}
-              </button>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-rose-200 dark:border-rose-900/50 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Danger Zone</h3>
+
+              <div>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+                  Permanently delete every event that isn't tagged as a WARN Act notice, along with their bets and comments. WARN Act events are kept.
+                </p>
+                <button
+                  onClick={deleteNonWarnEvents}
+                  disabled={deletingNonWarn}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" /> {deletingNonWarn ? 'Deleting...' : 'Delete All Non-WARN Events'}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+                  Permanently delete every user except admins. Admin accounts are kept.
+                </p>
+                <button
+                  onClick={deleteAllNonAdminUsers}
+                  disabled={deletingNonAdminUsers}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" /> {deletingNonAdminUsers ? 'Deleting...' : 'Delete All Non-Admin Users'}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+                  Permanently delete every comment on every event.
+                </p>
+                <button
+                  onClick={deleteAllComments}
+                  disabled={deletingAllComments}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" /> {deletingAllComments ? 'Deleting...' : 'Delete All Comments'}
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+                  Permanently delete every company chat's topic and all chat messages.
+                </p>
+                <button
+                  onClick={deleteAllChat}
+                  disabled={deletingAllChat}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" /> {deletingAllChat ? 'Deleting...' : 'Delete All Chat Topics & Messages'}
+                </button>
+              </div>
             </div>
           </div>
         )}
