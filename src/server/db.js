@@ -90,6 +90,14 @@ const fetchAllRows = async (buildQuery, ctx, { maxTotal = 20000, safe = false } 
   return all
 }
 
+// Keeps bulk .in(column, [...ids]) deletes from building a request URL that's too long
+// when the id list runs into the thousands.
+const chunk = (arr, size) => {
+  const out = []
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
+  return out
+}
+
 export const db = {
   // ===== USERS =====
   async getUsers() {
@@ -623,12 +631,30 @@ export const db = {
     if (!allBets || allBets.length <= keepCount) return
 
     const betsToDelete = allBets.slice(keepCount).map(b => b.id)
-    const { error: deleteErr } = await supabase
-      .from('bets')
-      .delete()
-      .in('id', betsToDelete)
-
-    if (deleteErr) throwOnError(deleteErr, 'deleteExcessBets')
+    for (const batch of chunk(betsToDelete, 200)) {
+      const { error: deleteErr } = await supabase.from('bets').delete().in('id', batch)
+      throwOnError(deleteErr, 'deleteExcessBets')
+    }
     console.log(`[db] Deleted ${betsToDelete.length} excess bets, kept ${keepCount}`)
+  },
+
+  async deleteNonWarnEvents() {
+    const rows = await fetchAllRows(
+      () => supabase.from('events').select('id').or('is_warn_act_notice.is.null,is_warn_act_notice.eq.false'),
+      'deleteNonWarnEvents:fetchEvents'
+    )
+    const ids = rows.map(r => r.id)
+    if (ids.length === 0) return { deleted: 0 }
+
+    for (const batch of chunk(ids, 200)) {
+      const { error: betsErr } = await supabase.from('bets').delete().in('event_id', batch)
+      throwOnError(betsErr, 'deleteNonWarnEvents:bets')
+      const { error: commentsErr } = await supabase.from('comments').delete().in('event_id', batch)
+      throwOnError(commentsErr, 'deleteNonWarnEvents:comments')
+      const { error: eventsErr } = await supabase.from('events').delete().in('id', batch)
+      throwOnError(eventsErr, 'deleteNonWarnEvents:events')
+    }
+    console.log(`[db] Deleted ${ids.length} non-WARN events`)
+    return { deleted: ids.length }
   },
 }

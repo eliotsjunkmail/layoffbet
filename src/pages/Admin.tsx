@@ -367,6 +367,7 @@ export const Admin = () => {
   const [mergePrimaryId, setMergePrimaryId] = useState('')
   const [mergeDuplicateIds, setMergeDuplicateIds] = useState<string[]>([])
   const [merging, setMerging] = useState(false)
+  const [deletingNonWarn, setDeletingNonWarn] = useState(false)
   const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false)
@@ -526,6 +527,28 @@ export const Admin = () => {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to merge companies' })
     } finally {
       setMerging(false)
+    }
+  }
+
+  const deleteNonWarnEvents = async () => {
+    const count = events.filter(e => !e.isWarnActNotice).length
+    if (count === 0) { setMessage({ type: 'error', text: 'No non-WARN events to delete' }); setTimeout(() => setMessage(null), 2000); return }
+    if (!window.confirm(`Delete all ${count} non-WARN Act event${count === 1 ? '' : 's'} (and their bets/comments)? This cannot be undone.`)) return
+    setDeletingNonWarn(true)
+    try {
+      const response = await fetch('/api/admin/delete-non-warn-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, password: currentUser.password }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to delete events')
+      setMessage({ type: 'success', text: `Deleted ${data.deleted} non-WARN event${data.deleted === 1 ? '' : 's'}` })
+      setTimeout(() => { setMessage(null); window.location.reload() }, 1200)
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete events' })
+    } finally {
+      setDeletingNonWarn(false)
     }
   }
 
@@ -1566,6 +1589,19 @@ export const Admin = () => {
                 className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-900 dark:text-white text-sm font-medium rounded-xl transition-colors"
               >
                 <Merge className="w-4 h-4" /> Review Potential Duplicates
+              </button>
+            </div>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-rose-200 dark:border-rose-900/50 p-5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Danger Zone</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
+                Permanently delete every event that isn't tagged as a WARN Act notice, along with their bets and comments. WARN Act events are kept.
+              </p>
+              <button
+                onClick={deleteNonWarnEvents}
+                disabled={deletingNonWarn}
+                className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 className="w-4 h-4" /> {deletingNonWarn ? 'Deleting...' : 'Delete All Non-WARN Events'}
               </button>
             </div>
           </div>
