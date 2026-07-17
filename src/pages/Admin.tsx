@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
 import { DuplicateCompaniesModal } from '../components/DuplicateCompaniesModal'
+import { AddCompanyModal } from '../components/AddCompanyModal'
 
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const ADS_ENABLED_KEY = 'lb-ads-enabled'
@@ -365,7 +366,6 @@ export const Admin = () => {
   const [togglingCompanyId, setTogglingCompanyId] = useState<string | null>(null)
   const [showOnlyActive, setShowOnlyActive] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newCompany, setNewCompany] = useState({ name: '', description: '', industry: '', color: '#003DA5' })
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ name: '', description: '', industry: '', aliases: '' })
   const [showMergeForm, setShowMergeForm] = useState(false)
@@ -444,38 +444,6 @@ export const Admin = () => {
     } catch (err) {
       console.error('Delete error:', err)
       setMessage({ type: 'error', text: err instanceof Error ? err.message : `Failed to delete ${type}` })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addCompany = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentUser || !newCompany.name.trim()) return
-
-    setLoading(true)
-    try {
-      const response = await fetch('/api/companies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newCompany,
-          username: currentUser.username,
-          password: currentUser.password,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to create company')
-      }
-
-      setMessage({ type: 'success', text: 'Company created successfully' })
-      setNewCompany({ name: '', description: '', industry: '', color: '#003DA5' })
-      setShowAddForm(false)
-      setTimeout(() => window.location.reload(), 1000)
-    } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to create company' })
     } finally {
       setLoading(false)
     }
@@ -1461,73 +1429,6 @@ export const Admin = () => {
                 </div>
               )}
 
-              {showAddForm && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Add New Company</h3>
-                  <form onSubmit={addCompany} className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Company Name *</label>
-                      <input
-                        type="text"
-                        value={newCompany.name}
-                        onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })}
-                        placeholder="e.g. Acme Corp"
-                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description</label>
-                      <input
-                        type="text"
-                        value={newCompany.description}
-                        onChange={(e) => setNewCompany({ ...newCompany, description: e.target.value })}
-                        placeholder="Brief company description (optional)"
-                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Industry</label>
-                        <input
-                          type="text"
-                          value={newCompany.industry}
-                          onChange={(e) => setNewCompany({ ...newCompany, industry: e.target.value })}
-                          placeholder="e.g. Technology"
-                          className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Color</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={newCompany.color}
-                            onChange={(e) => setNewCompany({ ...newCompany, color: e.target.value })}
-                            className="w-12 h-10 rounded cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-600 dark:text-slate-400">{newCompany.color}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="submit"
-                        disabled={loading || !newCompany.name.trim()}
-                        className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {loading ? 'Creating...' : 'Create Company'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddForm(false)}
-                        className="flex-1 px-4 py-2 bg-gray-300 dark:bg-slate-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-400 dark:hover:bg-slate-600 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
               <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden px-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -1784,6 +1685,18 @@ export const Admin = () => {
           onMerged={() => {
             setShowDuplicatesModal(false)
             setMessage({ type: 'success', text: 'Companies merged' })
+            setTimeout(() => { setMessage(null); window.location.reload() }, 1000)
+          }}
+        />
+      )}
+
+      {showAddForm && (
+        <AddCompanyModal
+          initialName=""
+          onClose={() => setShowAddForm(false)}
+          onCreated={() => {
+            setShowAddForm(false)
+            setMessage({ type: 'success', text: 'Company created successfully' })
             setTimeout(() => { setMessage(null); window.location.reload() }, 1000)
           }}
         />
