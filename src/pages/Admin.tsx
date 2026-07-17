@@ -5,6 +5,7 @@ import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
 import { DuplicateCompaniesModal } from '../components/DuplicateCompaniesModal'
 import { AddCompanyModal } from '../components/AddCompanyModal'
+import { StateTypeahead } from '../components/StateTypeahead'
 
 const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const ADS_ENABLED_KEY = 'lb-ads-enabled'
@@ -1108,10 +1109,9 @@ export const Admin = () => {
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">State *</label>
-                            <input
-                              type="text"
+                            <StateTypeahead
                               value={newEvent.warnState}
-                              onChange={e => setNewEvent({ ...newEvent, warnState: e.target.value })}
+                              onChange={v => setNewEvent({ ...newEvent, warnState: v })}
                               placeholder="e.g. New Jersey"
                               className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                               required

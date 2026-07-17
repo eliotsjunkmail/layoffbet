@@ -4,6 +4,8 @@ import { ChevronLeft, Calendar } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
+import { StateTypeahead } from '../components/StateTypeahead'
+import { EventCreatedModal } from '../components/EventCreatedModal'
 import { checkContentModeration } from '../utils/moderation'
 
 export const CreateEvent = () => {
@@ -33,6 +35,7 @@ export const CreateEvent = () => {
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [moderationWarning, setModerationWarning] = useState<string | null>(null)
+  const [createdWarnEvent, setCreatedWarnEvent] = useState<{ id: string; companyId: string; companySlug: string; companyName: string } | null>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   // Admin-only: mark this as a sourced WARN Act notice instead of a personal prediction.
@@ -116,7 +119,7 @@ export const CreateEvent = () => {
         throw new Error(data.error || 'Failed to create event')
       }
       const newEvent = await response.json()
-      navigate(`/${company.slug}`, { state: { newEventId: newEvent.id, showToast: true } })
+      setCreatedWarnEvent({ id: newEvent.id, companyId: company.id, companySlug: company.slug, companyName: company.name })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create event')
     }
@@ -174,7 +177,7 @@ export const CreateEvent = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5">State</label>
-                <input type="text" value={warnState} onChange={e => setWarnState(e.target.value)} placeholder="e.g. New Jersey" className={inputCls} />
+                <StateTypeahead value={warnState} onChange={setWarnState} placeholder="e.g. New Jersey" className={inputCls} />
               </div>
               <div>
                 <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1.5"># Workers</label>
@@ -282,6 +285,14 @@ export const CreateEvent = () => {
           reason={moderationWarning}
           onEdit={() => setModerationWarning(null)}
           onSubmitAnyway={() => { setModerationWarning(null); submitEvent() }}
+        />
+      )}
+
+      {createdWarnEvent && (
+        <EventCreatedModal
+          companyName={createdWarnEvent.companyName}
+          onSkip={() => navigate(`/${createdWarnEvent.companySlug}`, { state: { newEventId: createdWarnEvent.id, showToast: true } })}
+          onAddTopic={() => navigate(`/${createdWarnEvent.companySlug}`, { state: { newEventId: createdWarnEvent.id, showToast: true, openChatNewTopic: true } })}
         />
       )}
     </Layout>

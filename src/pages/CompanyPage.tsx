@@ -93,7 +93,7 @@ export const CompanyPage = () => {
   const myUserIdRef = useRef(currentUser?.id || `anon-${Date.now()}`)
   const shakeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const scrollTargetRef = useRef<HTMLDivElement>(null)
-  const { state } = useLocation() as { state?: { newEventId?: string; showToast?: boolean } | null }
+  const { state } = useLocation() as { state?: { newEventId?: string; showToast?: boolean; openChatNewTopic?: boolean } | null }
   const [searchParams, setSearchParams] = useSearchParams()
 
   const company = companies.find(c => c.slug === slug)
@@ -106,6 +106,12 @@ export const CompanyPage = () => {
       setSearchParams(searchParams, { replace: true })
     }
   }, [company?.id])
+
+  // Open chat directly when arriving right after creating a WARN event and choosing
+  // "Add Chat Topic" on the confirmation prompt
+  useEffect(() => {
+    if (company && state?.openChatNewTopic) setChatOpen(true)
+  }, [company?.id, state?.openChatNewTopic])
 
   const reloadChatSettings = (id: string, name: string) => {
     api.getChatSettings(id, name)
@@ -846,7 +852,7 @@ export const CompanyPage = () => {
     {company && (
       <>
         <ChatFAB companyName={company.name} onClick={() => setChatOpen(true)} newMessageCount={newMessageCount} shouldShake={shouldShake} chatDisplayName={chatDisplayName} expiresAt={chatExpiresAt} />
-        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} onShare={handleShareChat} onSharePoll={handleSharePoll} />
+        <CompanyChat companyId={company.id} companyName={company.name} isOpen={chatOpen} onClose={() => setChatOpen(false)} onTopicCreated={() => reloadChatSettings(company.id, company.name)} onShare={handleShareChat} onSharePoll={handleSharePoll} autoOpenNewTopic={!!state?.openChatNewTopic} />
       </>
     )}
     </>

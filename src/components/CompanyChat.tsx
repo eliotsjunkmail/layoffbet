@@ -51,7 +51,7 @@ const countWordMentions = (msgs: { text: string; username: string }[], word: str
   }, 0)
 }
 
-export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare, onSharePoll }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: (topicName: string | null) => void; onSharePoll?: (pollQuestion: string | null) => void }) => {
+export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCreated, onShare, onSharePoll, autoOpenNewTopic }: { companyId: string; companyName: string; isOpen: boolean; onClose: () => void; onTopicCreated?: () => void; onShare?: (topicName: string | null) => void; onSharePoll?: (pollQuestion: string | null) => void; autoOpenNewTopic?: boolean }) => {
   const currentUser = useStore(s => s.currentUser)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -127,7 +127,18 @@ export const CompanyChat = ({ companyId, companyName, isOpen, onClose, onTopicCr
     }
 
     return () => stopPolling()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, companyId])
+
+  // Lets a caller (e.g. right after creating a WARN Act event) jump straight to the
+  // "New Topic" form instead of the admin having to open the actions menu themselves.
+  useEffect(() => {
+    if (isOpen && autoOpenNewTopic && !isLocked) {
+      setEditNameValue('')
+      setShowDurationPicker(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, autoOpenNewTopic, isLocked])
 
   useEffect(() => {
     if (!expiresAt) {
