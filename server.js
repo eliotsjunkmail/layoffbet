@@ -90,8 +90,8 @@ app.post('/api/admin/import', async (req, res) => {
       // check above and then crash on the DB's unique slug constraint when created.
       return companies.find(c => c.name.toLowerCase() === n || (c.aliases || []).some(a => a.toLowerCase() === n) || c.slug === s)
     }
-    const findEvent = (companyId, title) => events.find(e => e.companyId === companyId && e.title.toLowerCase() === (title || '').toLowerCase())
-    const findUser = (uname) => users.find(u => u.username && u.username.toLowerCase() === (uname || '').toLowerCase())
+    const findEvent = (companyId, title) => events.find(e => e.companyId === companyId && e.title.trim().toLowerCase() === (title || '').trim().toLowerCase())
+    const findUser = (uname) => users.find(u => u.username && u.username.trim().toLowerCase() === (uname || '').trim().toLowerCase())
 
     for (const item of items) {
       try {

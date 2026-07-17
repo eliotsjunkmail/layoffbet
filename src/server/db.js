@@ -69,7 +69,9 @@ const throwOnError = (error, ctx) => {
 export const db = {
   // ===== USERS =====
   async getUsers() {
-    const { data, error } = await supabase.from('users').select('*').order('created_at')
+    // Explicit limit overrides Supabase/PostgREST's default 1000-row cap, which would
+    // otherwise silently truncate results once the table grows past that.
+    const { data, error } = await supabase.from('users').select('*').order('created_at').limit(20000)
     throwOnError(error, 'getUsers')
     return (data || []).map(fromDb)
   },
@@ -152,7 +154,7 @@ export const db = {
 
   // ===== COMPANIES =====
   async getCompanies() {
-    const { data, error } = await supabase.from('companies').select('*').order('created_at')
+    const { data, error } = await supabase.from('companies').select('*').order('created_at').limit(20000)
     throwOnError(error, 'getCompanies')
     return (data || []).map(fromDb)
   },
@@ -224,7 +226,7 @@ export const db = {
 
   // ===== EVENTS =====
   async getEvents() {
-    const { data, error } = await supabase.from('events').select('*').order('created_at')
+    const { data, error } = await supabase.from('events').select('*').order('created_at').limit(20000)
     throwOnError(error, 'getEvents')
     return (data || []).map(fromDb)
   },
@@ -258,7 +260,7 @@ export const db = {
 
   // ===== BETS =====
   async getBets() {
-    const { data, error } = await supabase.from('bets').select('*').order('created_at')
+    const { data, error } = await supabase.from('bets').select('*').order('created_at').limit(20000)
     throwOnError(error, 'getBets')
     return (data || []).map(fromDb)
   },
@@ -294,7 +296,7 @@ export const db = {
 
   // ===== COMMENTS =====
   async getComments() {
-    const { data, error } = await supabase.from('comments').select('*').order('created_at')
+    const { data, error } = await supabase.from('comments').select('*').order('created_at').limit(20000)
     throwOnError(error, 'getComments')
     return (data || []).map(fromDb)
   },
@@ -379,7 +381,7 @@ export const db = {
 
   // ===== CHAT MESSAGES =====
   async getChatMessages(companyId) {
-    const { data, error } = await supabase.from('chat_messages').select('*').eq('company_id', companyId).order('created_at')
+    const { data, error } = await supabase.from('chat_messages').select('*').eq('company_id', companyId).order('created_at').limit(20000)
     throwOnError(error, 'getChatMessages')
     return (data || []).map(fromDb)
   },
@@ -432,7 +434,7 @@ export const db = {
 
   // ===== HIDDEN COMPANIES =====
   async getHiddenCompanyIds() {
-    const { data, error } = await supabase.from('hidden_company_ids').select('company_id')
+    const { data, error } = await supabase.from('hidden_company_ids').select('company_id').limit(20000)
     throwOnError(error, 'getHiddenCompanyIds')
     return (data || []).map(r => r.company_id)
   },
@@ -523,11 +525,11 @@ export const db = {
     // These tables were added after initial launch — fetched defensively (no throwOnError)
     // so a not-yet-migrated Supabase project degrades to empty data instead of failing the whole sync.
     const [{ data: chatMsgRows }, { data: favRows }, { data: upvoteRows }, { data: suggestionRows }, { data: moderationRows }] = await Promise.all([
-      supabase.from('chat_messages').select('*').order('created_at'),
-      supabase.from('favorites').select('*'),
-      supabase.from('comment_upvotes').select('*'),
-      supabase.from('company_suggestions').select('*').order('created_at'),
-      supabase.from('moderation_queue').select('*').order('created_at'),
+      supabase.from('chat_messages').select('*').order('created_at').limit(20000),
+      supabase.from('favorites').select('*').limit(20000),
+      supabase.from('comment_upvotes').select('*').limit(20000),
+      supabase.from('company_suggestions').select('*').order('created_at').limit(20000),
+      supabase.from('moderation_queue').select('*').order('created_at').limit(20000),
     ])
 
     const companySuggestions = (suggestionRows || []).map(fromDb)
@@ -605,6 +607,7 @@ export const db = {
       .from('bets')
       .select('id')
       .order('created_at', { ascending: true })
+      .limit(20000)
 
     if (fetchErr) throwOnError(fetchErr, 'fetchBets')
     if (!allBets || allBets.length <= keepCount) return
