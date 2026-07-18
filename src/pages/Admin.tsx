@@ -368,7 +368,8 @@ export const Admin = () => {
   const [showOnlyActive, setShowOnlyActive] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ name: '', description: '', industry: '', aliases: '' })
+  const [editForm, setEditForm] = useState<{ name: string; description: string; industry: string; aliases: string[] }>({ name: '', description: '', industry: '', aliases: [] })
+  const [showAliasesDropdown, setShowAliasesDropdown] = useState(false)
   const [showMergeForm, setShowMergeForm] = useState(false)
   const [mergePrimaryId, setMergePrimaryId] = useState('')
   const [mergeDuplicateIds, setMergeDuplicateIds] = useState<string[]>([])
@@ -452,14 +453,15 @@ export const Admin = () => {
 
   const startEditCompany = (company: typeof companies[0]) => {
     setEditingCompanyId(company.id)
-    setEditForm({ name: company.name, description: company.description || '', industry: company.industry || '', aliases: (company.aliases || []).join('; ') })
+    setEditForm({ name: company.name, description: company.description || '', industry: company.industry || '', aliases: company.aliases || [] })
+    setShowAliasesDropdown(false)
   }
 
   const saveEditCompany = async (companyId: string) => {
     if (!editForm.name.trim()) return
     setLoading(true)
     try {
-      const aliases = editForm.aliases.split(';').map(a => a.trim()).filter(Boolean)
+      const aliases = editForm.aliases.map(a => a.trim()).filter(Boolean)
       const response = await fetch(`/api/companies/${companyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -471,6 +473,7 @@ export const Admin = () => {
       }
       updateCompany(companyId, editForm.name.trim(), editForm.description.trim(), editForm.industry.trim(), aliases)
       setEditingCompanyId(null)
+      setShowAliasesDropdown(false)
       setMessage({ type: 'success', text: 'Company updated' })
       setTimeout(() => setMessage(null), 2000)
     } catch (err) {
@@ -1504,12 +1507,35 @@ export const Admin = () => {
                         </td>
                         <td className="px-2 py-3 text-sm text-gray-600 dark:text-slate-400 max-w-[160px]">
                           {isEditing ? (
-                            <input
-                              value={editForm.aliases}
-                              onChange={e => setEditForm(f => ({ ...f, aliases: e.target.value }))}
-                              placeholder="Alias 1; Alias 2"
-                              className="w-full bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none"
-                            />
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setShowAliasesDropdown(v => !v)}
+                                className="w-full text-left bg-white dark:bg-slate-700 border border-blue-400 rounded-lg px-2 py-1 text-sm text-gray-900 dark:text-white focus:outline-none truncate"
+                              >
+                                {editForm.aliases.length > 0 ? editForm.aliases.join(', ') : 'Select aliases…'}
+                              </button>
+                              {showAliasesDropdown && (
+                                <>
+                                  <div className="fixed inset-0 z-10" onClick={() => setShowAliasesDropdown(false)} />
+                                  <div className="absolute z-20 mt-1 w-56 max-h-56 overflow-y-auto bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg divide-y divide-gray-100 dark:divide-slate-700">
+                                    {companies.filter(c => c.id !== company.id).sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                                      <label key={c.id} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-900 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700">
+                                        <input
+                                          type="checkbox"
+                                          checked={editForm.aliases.includes(c.name)}
+                                          onChange={e => setEditForm(f => ({
+                                            ...f,
+                                            aliases: e.target.checked ? [...f.aliases, c.name] : f.aliases.filter(a => a !== c.name),
+                                          }))}
+                                        />
+                                        {c.name}
+                                      </label>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           ) : <span className="truncate block">{(company.aliases || []).join('; ') || '—'}</span>}
                         </td>
                         <td className="px-2 py-3 text-center text-sm text-gray-600 dark:text-slate-400">{activeEventsCount}</td>
@@ -1520,7 +1546,7 @@ export const Admin = () => {
                                 <button onClick={() => saveEditCompany(company.id)} disabled={loading} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50">
                                   <Check className="w-3.5 h-3.5" /> Save
                                 </button>
-                                <button onClick={() => setEditingCompanyId(null)} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                                <button onClick={() => { setEditingCompanyId(null); setShowAliasesDropdown(false) }} className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
                                   <X className="w-3.5 h-3.5" /> Cancel
                                 </button>
                               </>
