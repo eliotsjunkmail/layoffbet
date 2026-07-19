@@ -66,6 +66,11 @@ const throwOnError = (error, ctx) => {
   }
 }
 
+// PostgREST reports a table that hasn't been created yet (e.g. a project that predates a
+// feature added after launch) as PGRST205 with this message — distinguish that from a real
+// failure so callers can choose to no-op instead of blocking on it.
+const isMissingTableError = (error) => !!error && (error.code === 'PGRST205' || /Could not find the table/i.test(error.message || ''))
+
 // Supabase/PostgREST caps any single request at the project's configured max-rows (1000 by
 // default) no matter what .limit() the client asks for — so tables that can grow past that
 // have to be paged with .range() across multiple requests to actually return everything.
@@ -669,7 +674,7 @@ export const db = {
 
   async deleteAllComments() {
     const { error: upvoteErr } = await supabase.from('comment_upvotes').delete().neq('comment_id', '')
-    throwOnError(upvoteErr, 'deleteAllComments:upvotes')
+    if (upvoteErr && !isMissingTableError(upvoteErr)) throwOnError(upvoteErr, 'deleteAllComments:upvotes')
     const { error, count } = await supabase.from('comments').delete({ count: 'exact' }).neq('id', '')
     throwOnError(error, 'deleteAllComments')
     console.log(`[db] Deleted ${count ?? 0} comments`)
