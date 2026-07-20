@@ -748,6 +748,10 @@ app.post('/api/users/:id/share', async (req, res) => {
   try {
     const user = await db.getUserById(req.params.id)
     if (!user) return res.status(404).json({ error: 'User not found' })
+    // Attribute the share to a company too, when the share is of a company / its
+    // predictions / chat (best-effort, feeds per-company share analytics).
+    const { companyId } = req.body || {}
+    if (companyId) await db.incrementCompanyShares(companyId)
     res.json(await db.updateUser(req.params.id, { shareCount: (user.shareCount ?? 0) + 1 }))
   } catch (err) {
     res.status(500).json({ error: err.message })

@@ -239,7 +239,7 @@ export const EventDetail = () => {
       url,
     }
     recordShare(id!)
-    recordUserShare()
+    recordUserShare(event.companyId)
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
     } else {

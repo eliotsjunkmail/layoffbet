@@ -209,6 +209,19 @@ export const db = {
     throwOnError(error, 'incrementCompanyViews')
   },
 
+  // Best-effort +1 to a company's share count. Fully swallows errors so it no-ops (rather
+  // than failing the parent share request) until the companies.share_count column exists.
+  async incrementCompanyShares(companyId) {
+    if (!companyId) return
+    try {
+      const { data: row, error } = await supabase.from('companies').select('share_count').eq('id', companyId).maybeSingle()
+      if (error || !row) return
+      await supabase.from('companies').update({ share_count: (row.share_count || 0) + 1 }).eq('id', companyId)
+    } catch {
+      /* share_count column may not be migrated yet — ignore */
+    }
+  },
+
   async updateCompany(id, updates) {
     const { data, error } = await supabase.from('companies').update(toDb(updates, ['id'])).eq('id', id).select().maybeSingle()
     throwOnError(error, 'updateCompany')
@@ -775,9 +788,21 @@ export const db = {
       return { anonymous, registered: reg }
     }
 
+    // Shares are counters (users.share_count), not rows, so they're summed rather than
+    // split via splitByActor. Migrated anon tombstones are counted as registered so their
+    // past shares aren't lost and total == anonymous + registered.
+    let sharesAnon = 0, sharesReg = 0
+    for (const u of users) {
+      const cnt = u.shareCount || 0
+      if (!cnt) continue
+      if (u.isAnonymous && !isMigrated(u)) sharesAnon += cnt
+      else sharesReg += cnt
+    }
+    const sharesSplit = { anonymous: sharesAnon, registered: sharesReg }
+
     const actionTotals = {
       events: events.length, bets: bets.length, comments: comments.length,
-      chatMessages: chat.length, favorites: favorites.length,
+      chatMessages: chat.length, favorites: favorites.length, shares: sharesAnon + sharesReg,
     }
     const actionTotalsByType = {
       events: splitByActor(events.map(e => ({ userId: e.creatorId }))),
@@ -785,6 +810,7 @@ export const db = {
       comments: splitByActor(comments),
       chatMessages: splitByActor(chat),
       favorites: splitByActor(favorites),
+      shares: sharesSplit,
     }
 
     // Active users (distinct pinged user_ids in each window). Date strings are YYYY-MM-DD
@@ -838,7 +864,7 @@ export const db = {
 
     const companyStats = companies.map(c => {
       const s = perCompany[c.id] || { events: 0, bets: 0, comments: 0, chatMessages: 0, favorites: 0 }
-      return { id: c.id, name: c.name, slug: c.slug, clicks: c.viewCount || 0, ...s }
+      return { id: c.id, name: c.name, slug: c.slug, clicks: c.viewCount || 0, shares: c.shareCount || 0, ...s }
     }).sort((a, b) => b.clicks - a.clicks)
 
     return {

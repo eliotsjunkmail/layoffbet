@@ -56,7 +56,7 @@ interface StoreState {
   checkDailyCoins: () => void
   updateCoins: (amount: number) => void
   addCoin: () => Promise<void>
-  recordUserShare: () => void
+  recordUserShare: (companyId?: string) => void
   setTheme: (theme: Theme) => void
   setOnboardingCompany: (companyId: string) => void
   toggleFavoriteCompany: (companyId: string) => void
@@ -479,12 +479,12 @@ export const useStore = create<StoreState>()(
         }
       },
 
-      recordUserShare: () => {
+      recordUserShare: (companyId) => {
         const { currentUser, users } = get()
         const anonUserId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
         const userId = currentUser?.id || anonUserId || users.find(u => u.isAnonymous)?.id
         if (!userId) return
-        api.recordUserShare(userId)
+        api.recordUserShare(userId, companyId)
           .then(updated => {
             set(s => ({
               currentUser: s.currentUser?.id === updated.id ? updated : s.currentUser,

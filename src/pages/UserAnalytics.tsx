@@ -7,15 +7,15 @@ import { api } from '../services/api'
 
 // ---- payload shape (mirrors db.getAnalytics) ----
 interface Split { anonymous: number; registered: number }
-interface CompanyStat { id: string; name: string; slug: string; clicks: number; events: number; bets: number; comments: number; chatMessages: number; favorites: number }
+interface CompanyStat { id: string; name: string; slug: string; clicks: number; shares: number; events: number; bets: number; comments: number; chatMessages: number; favorites: number }
 interface Analytics {
   generatedAt: string
   rangeDays: number
   hasActivityData: boolean
   totals: { totalUsers: number; anonymousUsers: number; registeredUsers: number; admins: number }
   activeUsers: { dau: number; wau: number; mau: number }
-  actionTotals: { events: number; bets: number; comments: number; chatMessages: number; favorites: number }
-  actionTotalsByType: { events: Split; bets: Split; comments: Split; chatMessages: Split; favorites: Split }
+  actionTotals: { events: number; bets: number; comments: number; chatMessages: number; favorites: number; shares: number }
+  actionTotalsByType: { events: Split; bets: Split; comments: Split; chatMessages: Split; favorites: Split; shares: Split }
   series: {
     newUsers: { date: string; anonymous: number; registered: number }[]
     actions: { date: string; events: number; bets: number; comments: number; chatMessages: number }[]
@@ -220,9 +220,10 @@ const RankBars = ({ rows }: { rows: { label: string; value: number; split: Split
 }
 
 // ---- per-company stats: sortable, filterable, scrollable table ----
-type CompCol = 'clicks' | 'events' | 'bets' | 'comments' | 'chatMessages' | 'favorites'
+type CompCol = 'clicks' | 'shares' | 'events' | 'bets' | 'comments' | 'chatMessages' | 'favorites'
 const COMP_COLS: { key: CompCol; label: string }[] = [
   { key: 'clicks', label: 'Clicks' },
+  { key: 'shares', label: 'Shares' },
   { key: 'events', label: 'Events' },
   { key: 'bets', label: 'Bets' },
   { key: 'comments', label: 'Comments' },
@@ -386,6 +387,7 @@ export const UserAnalytics = () => {
               { label: 'Comments made', value: data.actionTotals.comments, split: data.actionTotalsByType.comments },
               { label: 'Chat messages sent', value: data.actionTotals.chatMessages, split: data.actionTotalsByType.chatMessages },
               { label: 'Companies favorited', value: data.actionTotals.favorites, split: data.actionTotalsByType.favorites },
+              { label: 'Shares', value: data.actionTotals.shares, split: data.actionTotalsByType.shares },
             ]} />
           </ChartCard>
 

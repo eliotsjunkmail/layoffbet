@@ -292,10 +292,11 @@ export const api = {
     return response.json()
   },
 
-  recordUserShare: async (userId: string) => {
+  recordUserShare: async (userId: string, companyId?: string) => {
     const response = await fetch(`${API_BASE}/api/users/${userId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyId }),
     })
     if (!response.ok) {
       throw new Error('Failed to record share')

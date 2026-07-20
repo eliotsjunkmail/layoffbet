@@ -699,7 +699,7 @@ export const Home = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      recordUserShare()
+                      recordUserShare(c.id)
                       const url = `${window.location.origin}/${c.slug}`
                       const text = `What's really happening? Insiders are betting on it at LayoffLive.com - ${c.name}`
                       if (navigator.share) {
@@ -942,7 +942,7 @@ export const Home = () => {
                 .catch(err => console.error('Failed to reload chat settings:', err))
             }}
             onShare={async (liveTopicName) => {
-              recordUserShare()
+              recordUserShare(topFavoritedCompany.id)
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
               const hasTopic = !!liveTopicName
               const text = hasTopic
@@ -957,7 +957,7 @@ export const Home = () => {
               }
             }}
             onSharePoll={async (pollQuestion) => {
-              recordUserShare()
+              recordUserShare(topFavoritedCompany.id)
               const url = `${window.location.origin}/${topFavoritedCompany.slug}?chat=open`
               const hasQuestion = !!pollQuestion
               const text = hasQuestion
