@@ -627,6 +627,9 @@ export const CompanyPage = () => {
                           ) : (
                             <p className="text-sm text-gray-900 dark:text-white font-medium leading-snug flex-1">
                               {event.isWarnActNotice && <WarnNoticeTag className="mr-1.5" />}
+                              {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
+                                <span className="inline-block align-middle mr-1.5 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                              )}
                               {event.title}
                             </p>
                           )}
@@ -669,9 +672,6 @@ export const CompanyPage = () => {
                                   </>
                                 )}
                               </>
-                            )}
-                            {prevVisitTimeRef.current && event.createdAt > prevVisitTimeRef.current && (
-                              <span className="flex-shrink-0 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                             )}
                           </div>
                         </div>

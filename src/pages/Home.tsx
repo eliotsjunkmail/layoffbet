@@ -768,10 +768,10 @@ export const Home = () => {
                           )}
                           <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2">
                             {e.isWarnActNotice && <WarnNoticeTag className="mr-1.5" />}
-                            {e.title}
                             {companyLastVisit[c.id] && e.createdAt > companyLastVisit[c.id] && (
-                              <span className="inline-block align-middle ml-1 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
+                              <span className="inline-block align-middle mr-1.5 text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-full">NEW</span>
                             )}
+                            {e.title}
                           </p>
                           <ProbabilityBar pct={pct} dominant={dominant} animate={justResolvedEventId === e.id || (e.isWarnActNotice && shouldAnimateWarnReveal(e.id))} />
                           <div className="flex items-center text-xs">
