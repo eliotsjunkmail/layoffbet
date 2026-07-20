@@ -21,7 +21,7 @@ export const PrivacyPolicy = () => {
       {[
         {
           title: 'Our Commitment to Anonymity',
-          body: 'Layoff Live is built anonymous-first. We do not require your real name, email address, employer, or any identifying information to create an account or participate. Your username is the only identity associated with your activity on this platform.',
+          body: 'Layoff Chat is built anonymous-first. We do not require your real name, email address, employer, or any identifying information to create an account or participate. Your username is the only identity associated with your activity on this platform.',
         },
         {
           title: 'Data We Collect',
@@ -60,7 +60,7 @@ export const PrivacyPolicy = () => {
         },
         {
           title: 'Anonymous Participation & Public Content',
-          body: 'Layoff Live is an anonymous open forum. The events, bets, comments, and chat messages you post — including those by current and former employees — are visible to other users and are not endorsed by us. We protect your anonymity by not attaching your real identity to this activity, but the content itself is public within the platform. Do not post personal or confidential information.',
+          body: 'Layoff Chat is an anonymous open forum. The events, bets, comments, and chat messages you post — including those by current and former employees — are visible to other users and are not endorsed by us. We protect your anonymity by not attaching your real identity to this activity, but the content itself is public within the platform. Do not post personal or confidential information.',
         },
         {
           title: 'Data Sharing',

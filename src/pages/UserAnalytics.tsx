@@ -468,7 +468,7 @@ export const UserAnalytics = () => {
           </ChartCard>
 
           <p className="text-xs text-gray-400 dark:text-slate-500 text-center">
-            All betting and event activity on Layoff Live is for amusement only, using virtual coins with no real-world value.
+            All betting and event activity on Layoff Chat is for amusement only, using virtual coins with no real-world value.
           </p>
         </div>
       )}

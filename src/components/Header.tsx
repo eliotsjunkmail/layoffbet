@@ -215,7 +215,7 @@ export const Header = () => {
             </div>
             <div className="flex items-baseline gap-0.5">
               <span className="font-semibold text-gray-600 dark:text-slate-300 text-[1.75rem] tracking-tight">Layoff</span>
-              <span className="font-black text-blue-600 dark:text-blue-400 text-[1.75rem] tracking-tight">Live</span>
+              <span className="font-black text-blue-600 dark:text-blue-400 text-[1.75rem] tracking-tight">Chat</span>
               <span className="text-xs text-gray-400 dark:text-slate-500 ml-2">{APP_VERSION}</span>
             </div>
           </Link>

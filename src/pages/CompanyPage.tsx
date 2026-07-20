@@ -387,8 +387,8 @@ export const CompanyPage = () => {
 
   useEffect(() => {
     if (!company) return
-    document.title = chatOpen ? `${company.name} Live Chat | Layoff Live` : `${company.name} | Layoff Live`
-    return () => { document.title = 'Layoff Live' }
+    document.title = chatOpen ? `${company.name} Live Chat | Layoff Chat` : `${company.name} | Layoff Chat`
+    return () => { document.title = 'Layoff Chat' }
   }, [company, chatOpen])
 
   useEffect(() => {
@@ -442,8 +442,8 @@ export const CompanyPage = () => {
     recordUserShare(company.id)
     const url = window.location.href
     const shareData = {
-      title: `${company.name} on Layoff Live`,
-      text: `What's really happening? Insiders are betting on it at LayoffLive.com - ${company.name}`,
+      title: `${company.name} on Layoff Chat`,
+      text: `What's really happening? Insiders are betting on it at LayoffChat.com - ${company.name}`,
       url,
     }
     if (navigator.share) {
@@ -461,9 +461,9 @@ export const CompanyPage = () => {
     const topicName = liveTopicName !== undefined ? liveTopicName : (chatExpiresAt && chatDisplayName !== `${company.name} Chat` ? chatDisplayName : null)
     const hasTopic = !!topicName
     const text = hasTopic
-      ? `Join the "${topicName}" discussion at LayoffLive.com - ${company.name}`
-      : `Join the live discussion at LayoffLive.com - ${company.name}`
-    const shareData = { title: hasTopic ? `"${topicName}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
+      ? `Join the "${topicName}" discussion at LayoffChat.com - ${company.name}`
+      : `Join the live discussion at LayoffChat.com - ${company.name}`
+    const shareData = { title: hasTopic ? `"${topicName}" — ${company.name} Chat on Layoff Chat` : `${company.name} Chat on Layoff Chat`, text, url }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
     } else {
@@ -477,9 +477,9 @@ export const CompanyPage = () => {
     const url = `${window.location.origin}/${company.slug}?chat=open`
     const hasQuestion = !!pollQuestion
     const text = hasQuestion
-      ? `Vote on "${pollQuestion}" at LayoffLive.com - ${company.name}`
-      : `Vote on this poll at LayoffLive.com - ${company.name}`
-    const shareData = { title: hasQuestion ? `"${pollQuestion}" — ${company.name} Chat on Layoff Live` : `${company.name} Chat on Layoff Live`, text, url }
+      ? `Vote on "${pollQuestion}" at LayoffChat.com - ${company.name}`
+      : `Vote on this poll at LayoffChat.com - ${company.name}`
+    const shareData = { title: hasQuestion ? `"${pollQuestion}" — ${company.name} Chat on Layoff Chat` : `${company.name} Chat on Layoff Chat`, text, url }
     if (navigator.share) {
       try { await navigator.share(shareData) } catch {}
     } else {

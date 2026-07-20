@@ -530,7 +530,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-semibold text-gray-600 dark:text-slate-300 tracking-tight">Layoff</span>
-                <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">Live</span>
+                <span className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">Chat</span>
               </div>
             </div>
             <div className="text-sm text-slate-400 tracking-wide uppercase">See it coming</div>
@@ -577,7 +577,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         <div className="text-center mt-6 space-y-3">
-          <p className="text-xs text-slate-500 leading-relaxed">For amusement only. All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling activity. An anonymous open forum; posts are user-generated and not endorsed by Layoff Live. Anonymous sessions and interactions are tracked for analytics.</p>
+          <p className="text-xs text-slate-500 leading-relaxed">For amusement only. All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling activity. An anonymous open forum; posts are user-generated and not endorsed by Layoff Chat. Anonymous sessions and interactions are tracked for analytics.</p>
           <p className="text-xs text-slate-600">{APP_VERSION}</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
@@ -639,10 +639,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               {policiesTab === 'guidelines' ? (
                 <>
                   <p className="text-gray-600 dark:text-slate-400">
-                    Layoff Live is an anonymous open forum built on good-faith participation. Current and former employees can post anonymously. These guidelines protect all users and keep the platform valuable and safe.
+                    Layoff Chat is an anonymous open forum built on good-faith participation. Current and former employees can post anonymously. These guidelines protect all users and keep the platform valuable and safe.
                   </p>
                   <p className="text-gray-600 dark:text-slate-400">
-                    <span className="font-semibold text-gray-900 dark:text-white">For amusement only.</span> All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling advice. Posts are user-generated and not endorsed by Layoff Live.
+                    <span className="font-semibold text-gray-900 dark:text-white">For amusement only.</span> All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling advice. Posts are user-generated and not endorsed by Layoff Chat.
                   </p>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
@@ -673,7 +673,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
                     <p className="text-gray-600 dark:text-slate-400">
-                      Layoff Live is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
+                      Layoff Chat is built anonymous-first. We do not require your real name, email address, employer, or any identifying information. Your username is the only identity associated with your activity.
                     </p>
                   </div>
                   <div>

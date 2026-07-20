@@ -70,8 +70,8 @@ export const EventDetail = () => {
 
   useEffect(() => {
     if (!event) return
-    document.title = `${event.title} | ${event.companyName} | Layoff Live`
-    return () => { document.title = 'Layoff Live' }
+    document.title = `${event.title} | ${event.companyName} | Layoff Chat`
+    return () => { document.title = 'Layoff Chat' }
   }, [event])
 
   // WARN notice events get a one-time reveal animation for the odds bar when the page
@@ -232,7 +232,7 @@ export const EventDetail = () => {
     const url = company
       ? `${window.location.origin}/${company.slug}/bet/${id}/${eventSlug}`
       : `${window.location.origin}/event/${id}`
-    const shareText = `"${event.title}" — ${prob.yes}% likely at LayoffLive.com - ${event.companyName}`
+    const shareText = `"${event.title}" — ${prob.yes}% likely at LayoffChat.com - ${event.companyName}`
     const shareData = {
       title: event.companyName,
       text: shareText,

@@ -130,7 +130,7 @@ export const Login = () => {
             <Link to="/" className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200 dark:shadow-blue-900/50">
               <TrendingUp className="w-7 h-7 text-white" />
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight">Layoff Live</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Layoff Chat</h1>
             <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Anonymous prediction markets</p>
           </div>
 
