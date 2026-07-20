@@ -14,6 +14,7 @@ interface Analytics {
   hasActivityData: boolean
   totals: { totalUsers: number; anonymousUsers: number; registeredUsers: number; admins: number }
   activeUsers: { dau: number; wau: number; mau: number }
+  activeInRange: number
   actionTotals: { events: number; bets: number; comments: number; chatMessages: number; favorites: number; shares: number }
   actionTotalsByType: { events: Split; bets: Split; comments: Split; chatMessages: Split; favorites: Split; shares: Split }
   series: {
@@ -310,6 +311,8 @@ export const UserAnalytics = () => {
     return () => { cancelled = true }
   }, [days, currentUser])
 
+  const rangeLabel = RANGES.find(r => r.days === days)?.label || `${days} days`
+
   const rangeButtons = (
     <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-700/50 rounded-lg p-0.5">
       {RANGES.map(r => (
@@ -347,25 +350,18 @@ export const UserAnalytics = () => {
 
       {data && !loading && (
         <div className="space-y-4">
-          {/* Totals */}
+          {/* Totals — the Active Users tile tracks the selected time range above */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatTile label="Total Users" value={data.totals.totalUsers} icon={Users} sub={`${fmt(data.totals.admins)} admin`} />
             <StatTile label="Anonymous" value={data.totals.anonymousUsers} icon={UserX} />
             <StatTile label="Registered" value={data.totals.registeredUsers} icon={UserCheck} />
-            <StatTile label="Active Today" value={data.activeUsers.dau} icon={Activity} sub="DAU" />
-          </div>
-
-          {/* Active users */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatTile label="DAU" value={data.activeUsers.dau} icon={Activity} sub="Daily active" />
-            <StatTile label="WAU" value={data.activeUsers.wau} icon={Activity} sub="Weekly active" />
-            <StatTile label="MAU" value={data.activeUsers.mau} icon={Activity} sub="Monthly active" />
+            <StatTile label="Active Users" value={data.activeInRange} icon={Activity} sub={`in last ${rangeLabel}`} />
           </div>
 
           {!data.hasActivityData && (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
               <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>Active-user metrics (DAU/WAU/MAU and the daily-active trend) begin accumulating from when activity tracking went live, so early numbers may read low. User counts and action history below are computed from all existing data.</span>
+              <span>Active-user metrics (the Active Users count and the daily-active trend) begin accumulating from when activity tracking went live, so early numbers may read low. User counts and action history below are computed from all existing data.</span>
             </div>
           )}
 

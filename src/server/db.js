@@ -825,6 +825,9 @@ export const db = {
       wau: distinctActive(offsetKey(6)),
       mau: distinctActive(offsetKey(29)),
     }
+    // Distinct users active within the selected time range (the metric the dashboard shows,
+    // so the "active users" number tracks the 7/30/90-day filter instead of a fixed window).
+    const activeInRange = distinctActive(windowStart)
 
     // Time series over the window.
     const seed = () => Object.fromEntries(windowKeys.map(k => [k, 0]))
@@ -878,6 +881,7 @@ export const db = {
         admins: admins.length,
       },
       activeUsers,
+      activeInRange,
       actionTotals,
       actionTotalsByType,
       series: {
