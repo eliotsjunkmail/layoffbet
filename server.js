@@ -1137,6 +1137,16 @@ app.get('/api/companies', async (req, res) => {
   }
 })
 
+// Records a company page view/click (feeds the per-company analytics). Best-effort.
+app.post('/api/companies/:id/view', async (req, res) => {
+  try {
+    await db.incrementCompanyViews(req.params.id)
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.post('/api/companies', async (req, res) => {
   try {
     const { username, password } = req.body

@@ -198,6 +198,17 @@ export const db = {
     return fromDb(data)
   },
 
+  // Best-effort +1 to a company's view/click count when its page is visited. Read-modify-write
+  // (a small amount of undercounting under heavy concurrency is fine for an analytics metric).
+  async incrementCompanyViews(companyId) {
+    if (!companyId) return
+    const { data: row, error: fetchErr } = await supabase.from('companies').select('view_count').eq('id', companyId).maybeSingle()
+    throwOnError(fetchErr, 'incrementCompanyViews:fetch')
+    if (!row) return
+    const { error } = await supabase.from('companies').update({ view_count: (row.view_count || 0) + 1 }).eq('id', companyId)
+    throwOnError(error, 'incrementCompanyViews')
+  },
+
   async updateCompany(id, updates) {
     const { data, error } = await supabase.from('companies').update(toDb(updates, ['id'])).eq('id', id).select().maybeSingle()
     throwOnError(error, 'updateCompany')
@@ -726,12 +737,12 @@ export const db = {
   async getAnalytics(days = 30) {
     const window = Math.max(1, Math.min(365, Number(days) || 30))
 
-    const [users, events, bets, comments] = await Promise.all([
-      this.getUsers(), this.getEvents(), this.getBets(), this.getComments(),
+    const [users, events, bets, comments, companies] = await Promise.all([
+      this.getUsers(), this.getEvents(), this.getBets(), this.getComments(), this.getCompanies(),
     ])
     const [chatRows, favRows, activityRows] = await Promise.all([
-      fetchAllRows(() => supabase.from('chat_messages').select('user_id, created_at'), 'getAnalytics:chat', { safe: true }),
-      fetchAllRows(() => supabase.from('favorites').select('user_id'), 'getAnalytics:favorites', { safe: true }),
+      fetchAllRows(() => supabase.from('chat_messages').select('user_id, created_at, company_id'), 'getAnalytics:chat', { safe: true }),
+      fetchAllRows(() => supabase.from('favorites').select('user_id, company_id'), 'getAnalytics:favorites', { safe: true }),
       fetchAllRows(() => supabase.from('user_activity').select('user_id, is_anonymous, active_date'), 'getAnalytics:activity', { safe: true }),
     ])
     const chat = (chatRows || []).map(fromDb) // -> { userId, createdAt }
@@ -813,6 +824,23 @@ export const db = {
     const activeByDay = Object.fromEntries(windowKeys.map(k => [k, new Set()]))
     for (const a of activity) if (activeByDay[a.active_date]) activeByDay[a.active_date].add(a.user_id)
 
+    // Per-company engagement (all-time). Clicks come from the company's view_count;
+    // bets/comments are attributed to a company via their event; chat & favorites via
+    // their own company_id.
+    const eventCompany = new Map(events.map(e => [e.id, e.companyId]))
+    const perCompany = {}
+    const ensureCo = (id) => (perCompany[id] || (perCompany[id] = { events: 0, bets: 0, comments: 0, chatMessages: 0, favorites: 0 }))
+    for (const e of events) if (e.companyId) ensureCo(e.companyId).events++
+    for (const b of bets) { const cid = eventCompany.get(b.eventId); if (cid) ensureCo(cid).bets++ }
+    for (const cm of comments) { const cid = cm.companyId || eventCompany.get(cm.eventId); if (cid) ensureCo(cid).comments++ }
+    for (const m of chat) if (m.companyId) ensureCo(m.companyId).chatMessages++
+    for (const f of favorites) if (f.company_id) ensureCo(f.company_id).favorites++
+
+    const companyStats = companies.map(c => {
+      const s = perCompany[c.id] || { events: 0, bets: 0, comments: 0, chatMessages: 0, favorites: 0 }
+      return { id: c.id, name: c.name, slug: c.slug, clicks: c.viewCount || 0, ...s }
+    }).sort((a, b) => b.clicks - a.clicks)
+
     return {
       generatedAt: new Date().toISOString(),
       rangeDays: window,
@@ -831,6 +859,7 @@ export const db = {
         actions: windowKeys.map(k => ({ date: k, events: actEvents[k], bets: actBets[k], comments: actComments[k], chatMessages: actChat[k] })),
         activeUsers: windowKeys.map(k => ({ date: k, count: activeByDay[k].size })),
       },
+      companyStats,
     }
   },
 }

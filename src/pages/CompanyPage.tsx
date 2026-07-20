@@ -392,7 +392,11 @@ export const CompanyPage = () => {
   }, [company, chatOpen])
 
   useEffect(() => {
-    if (company) markCompanyVisited(company.id)
+    if (company) {
+      markCompanyVisited(company.id)
+      // Record a click/view for per-company analytics (best-effort, once per company visit).
+      api.recordCompanyView(company.id)
+    }
   }, [company?.id])
 
   if (!company) return <Navigate to="/" replace />

@@ -326,6 +326,15 @@ export const api = {
     }
   },
 
+  // Best-effort company page view/click, feeds per-company analytics. Never throws.
+  recordCompanyView: async (companyId: string) => {
+    try {
+      await fetch(`${API_BASE}/api/companies/${companyId}/view`, { method: 'POST' })
+    } catch {
+      /* ignore — view count is non-critical */
+    }
+  },
+
   getAnalytics: async (username: string, password: string, days: number) => {
     const response = await fetch(`${API_BASE}/api/admin/analytics`, {
       method: 'POST',

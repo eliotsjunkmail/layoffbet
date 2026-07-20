@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, Users, UserCheck, UserX, Activity, Shield } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { ChevronLeft, Users, UserCheck, UserX, Activity, Shield, Search, ArrowUpDown } from 'lucide-react'
 import { Layout } from '../components/Layout'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
 
 // ---- payload shape (mirrors db.getAnalytics) ----
 interface Split { anonymous: number; registered: number }
+interface CompanyStat { id: string; name: string; slug: string; clicks: number; events: number; bets: number; comments: number; chatMessages: number; favorites: number }
 interface Analytics {
   generatedAt: string
   rangeDays: number
@@ -20,6 +21,7 @@ interface Analytics {
     actions: { date: string; events: number; bets: number; comments: number; chatMessages: number }[]
     activeUsers: { date: string; count: number }[]
   }
+  companyStats: CompanyStat[]
 }
 
 const RANGES = [
@@ -90,6 +92,7 @@ const StackedBars = ({ data }: { data: { date: string; anonymous: number; regist
   const [hover, setHover] = useState<number | null>(null)
   const VBW = 720, VBH = 200, padB = 22, padT = 8
   const n = data.length
+  if (n === 0) return <div className="h-32 flex items-center justify-center text-xs text-gray-400 dark:text-slate-500">No data in this range</div>
   const max = Math.max(1, ...data.map(d => d.anonymous + d.registered))
   const plotH = VBH - padB - padT
   const slot = VBW / n
@@ -147,6 +150,7 @@ const TrendArea = ({ data }: { data: { date: string; count: number }[] }) => {
   const [hover, setHover] = useState<number | null>(null)
   const VBW = 720, VBH = 200, padB = 22, padT = 8
   const n = data.length
+  if (n === 0) return <div className="h-32 flex items-center justify-center text-xs text-gray-400 dark:text-slate-500">No activity recorded yet</div>
   const max = Math.max(1, ...data.map(d => d.count))
   const plotH = VBH - padB - padT
   const x = (i: number) => n === 1 ? VBW / 2 : (i / (n - 1)) * VBW
@@ -211,6 +215,77 @@ const RankBars = ({ rows }: { rows: { label: string; value: number; split: Split
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ---- per-company stats: sortable, filterable, scrollable table ----
+type CompCol = 'clicks' | 'events' | 'bets' | 'comments' | 'chatMessages' | 'favorites'
+const COMP_COLS: { key: CompCol; label: string }[] = [
+  { key: 'clicks', label: 'Clicks' },
+  { key: 'events', label: 'Events' },
+  { key: 'bets', label: 'Bets' },
+  { key: 'comments', label: 'Comments' },
+  { key: 'chatMessages', label: 'Chat' },
+  { key: 'favorites', label: 'Favorites' },
+]
+
+const CompanyTable = ({ rows }: { rows: CompanyStat[] }) => {
+  const [sort, setSort] = useState<CompCol>('clicks')
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const base = q ? rows.filter(r => r.name.toLowerCase().includes(q)) : rows
+    return [...base].sort((a, b) => b[sort] - a[sort] || a.name.localeCompare(b.name))
+  }, [rows, query, sort])
+
+  const Th = ({ col }: { col: { key: CompCol; label: string } }) => (
+    <th className="px-2 py-2 text-right">
+      <button onClick={() => setSort(col.key)} className={`inline-flex items-center gap-1 font-medium transition-colors ${sort === col.key ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}>
+        {col.label}
+        <ArrowUpDown className="w-3 h-3 opacity-60" />
+      </button>
+    </th>
+  )
+
+  return (
+    <div>
+      <div className="relative mb-3">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Filter companies…"
+          className="w-full sm:w-64 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500"
+        />
+      </div>
+      <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-lg border border-gray-100 dark:border-slate-700">
+        <table className="w-full text-xs">
+          <thead className="sticky top-0 bg-gray-50 dark:bg-slate-700/60 backdrop-blur text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+            <tr>
+              <th className="px-2 py-2 text-left font-medium">Company</th>
+              {COMP_COLS.map(c => <Th key={c.key} col={c} />)}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+            {filtered.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/40">
+                <td className="px-2 py-2 max-w-[180px]">
+                  <Link to={`/${r.slug}`} className="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 truncate block">{r.name}</Link>
+                </td>
+                {COMP_COLS.map(c => (
+                  <td key={c.key} className={`px-2 py-2 text-right tabular-nums ${sort === c.key ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-600 dark:text-slate-300'}`}>{fmt(r[c.key])}</td>
+                ))}
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan={COMP_COLS.length + 1} className="px-2 py-6 text-center text-gray-400 dark:text-slate-500">No companies match “{query}”.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">{fmt(filtered.length)} compan{filtered.length === 1 ? 'y' : 'ies'} · sorted by {COMP_COLS.find(c => c.key === sort)?.label} · click a column to re-sort</p>
     </div>
   )
 }
@@ -312,6 +387,11 @@ export const UserAnalytics = () => {
               { label: 'Chat messages sent', value: data.actionTotals.chatMessages, split: data.actionTotalsByType.chatMessages },
               { label: 'Companies favorited', value: data.actionTotals.favorites, split: data.actionTotalsByType.favorites },
             ]} />
+          </ChartCard>
+
+          {/* Per-company breakdown */}
+          <ChartCard title="Stats by Company">
+            <CompanyTable rows={data.companyStats || []} />
           </ChartCard>
 
           <p className="text-xs text-gray-400 dark:text-slate-500 text-center">
