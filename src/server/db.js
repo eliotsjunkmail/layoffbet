@@ -892,4 +892,96 @@ export const db = {
       companyStats,
     }
   },
+
+  // Drill-down for a single analytics metric: returns the underlying items (id + labels)
+  // behind a headline number, so an admin can click a tile/row and see, e.g., the ids of the
+  // users who were active. Capped so a huge table (bets/favorites) can't return unbounded.
+  async getAnalyticsDetail(metric, days = 30) {
+    const CAP = 1000
+    const window = Math.max(1, Math.min(365, Number(days) || 30))
+    const users = await this.getUsers()
+    const isMigrated = (u) => u.migrated === true || !!u.migratedToUserId
+    const fmtDate = (iso) => { try { return new Date(iso).toISOString().slice(0, 10) } catch { return '' } }
+    const userById = new Map(users.map(u => [u.id, u]))
+    const kindOf = (u) => u ? (u.isAdmin ? 'admin' : (u.isAnonymous ? 'anonymous' : 'registered')) : 'unknown'
+    const nameOf = (u, id) => (u && (u.username || u.displayName)) || id
+    const cap = (items) => ({ metric, total: items.length, truncated: items.length > CAP, items: items.slice(0, CAP) })
+
+    if (metric === 'totalUsers' || metric === 'anonymousUsers' || metric === 'registeredUsers') {
+      let list = users.filter(u => !isMigrated(u))
+      if (metric === 'anonymousUsers') list = list.filter(u => u.isAnonymous)
+      else if (metric === 'registeredUsers') list = users.filter(u => !u.isAnonymous)
+      const items = list
+        .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .map(u => ({ id: u.id, primary: nameOf(u, u.id), secondary: `${kindOf(u)} · joined ${fmtDate(u.createdAt)}` }))
+      return cap(items)
+    }
+
+    if (metric === 'activeUsers') {
+      const todayKey = new Date().toISOString().slice(0, 10)
+      const base = new Date(todayKey + 'T00:00:00Z')
+      const windowStart = new Date(base.getTime() - (window - 1) * 86400000).toISOString().slice(0, 10)
+      const activity = await fetchAllRows(() => supabase.from('user_activity').select('user_id, active_date'), 'detail:activity', { safe: true })
+      const lastById = {}
+      for (const a of (activity || [])) {
+        if (a.active_date >= windowStart && (!lastById[a.user_id] || a.active_date > lastById[a.user_id])) lastById[a.user_id] = a.active_date
+      }
+      const items = Object.keys(lastById)
+        .sort((a, b) => lastById[b].localeCompare(lastById[a]))
+        .map(uid => { const u = userById.get(uid); return { id: uid, primary: nameOf(u, uid), secondary: `${kindOf(u)} · last active ${lastById[uid]}` } })
+      return cap(items)
+    }
+
+    if (metric === 'shares') {
+      const items = users.filter(u => (u.shareCount || 0) > 0)
+        .sort((a, b) => (b.shareCount || 0) - (a.shareCount || 0))
+        .map(u => ({ id: u.id, primary: nameOf(u, u.id), secondary: `${u.shareCount} share${u.shareCount === 1 ? '' : 's'} · ${kindOf(u)}` }))
+      return cap(items)
+    }
+
+    if (metric === 'events') {
+      const events = await this.getEvents()
+      const items = events.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .map(e => ({ id: e.id, primary: e.title, secondary: `${e.companyName || ''} · ${fmtDate(e.createdAt)}` }))
+      return cap(items)
+    }
+
+    if (metric === 'bets') {
+      const [events, bets] = await Promise.all([this.getEvents(), this.getBets()])
+      const evTitle = new Map(events.map(e => [e.id, e.title]))
+      const items = bets.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .map(b => ({ id: b.id, primary: `${String(b.side || '').toUpperCase()} ${b.amount || 0} — ${evTitle.get(b.eventId) || b.eventId}`, secondary: `${nameOf(userById.get(b.userId), b.userId)} · ${fmtDate(b.createdAt)}` }))
+      return cap(items)
+    }
+
+    if (metric === 'comments') {
+      const comments = await this.getComments()
+      const items = comments.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .map(c => ({ id: c.id, primary: String(c.content || '').slice(0, 90), secondary: `${nameOf(userById.get(c.userId), c.userId)} · ${fmtDate(c.createdAt)}` }))
+      return cap(items)
+    }
+
+    if (metric === 'chatMessages') {
+      const [rows, companies] = await Promise.all([
+        fetchAllRows(() => supabase.from('chat_messages').select('id, user_id, company_id, text, created_at'), 'detail:chat', { safe: true }),
+        this.getCompanies(),
+      ])
+      const coName = new Map(companies.map(c => [c.id, c.name]))
+      const items = (rows || []).map(fromDb).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .map(m => ({ id: m.id, primary: String(m.text || '').slice(0, 90), secondary: `${nameOf(userById.get(m.userId), m.userId)} · ${coName.get(m.companyId) || ''} · ${fmtDate(m.createdAt)}` }))
+      return cap(items)
+    }
+
+    if (metric === 'favorites') {
+      const [rows, companies] = await Promise.all([
+        fetchAllRows(() => supabase.from('favorites').select('user_id, company_id'), 'detail:favorites', { safe: true }),
+        this.getCompanies(),
+      ])
+      const coName = new Map(companies.map(c => [c.id, c.name]))
+      const items = (rows || []).map((f, i) => ({ id: `${f.user_id}:${f.company_id}:${i}`, primary: coName.get(f.company_id) || f.company_id, secondary: nameOf(userById.get(f.user_id), f.user_id) }))
+      return cap(items)
+    }
+
+    return { metric, total: 0, truncated: false, items: [] }
+  },
 }

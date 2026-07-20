@@ -349,6 +349,19 @@ export const api = {
     return response.json()
   },
 
+  getAnalyticsDetail: async (username: string, password: string, metric: string, days: number) => {
+    const response = await fetch(`${API_BASE}/api/admin/analytics/detail`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, metric, days }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to fetch details')
+    }
+    return response.json()
+  },
+
   // Chat message endpoints
   getChatMessages: async (companyId: string) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat`)

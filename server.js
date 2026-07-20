@@ -549,6 +549,22 @@ app.post('/api/admin/analytics', async (req, res) => {
   }
 })
 
+// Drill-down list behind a single analytics metric (admin only).
+app.post('/api/admin/analytics/detail', async (req, res) => {
+  try {
+    const { username, password, metric, days } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+    if (!metric) return res.status(400).json({ error: 'metric required' })
+
+    const detail = await db.getAnalyticsDetail(metric, days)
+    res.json(detail)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== USERS =====
 app.post('/api/users/register', async (req, res) => {
   try {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Users, UserCheck, UserX, Activity, Shield, Search, ArrowUpDown } from 'lucide-react'
+import { ChevronLeft, Users, UserCheck, UserX, Activity, Shield, Search, ArrowUpDown, ArrowDown, X, ChevronRight } from 'lucide-react'
 import { Layout } from '../components/Layout'
 import { useStore } from '../store/useStore'
 import { api } from '../services/api'
@@ -56,15 +56,22 @@ const shortDate = (iso: string) => {
 }
 
 // ---- stat tile ----
-const StatTile = ({ label, value, sub, icon: Icon }: { label: string; value: number; sub?: string; icon: React.ComponentType<{ className?: string }> }) => (
-  <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4">
-    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-      <Icon className="w-3.5 h-3.5" /> {label}
-    </div>
-    <div className="mt-1.5 text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{fmt(value)}</div>
-    {sub && <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{sub}</div>}
-  </div>
-)
+const StatTile = ({ label, value, sub, icon: Icon, onClick }: { label: string; value: number; sub?: string; icon: React.ComponentType<{ className?: string }>; onClick?: () => void }) => {
+  const inner = (
+    <>
+      <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+        <Icon className="w-3.5 h-3.5" /> {label}
+        {onClick && <ChevronRight className="w-3.5 h-3.5 ml-auto text-gray-300 dark:text-slate-600" />}
+      </div>
+      <div className="mt-1.5 text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{fmt(value)}</div>
+      {sub && <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{sub}</div>}
+    </>
+  )
+  const cls = 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 text-left w-full'
+  return onClick
+    ? <button onClick={onClick} className={`${cls} hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all`}>{inner}</button>
+    : <div className={cls}>{inner}</div>
+}
 
 const Legend = ({ items }: { items: { color: string; label: string }[] }) => (
   <div className="flex items-center gap-4 flex-wrap">
@@ -195,27 +202,91 @@ const TrendArea = ({ data }: { data: { date: string; count: number }[] }) => {
 }
 
 // ---- horizontal ranked bars (action totals, single hue + value labels) ----
-const RankBars = ({ rows }: { rows: { label: string; value: number; split: Split }[] }) => {
+const RankBars = ({ rows, onSelect }: { rows: { label: string; value: number; split: Split; metric: string }[]; onSelect?: (metric: string, label: string) => void }) => {
   const c = useColors()
   const max = Math.max(1, ...rows.map(r => r.value))
   return (
-    <div className="space-y-3">
-      {rows.map(r => (
-        <div key={r.label}>
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-medium text-gray-700 dark:text-slate-300">{r.label}</span>
-            <span className="tabular-nums text-gray-500 dark:text-slate-400">
-              {fmt(r.value)}
-              <span className="text-gray-400 dark:text-slate-500"> · {fmt(r.split.anonymous)} anon / {fmt(r.split.registered)} reg</span>
-            </span>
+    <div className="space-y-1">
+      {rows.map(r => {
+        const body = (
+          <>
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="font-medium text-gray-700 dark:text-slate-300 flex items-center gap-1">
+                {r.label}
+                {onSelect && <ChevronRight className="w-3 h-3 text-gray-300 dark:text-slate-600" />}
+              </span>
+              <span className="tabular-nums text-gray-500 dark:text-slate-400">
+                {fmt(r.value)}
+                <span className="text-gray-400 dark:text-slate-500"> · {fmt(r.split.anonymous)} anon / {fmt(r.split.registered)} reg</span>
+              </span>
+            </div>
+            {/* stacked anon/registered proportion within the bar */}
+            <div className="h-2.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden flex" style={{ width: `${Math.max(4, (r.value / max) * 100)}%` }}>
+              <div style={{ background: c.anon, width: r.value ? `${(r.split.anonymous / r.value) * 100}%` : '0%' }} />
+              <div style={{ background: c.reg, width: r.value ? `${(r.split.registered / r.value) * 100}%` : '0%' }} />
+            </div>
+          </>
+        )
+        return onSelect
+          ? <button key={r.label} onClick={() => onSelect(r.metric, r.label)} className="block w-full text-left px-2 py-1.5 -mx-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">{body}</button>
+          : <div key={r.label} className="px-2 py-1.5">{body}</div>
+      })}
+    </div>
+  )
+}
+
+// ---- metric drill-down modal: the items behind a headline number ----
+interface DetailItem { id: string; primary: string; secondary: string }
+const DetailModal = ({ title, metric, days, username, password, onClose }: { title: string; metric: string; days: number; username: string; password: string; onClose: () => void }) => {
+  const [data, setData] = useState<{ items: DetailItem[]; total: number; truncated: boolean } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [q, setQ] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true); setError('')
+    api.getAnalyticsDetail(username, password, metric, days)
+      .then(d => { if (!cancelled) { setData(d); setLoading(false) } })
+      .catch(e => { if (!cancelled) { setError(e instanceof Error ? e.message : 'Failed to load'); setLoading(false) } })
+    return () => { cancelled = true }
+  }, [metric, days, username, password])
+
+  const items = useMemo(() => {
+    if (!data) return []
+    const s = q.trim().toLowerCase()
+    return s ? data.items.filter(it => it.primary.toLowerCase().includes(s) || it.secondary.toLowerCase().includes(s) || it.id.toLowerCase().includes(s)) : data.items
+  }, [data, q])
+
+  return (
+    <div className="fixed inset-0 z-[70] bg-black/50 flex items-end sm:items-center justify-center sm:p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
+            {data && <p className="text-xs text-gray-400 dark:text-slate-500">{fmt(data.total)} total{data.truncated ? ` · showing first ${fmt(data.items.length)}` : ''}</p>}
           </div>
-          {/* stacked anon/registered proportion within the bar */}
-          <div className="h-2.5 w-full rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden flex" style={{ width: `${Math.max(4, (r.value / max) * 100)}%` }}>
-            <div style={{ background: c.anon, width: r.value ? `${(r.split.anonymous / r.value) * 100}%` : '0%' }} />
-            <div style={{ background: c.reg, width: r.value ? `${(r.split.registered / r.value) * 100}%` : '0%' }} />
+          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="p-3 border-b border-gray-100 dark:border-slate-800">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Filter…" className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-blue-500" />
           </div>
         </div>
-      ))}
+        <div className="overflow-y-auto flex-1 p-2">
+          {loading && <div className="py-10 text-center text-sm text-gray-400 dark:text-slate-500">Loading…</div>}
+          {error && !loading && <div className="py-6 text-center text-sm text-rose-500">{error}</div>}
+          {data && !loading && items.length === 0 && <div className="py-10 text-center text-sm text-gray-400 dark:text-slate-500">Nothing to show.</div>}
+          {data && !loading && items.map(it => (
+            <div key={it.id} className="px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
+              <div className="text-sm text-gray-900 dark:text-white break-words">{it.primary}</div>
+              <div className="text-xs text-gray-500 dark:text-slate-400 break-words">{it.secondary}</div>
+              <div className="text-[10px] font-mono text-gray-400 dark:text-slate-600 break-all mt-0.5">{it.id}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -246,7 +317,7 @@ const CompanyTable = ({ rows }: { rows: CompanyStat[] }) => {
     <th className="px-2 py-2 text-right">
       <button onClick={() => setSort(col.key)} className={`inline-flex items-center gap-1 font-medium transition-colors ${sort === col.key ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}>
         {col.label}
-        <ArrowUpDown className="w-3 h-3 opacity-60" />
+        {sort === col.key ? <ArrowDown className="w-3 h-3" /> : <ArrowUpDown className="w-3 h-3 opacity-50" />}
       </button>
     </th>
   )
@@ -300,6 +371,7 @@ export const UserAnalytics = () => {
   const [data, setData] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [detail, setDetail] = useState<{ metric: string; title: string } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -350,12 +422,13 @@ export const UserAnalytics = () => {
 
       {data && !loading && (
         <div className="space-y-4">
-          {/* Totals — the Active Users tile tracks the selected time range above */}
+          {/* Totals — the Active Users tile tracks the selected time range above.
+              Every tile is clickable to drill into the underlying users. */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatTile label="Total Users" value={data.totals.totalUsers} icon={Users} sub={`${fmt(data.totals.admins)} admin`} />
-            <StatTile label="Anonymous" value={data.totals.anonymousUsers} icon={UserX} />
-            <StatTile label="Registered" value={data.totals.registeredUsers} icon={UserCheck} />
-            <StatTile label="Active Users" value={data.activeInRange} icon={Activity} sub={`in last ${rangeLabel}`} />
+            <StatTile label="Total Users" value={data.totals.totalUsers} icon={Users} sub={`${fmt(data.totals.admins)} admin`} onClick={() => setDetail({ metric: 'totalUsers', title: 'All users' })} />
+            <StatTile label="Anonymous" value={data.totals.anonymousUsers} icon={UserX} onClick={() => setDetail({ metric: 'anonymousUsers', title: 'Anonymous users' })} />
+            <StatTile label="Registered" value={data.totals.registeredUsers} icon={UserCheck} onClick={() => setDetail({ metric: 'registeredUsers', title: 'Registered users' })} />
+            <StatTile label="Active Users" value={data.activeInRange} icon={Activity} sub={`in last ${rangeLabel}`} onClick={() => setDetail({ metric: 'activeUsers', title: `Active users · last ${rangeLabel}` })} />
           </div>
 
           {!data.hasActivityData && (
@@ -377,14 +450,16 @@ export const UserAnalytics = () => {
 
           {/* Action frequencies */}
           <ChartCard title="Platform Actions (all-time)" right={<Legend items={[{ color: colors.anon, label: 'Anonymous' }, { color: colors.reg, label: 'Registered' }]} />}>
-            <RankBars rows={[
-              { label: 'Betting events created', value: data.actionTotals.events, split: data.actionTotalsByType.events },
-              { label: 'Bets placed', value: data.actionTotals.bets, split: data.actionTotalsByType.bets },
-              { label: 'Comments made', value: data.actionTotals.comments, split: data.actionTotalsByType.comments },
-              { label: 'Chat messages sent', value: data.actionTotals.chatMessages, split: data.actionTotalsByType.chatMessages },
-              { label: 'Companies favorited', value: data.actionTotals.favorites, split: data.actionTotalsByType.favorites },
-              { label: 'Shares', value: data.actionTotals.shares, split: data.actionTotalsByType.shares },
-            ]} />
+            <RankBars
+              onSelect={(metric, label) => setDetail({ metric, title: label })}
+              rows={[
+                { label: 'Betting events created', metric: 'events', value: data.actionTotals.events, split: data.actionTotalsByType.events },
+                { label: 'Bets placed', metric: 'bets', value: data.actionTotals.bets, split: data.actionTotalsByType.bets },
+                { label: 'Comments made', metric: 'comments', value: data.actionTotals.comments, split: data.actionTotalsByType.comments },
+                { label: 'Chat messages sent', metric: 'chatMessages', value: data.actionTotals.chatMessages, split: data.actionTotalsByType.chatMessages },
+                { label: 'Companies favorited', metric: 'favorites', value: data.actionTotals.favorites, split: data.actionTotalsByType.favorites },
+                { label: 'Shares', metric: 'shares', value: data.actionTotals.shares, split: data.actionTotalsByType.shares },
+              ]} />
           </ChartCard>
 
           {/* Per-company breakdown */}
@@ -396,6 +471,17 @@ export const UserAnalytics = () => {
             All betting and event activity on Layoff Live is for amusement only, using virtual coins with no real-world value.
           </p>
         </div>
+      )}
+
+      {detail && (
+        <DetailModal
+          title={detail.title}
+          metric={detail.metric}
+          days={days}
+          username={currentUser?.username || ''}
+          password={currentUser?.password || ''}
+          onClose={() => setDetail(null)}
+        />
       )}
     </Layout>
   )
