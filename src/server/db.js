@@ -700,4 +700,137 @@ export const db = {
     console.log(`[db] Deleted ${count ?? 0} bets and reset all event pools`)
     return { deleted: count ?? 0 }
   },
+
+  // ===== ANALYTICS =====
+  // Records that a user (registered or anonymous) was active today. One row per
+  // (user_id, active_date) so DAU/WAU/MAU can be computed as distinct active users in a
+  // window. The `user_activity` table is added-after-launch, so a missing table is a no-op
+  // rather than an error (mirrors the deleteAllComments / getAllSyncData safe patterns).
+  async recordActivity(userId, isAnonymous) {
+    if (!userId) return
+    const today = new Date().toISOString().slice(0, 10)
+    const { error } = await supabase
+      .from('user_activity')
+      .upsert(
+        { user_id: userId, is_anonymous: !!isAnonymous, active_date: today, last_seen_at: new Date().toISOString() },
+        { onConflict: 'user_id,active_date' }
+      )
+    if (error && !isMissingTableError(error)) throwOnError(error, 'recordActivity')
+  },
+
+  // Computes the full admin analytics payload for the last `days` days. Action counts and
+  // growth are derived from the existing tables' created_at timestamps (no duplicate
+  // logging); DAU/WAU/MAU come from the user_activity ping table. Anonymous vs registered
+  // is derived from users.is_anonymous, and migrated anon rows (tombstoned when an anon
+  // registers) are excluded so a user isn't double-counted.
+  async getAnalytics(days = 30) {
+    const window = Math.max(1, Math.min(365, Number(days) || 30))
+
+    const [users, events, bets, comments] = await Promise.all([
+      this.getUsers(), this.getEvents(), this.getBets(), this.getComments(),
+    ])
+    const [chatRows, favRows, activityRows] = await Promise.all([
+      fetchAllRows(() => supabase.from('chat_messages').select('user_id, created_at'), 'getAnalytics:chat', { safe: true }),
+      fetchAllRows(() => supabase.from('favorites').select('user_id'), 'getAnalytics:favorites', { safe: true }),
+      fetchAllRows(() => supabase.from('user_activity').select('user_id, is_anonymous, active_date'), 'getAnalytics:activity', { safe: true }),
+    ])
+    const chat = (chatRows || []).map(fromDb) // -> { userId, createdAt }
+    const favorites = favRows || []
+    const activity = activityRows || []
+
+    const dayKey = (iso) => { try { return new Date(iso).toISOString().slice(0, 10) } catch { return null } }
+    const todayKey = new Date().toISOString().slice(0, 10)
+    const base = new Date(todayKey + 'T00:00:00Z')
+    const offsetKey = (n) => new Date(base.getTime() - n * 86400000).toISOString().slice(0, 10)
+
+    // Ordered date keys for the selected window (oldest -> newest, ending today).
+    const windowKeys = []
+    for (let i = window - 1; i >= 0; i--) windowKeys.push(offsetKey(i))
+    const windowStart = windowKeys[0]
+
+    const isMigrated = (u) => u.migrated === true || !!u.migratedToUserId
+    const liveAnon = users.filter(u => u.isAnonymous && !isMigrated(u))
+    const registered = users.filter(u => !u.isAnonymous)
+    const admins = users.filter(u => u.isAdmin)
+
+    const isAnonById = new Map(users.map(u => [u.id, !!u.isAnonymous]))
+    const splitByActor = (rows) => {
+      let anonymous = 0, reg = 0
+      for (const r of rows) {
+        const flag = isAnonById.get(r.userId ?? r.user_id)
+        if (flag === true) anonymous++
+        else if (flag === false) reg++
+      }
+      return { anonymous, registered: reg }
+    }
+
+    const actionTotals = {
+      events: events.length, bets: bets.length, comments: comments.length,
+      chatMessages: chat.length, favorites: favorites.length,
+    }
+    const actionTotalsByType = {
+      events: splitByActor(events.map(e => ({ userId: e.creatorId }))),
+      bets: splitByActor(bets),
+      comments: splitByActor(comments),
+      chatMessages: splitByActor(chat),
+      favorites: splitByActor(favorites),
+    }
+
+    // Active users (distinct pinged user_ids in each window). Date strings are YYYY-MM-DD
+    // so lexical comparison is chronological.
+    const distinctActive = (fromKey) => {
+      const set = new Set()
+      for (const a of activity) if (a.active_date >= fromKey) set.add(a.user_id)
+      return set.size
+    }
+    const activeUsers = {
+      dau: distinctActive(todayKey),
+      wau: distinctActive(offsetKey(6)),
+      mau: distinctActive(offsetKey(29)),
+    }
+
+    // Time series over the window.
+    const seed = () => Object.fromEntries(windowKeys.map(k => [k, 0]))
+    const newUsersAnon = seed(), newUsersReg = seed()
+    for (const u of users) {
+      const k = dayKey(u.createdAt)
+      if (k == null || k < windowStart || k > todayKey) continue
+      if (u.isAnonymous && !isMigrated(u)) newUsersAnon[k]++
+      else if (!u.isAnonymous) newUsersReg[k]++
+    }
+    const actEvents = seed(), actBets = seed(), actComments = seed(), actChat = seed()
+    const bucket = (rows, target, field) => {
+      for (const r of rows) {
+        const k = dayKey(r[field])
+        if (k != null && target[k] !== undefined) target[k]++
+      }
+    }
+    bucket(events, actEvents, 'createdAt')
+    bucket(bets, actBets, 'createdAt')
+    bucket(comments, actComments, 'createdAt')
+    bucket(chat, actChat, 'createdAt')
+
+    const activeByDay = Object.fromEntries(windowKeys.map(k => [k, new Set()]))
+    for (const a of activity) if (activeByDay[a.active_date]) activeByDay[a.active_date].add(a.user_id)
+
+    return {
+      generatedAt: new Date().toISOString(),
+      rangeDays: window,
+      hasActivityData: activity.length > 0,
+      totals: {
+        totalUsers: liveAnon.length + registered.length,
+        anonymousUsers: liveAnon.length,
+        registeredUsers: registered.length,
+        admins: admins.length,
+      },
+      activeUsers,
+      actionTotals,
+      actionTotalsByType,
+      series: {
+        newUsers: windowKeys.map(k => ({ date: k, anonymous: newUsersAnon[k], registered: newUsersReg[k] })),
+        actions: windowKeys.map(k => ({ date: k, events: actEvents[k], bets: actBets[k], comments: actComments[k], chatMessages: actChat[k] })),
+        activeUsers: windowKeys.map(k => ({ date: k, count: activeByDay[k].size })),
+      },
+    }
+  },
 }

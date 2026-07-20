@@ -31,12 +31,19 @@ export const ContentGuidelines = () => {
 
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Content Guidelines</h1>
       <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
-        Layoff Live is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+        Layoff Live is an anonymous open forum built on good-faith participation. Current and former employees can post anonymously. These guidelines protect all users and keep the platform valuable and safe.
       </p>
 
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
-        <p className="text-sm text-amber-800 dark:text-amber-300">
-          This site is for entertainment purposes only
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+        <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+          <span className="font-semibold">For amusement only.</span> All predictions and bets use virtual coins with no real-world or monetary value. Nothing here is financial, legal, or gambling advice, and no real wagering takes place.
+        </p>
+      </div>
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+        <h2 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">Anonymous open forum</h2>
+        <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">
+          Posts, comments, events and chat messages are user-generated. Layoff Live is a neutral forum and does not verify, adopt, or endorse any claim made about a specific company or individual. Content is moderated for the standards below, and admins may remove anything that violates them, but moderation does not imply endorsement. Treat everything here as unverified opinion.
         </p>
       </div>
 

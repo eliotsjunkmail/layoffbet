@@ -520,6 +520,35 @@ app.post('/api/admin/delete-all-bets', async (req, res) => {
   }
 })
 
+// ===== ANALYTICS =====
+// Records that the current viewer (registered or anonymous) is active today. Open to any
+// identified viewer — best-effort, called from the client on load and periodically.
+app.post('/api/activity/ping', async (req, res) => {
+  try {
+    const { userId, isAnonymous } = req.body
+    if (!userId) return res.status(400).json({ error: 'userId required' })
+    await db.recordActivity(userId, isAnonymous)
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Admin-only aggregated analytics for the User Analytics dashboard.
+app.post('/api/admin/analytics', async (req, res) => {
+  try {
+    const { username, password, days } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    const analytics = await db.getAnalytics(days)
+    res.json(analytics)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ===== USERS =====
 app.post('/api/users/register', async (req, res) => {
   try {

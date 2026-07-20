@@ -312,6 +312,33 @@ export const api = {
     return response.json()
   },
 
+  // Analytics: best-effort "I'm active today" ping. Never throws — analytics must not
+  // disrupt the app if the endpoint or the user_activity table isn't available.
+  pingActivity: async (userId: string, isAnonymous: boolean) => {
+    try {
+      await fetch(`${API_BASE}/api/activity/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, isAnonymous }),
+      })
+    } catch {
+      /* ignore — activity ping is non-critical */
+    }
+  },
+
+  getAnalytics: async (username: string, password: string, days: number) => {
+    const response = await fetch(`${API_BASE}/api/admin/analytics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, days }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to fetch analytics')
+    }
+    return response.json()
+  },
+
   // Chat message endpoints
   getChatMessages: async (companyId: string) => {
     const response = await fetch(`${API_BASE}/api/companies/${companyId}/chat`)

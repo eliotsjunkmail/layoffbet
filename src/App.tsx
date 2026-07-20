@@ -433,9 +433,12 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         const user = data
         console.log('[Gate] Successfully created anonymous user:', user.username, user.id)
 
-        // Store in localStorage
+        // Store in localStorage. Persist the anon id under the key the migration path reads
+        // (`lb-anon-user-id`) so that if this anonymous visitor later registers, their bets,
+        // favorites and history are transitioned onto the new registered account.
         console.log('[Gate] Storing user in localStorage...')
         localStorage.setItem('layoff-bets-currentUser', JSON.stringify(user))
+        localStorage.setItem('lb-anon-user-id', user.id)
 
         // Don't lock the gate permanently - allow others to enter
         // localStorage.setItem(GATE_KEY, '1')
@@ -574,7 +577,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         <div className="text-center mt-6 space-y-3">
-          <p className="text-xs text-slate-500">For entertainment purposes only. All predictions are speculative and not financial advice.</p>
+          <p className="text-xs text-slate-500 leading-relaxed">For amusement only. All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling activity. An anonymous open forum; posts are user-generated and not endorsed by Layoff Live. Anonymous sessions and interactions are tracked for analytics.</p>
           <p className="text-xs text-slate-600">{APP_VERSION}</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
@@ -636,7 +639,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               {policiesTab === 'guidelines' ? (
                 <>
                   <p className="text-gray-600 dark:text-slate-400">
-                    Layoff Live is an anonymous platform built on good-faith participation. These guidelines protect all users and ensure the platform remains valuable and safe.
+                    Layoff Live is an anonymous open forum built on good-faith participation. Current and former employees can post anonymously. These guidelines protect all users and keep the platform valuable and safe.
+                  </p>
+                  <p className="text-gray-600 dark:text-slate-400">
+                    <span className="font-semibold text-gray-900 dark:text-white">For amusement only.</span> All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling advice. Posts are user-generated and not endorsed by Layoff Live.
                   </p>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
@@ -662,7 +668,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               ) : (
                 <>
                   <div>
-                    <p className="text-gray-500 dark:text-slate-500 text-xs mb-2">Last updated: May 2026</p>
+                    <p className="text-gray-500 dark:text-slate-500 text-xs mb-2">Last updated: July 2026</p>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Our Commitment to Anonymity</h3>
@@ -674,10 +680,16 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Collect</h3>
                     <ul className="space-y-1 text-gray-600 dark:text-slate-400">
                       <li>• IP address (fraud prevention)</li>
-                      <li>• Browser cookies (session management)</li>
-                      <li>• Usage data (events, bets, comments)</li>
-                      <li>• Account data (username, password, coins)</li>
+                      <li>• First-party cookies &amp; an anonymous session id</li>
+                      <li>• Interaction analytics (events, bets, comments, chat, favorites, active usage)</li>
+                      <li>• Account data (username, password, virtual coins)</li>
                     </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Analytics &amp; Tracking</h3>
+                    <p className="text-gray-600 dark:text-slate-400">
+                      Anonymous sessions and platform interactions are tracked in aggregate for operational and amusement-purpose analytics (user counts and active-usage trends). We do not use third-party advertising or cross-site tracking cookies.
+                    </p>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data We Do Not Collect</h3>
@@ -728,10 +740,12 @@ import { CompanyPage } from './pages/CompanyPage'
 import { Search } from './pages/Search'
 import { Profile } from './pages/Profile'
 import { Admin } from './pages/Admin'
+import { UserAnalytics } from './pages/UserAnalytics'
 import { FeedbackAdmin } from './pages/FeedbackAdmin'
 import { Settings } from './pages/Settings'
 import { ContentGuidelines } from './pages/ContentGuidelines'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
+import { CookieBanner } from './components/CookieBanner'
 import { CompanySuggestionsAlert } from './components/CompanySuggestionsAlert'
 import { ModerationQueueAlert } from './components/ModerationQueueAlert'
 import { CompanyDuplicatesAlert } from './components/CompanyDuplicatesAlert'
@@ -827,6 +841,10 @@ const DataSync = () => {
 
       // Sync from server to get latest data
       await syncCommentsFromServer()
+
+      // Record this viewer as active today (DAU/WAU/MAU). Fire once now that identity is
+      // resolved, then on a slow interval so long sessions crossing midnight still count.
+      pingActivity()
     }
 
     initApp()
@@ -836,10 +854,26 @@ const DataSync = () => {
       syncCommentsFromServer()
     }, 5000)
 
-    return () => clearInterval(interval)
+    // Activity ping every 5 minutes (the upsert is idempotent per day, so this is cheap).
+    const activityInterval = setInterval(pingActivity, 5 * 60 * 1000)
+
+    return () => { clearInterval(interval); clearInterval(activityInterval) }
   }, [syncCommentsFromServer, restoreSession, initializeAnonymousUser])
 
   return null
+}
+
+// Resolves the current viewer's identity (registered or anonymous) and records a daily
+// activity ping. Best-effort — the api wrapper swallows errors so this never disrupts the app.
+const pingActivity = () => {
+  const s = useStore.getState()
+  const cu = s.currentUser
+  const anonId = typeof window !== 'undefined' ? localStorage.getItem('lb-anon-user-id') : null
+  const anon = anonId ? s.users.find(u => u.id === anonId) : s.users.find(u => u.isAnonymous)
+  const userId = cu?.id || anon?.id
+  if (!userId) return
+  const isAnonymous = cu ? !!cu.isAnonymous : true
+  api.pingActivity(userId, isAnonymous)
 }
 
 export const App = () => (
@@ -868,10 +902,12 @@ export const App = () => (
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/settings" element={<Protected><Settings /></Protected>} />
       <Route path="/admin" element={<AdminOnly><Admin /></AdminOnly>} />
+      <Route path="/user-analytics" element={<AdminOnly><UserAnalytics /></AdminOnly>} />
       <Route path="/feedback-admin" element={<AdminOnly><FeedbackAdmin /></AdminOnly>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <CookieBanner />
   </BrowserRouter>
   </SiteGate>
 )

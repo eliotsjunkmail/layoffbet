@@ -16,7 +16,7 @@ export const PrivacyPolicy = () => {
       )}
 
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Privacy Policy</h1>
-      <p className="text-gray-400 dark:text-slate-400 text-sm mb-6">Last updated: May 2026</p>
+      <p className="text-gray-400 dark:text-slate-400 text-sm mb-6">Last updated: July 2026</p>
 
       {[
         {
@@ -28,9 +28,9 @@ export const PrivacyPolicy = () => {
           body: 'We collect the minimum data necessary to operate the platform:',
           list: [
             'IP address (for fraud prevention and abuse detection)',
-            'Browser cookies (for session management)',
-            'Usage data (events created, bets placed, comments posted)',
-            'Account data (username, hashed password, coin balance)',
+            'A first-party anonymous session identifier stored in your browser, so we can recognize a returning anonymous visitor across sessions without a login',
+            'Interaction analytics (events created, bets placed, comments, chat messages, companies favorited, and daily active-usage) — used in aggregate for operational and amusement-purpose analytics',
+            'Account data (username, hashed password, virtual coin balance)',
           ],
         },
         {
@@ -55,8 +55,16 @@ export const PrivacyPolicy = () => {
           ],
         },
         {
+          title: 'Analytics & Activity Tracking',
+          body: 'To understand platform usage, we record your interactions and a daily "active" signal, tied to your anonymous session identifier or your account. This powers internal metrics such as total, anonymous, and registered user counts, daily/weekly/monthly active users, and the volume of events, bets, comments, chat messages, and favorites. These analytics are for operational and amusement purposes and are reviewed by administrators in aggregate.',
+        },
+        {
+          title: 'Anonymous Participation & Public Content',
+          body: 'Layoff Live is an anonymous open forum. The events, bets, comments, and chat messages you post — including those by current and former employees — are visible to other users and are not endorsed by us. We protect your anonymity by not attaching your real identity to this activity, but the content itself is public within the platform. Do not post personal or confidential information.',
+        },
+        {
           title: 'Data Sharing',
-          body: 'We do not sell, rent, or share your data with third parties for marketing or advertising purposes. We may disclose data only in the following circumstances:',
+          body: 'We do not sell or rent your personal data. Any promotional placements shown on the site are not personalized using your data, and we do not use third-party advertising or cross-site tracking networks. We may disclose data only in the following circumstances:',
           list: [
             'When required by law or valid legal process',
             'In genuine safety emergencies to protect users or the public',
@@ -68,8 +76,8 @@ export const PrivacyPolicy = () => {
           body: 'Account and activity data is retained for as long as your account is active. You may request deletion of your account and associated data at any time by contacting an administrator.',
         },
         {
-          title: 'Cookies',
-          body: 'We use session cookies to keep you logged in. No third-party tracking cookies are used. You may disable cookies in your browser, but this will prevent you from staying logged in.',
+          title: 'Cookies & Local Storage',
+          body: 'We use first-party cookies and browser local storage to keep you logged in, to remember an anonymous session, and to record the usage analytics described above. We do not use third-party advertising or cross-site tracking cookies. You may disable cookies or clear local storage in your browser, but this will prevent you from staying logged in or keeping an anonymous session.',
         },
         {
           title: 'Changes to This Policy',

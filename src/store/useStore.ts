@@ -313,8 +313,11 @@ export const useStore = create<StoreState>()(
           // Create or retrieve anonymous user from server
           const anonUser = await api.createOrGetAnonymousUser(storedAnonUserId)
 
-          // Store the anonymous user ID locally
+          // Store the anonymous user ID locally. `lb-anon-user-id` is the key the rest of
+          // the app (register/migration, comment voting, bet identity) reads from, so it
+          // must be written here too — otherwise anon→registered migration never fires.
           localStorage.setItem('layoff-bets-anonUserId', anonUser.id)
+          localStorage.setItem('lb-anon-user-id', anonUser.id)
 
           // Update store with anonymous user
           set(s => ({

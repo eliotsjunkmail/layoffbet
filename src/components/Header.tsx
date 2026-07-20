@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, User, Shield, LogOut, Settings, ChevronDown, Coins, X, MessageSquare, Trash2, AlertTriangle } from 'lucide-react'
+import { Search, User, Shield, LogOut, Settings, ChevronDown, Coins, X, MessageSquare, Trash2, AlertTriangle, BarChart3 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { APP_VERSION } from '../constants'
 
@@ -99,6 +99,10 @@ const ProfileSheet = ({ onClose }: { onClose: () => void }) => {
                 <button onClick={() => go('/admin')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
                   <Shield className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Panel</span>
+                </button>
+                <button onClick={() => go('/user-analytics')} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left">
+                  <BarChart3 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">User Analytics</span>
                 </button>
               </>
             )}
