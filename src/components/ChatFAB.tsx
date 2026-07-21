@@ -1,10 +1,14 @@
 import { MessageCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useCookieNoticeDismissed } from '../hooks/useCookieNotice'
 
 export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, chatDisplayName, expiresAt }: { companyName: string; onClick: () => void; newMessageCount?: number; shouldShake?: boolean; chatDisplayName?: string; expiresAt?: string | null }) => {
   const displayText = chatDisplayName || `${companyName} Chat`
   const isCustomName = chatDisplayName && chatDisplayName !== `${companyName} Chat`
   const [timeRemaining, setTimeRemaining] = useState<string>('')
+  // Stay hidden while the cookie/tracking notice is still showing at the bottom, so the
+  // FAB doesn't overlap it. Once the user closes the notice, the chat appears.
+  const cookieDismissed = useCookieNoticeDismissed()
 
   useEffect(() => {
     if (!isCustomName || !expiresAt) {
@@ -37,6 +41,9 @@ export const ChatFAB = ({ companyName, onClick, newMessageCount, shouldShake, ch
 
     return () => clearInterval(interval)
   }, [expiresAt, isCustomName])
+
+  if (!cookieDismissed) return null
+
   return (
     <>
       <style>{`
