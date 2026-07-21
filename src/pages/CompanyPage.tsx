@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link, useNavigate, Navigate, useLocation, useSearchParams } from 'react-router-dom'
-import { PlusCircle, Star, Share2, Check, Send, X, Edit2, Trash2, ChevronLeft, TrendingUp, Lock } from 'lucide-react'
+import { PlusCircle, Star, Share2, Check, Send, X, Edit2, Trash2, ChevronLeft, TrendingUp } from 'lucide-react'
+import { CompanyCodePrompt, requiredCompanyCode, isCompanyUnlocked } from '../components/CompanyCodePrompt'
 import { useStore } from '../store/useStore'
 import { Layout } from '../components/Layout'
 import { CompanyLogo } from '../components/CompanyLogo'
@@ -32,14 +33,6 @@ const fmtViews = (n: number) => {
   if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`
   return String(n)
 }
-
-// Companies that require an access code before their page can be viewed. Enforced for
-// everyone including admins, and only asked once per browser. Keyed by company name (lower)
-// or slug.
-const COMPANY_ACCESS_CODES: Record<string, string> = { bny: 'hello' }
-const requiredCompanyCode = (c: { name: string; slug: string }): string | null =>
-  COMPANY_ACCESS_CODES[c.name.trim().toLowerCase()] || COMPANY_ACCESS_CODES[c.slug] || null
-const companyCodeStorageKey = (id: string) => `lb-company-code-${id}`
 
 export const CompanyPage = () => {
   const { slug } = useParams<{ slug: string }>()
@@ -96,8 +89,6 @@ export const CompanyPage = () => {
   const [editEventDesc, setEditEventDesc] = useState('')
   const [chatDisplayName, setChatDisplayName] = useState('')
   const [chatExpiresAt, setChatExpiresAt] = useState<string | null>(null)
-  const [companyCodeInput, setCompanyCodeInput] = useState('')
-  const [companyCodeError, setCompanyCodeError] = useState(false)
   const [companyCodeUnlocked, setCompanyCodeUnlocked] = useState(false)
   const prevMessageCountRef = useRef(0)
   const prevNewMessagesRef = useRef(0)
@@ -113,10 +104,7 @@ export const CompanyPage = () => {
   // code was already entered in this browser. Otherwise the page shows a code prompt below.
   useEffect(() => {
     if (!company) return
-    const req = requiredCompanyCode(company)
-    setCompanyCodeUnlocked(!req || localStorage.getItem(companyCodeStorageKey(company.id)) === '1')
-    setCompanyCodeInput('')
-    setCompanyCodeError(false)
+    setCompanyCodeUnlocked(isCompanyUnlocked(company))
   }, [company?.id])
 
   // Open chat directly when arriving via a shared chat link
@@ -428,37 +416,7 @@ export const CompanyPage = () => {
   if (requiredCode && !companyCodeUnlocked) {
     return (
       <Layout>
-        <div className="max-w-sm mx-auto mt-12 sm:mt-20 text-center">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-            <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{company.name}</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">This company requires an access code to view.</p>
-          <form
-            onSubmit={e => {
-              e.preventDefault()
-              if (companyCodeInput.trim().toLowerCase() === requiredCode) {
-                localStorage.setItem(companyCodeStorageKey(company.id), '1')
-                setCompanyCodeUnlocked(true)
-              } else {
-                setCompanyCodeError(true)
-              }
-            }}
-            className="space-y-3"
-          >
-            <input
-              value={companyCodeInput}
-              onChange={e => { setCompanyCodeInput(e.target.value); setCompanyCodeError(false) }}
-              placeholder="Enter access code"
-              autoFocus
-              className={`w-full bg-white dark:bg-slate-800 border rounded-xl px-4 py-3 text-center text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none transition-colors ${companyCodeError ? 'border-rose-400 focus:border-rose-500' : 'border-gray-300 dark:border-slate-700 focus:border-blue-500'}`}
-            />
-            {companyCodeError && <p className="text-xs text-rose-500">That's not the right code.</p>}
-            <button type="submit" disabled={!companyCodeInput.trim()} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-              Unlock
-            </button>
-          </form>
-        </div>
+        <CompanyCodePrompt company={company} requiredCode={requiredCode} onUnlock={() => setCompanyCodeUnlocked(true)} />
       </Layout>
     )
   }

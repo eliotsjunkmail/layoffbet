@@ -8,6 +8,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ModerationWarningModal } from '../components/ModerationWarningModal'
 import { CommentVotes } from '../components/CommentVotes'
 import { WarnNoticeTag } from '../components/WarnNoticeTag'
+import { CompanyCodePrompt, requiredCompanyCode, isCompanyUnlocked } from '../components/CompanyCodePrompt'
 import { useAnimateOnce } from '../hooks/useAnimateOnce'
 import { getProbability, formatDate, timeUntil, betMovementStr, makeSlug, timeAgo } from '../utils/odds'
 import { checkContentModeration } from '../utils/moderation'
@@ -57,6 +58,14 @@ export const EventDetail = () => {
   })
   const recordShare = useStore(s => s.recordShare)
   const recordUserShare = useStore(s => s.recordUserShare)
+  // Gate an event page behind the company's access code too (so a shared BNY event link
+  // can't bypass the code). Lazy-init from localStorage to avoid a prompt flash when already
+  // unlocked; the effect below re-checks once companies finish loading.
+  const [companyCodeUnlocked, setCompanyCodeUnlocked] = useState(() => {
+    const ev = events.find(e => e.id === id)
+    const c = ev ? companies.find(x => x.id === ev.companyId) : null
+    return !c || isCompanyUnlocked(c)
+  })
 
   useEffect(() => {
     localStorage.setItem('anonCoins', anonCoins.toString())
@@ -67,6 +76,11 @@ export const EventDetail = () => {
   }, [anonCoinsSpent])
 
   const event = events.find(e => e.id === id)
+
+  useEffect(() => {
+    const c = companies.find(x => x.id === event?.companyId)
+    setCompanyCodeUnlocked(!c || isCompanyUnlocked(c))
+  }, [event?.companyId, companies])
 
   useEffect(() => {
     if (!event) return
@@ -102,6 +116,23 @@ export const EventDetail = () => {
   }, [revealAnimate, event?.yesPool, event?.noPool])
 
   if (!event || hiddenCompanyIds.includes(event.companyId)) return <Navigate to="/" replace />
+
+  // If this event's company requires an access code, gate the event page too (enforced for
+  // everyone, admins included) so shared links can't bypass it.
+  const eventCompany = companies.find(c => c.id === event.companyId)
+  const requiredCode = eventCompany ? requiredCompanyCode(eventCompany) : null
+  if (requiredCode && eventCompany && !companyCodeUnlocked) {
+    return (
+      <div className="fixed inset-0 z-40 bg-gray-100 dark:bg-slate-950 flex flex-col">
+        <div className="flex justify-end p-4">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-500 dark:text-slate-400" title="Close">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <CompanyCodePrompt company={eventCompany} requiredCode={requiredCode} onUnlock={() => setCompanyCodeUnlocked(true)} />
+      </div>
+    )
+  }
 
   const status = getEffectiveStatus(event)
   const prob = getProbability(event.yesPool, event.noPool)
