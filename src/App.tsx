@@ -330,6 +330,14 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
+  // Load public data on the gate itself so the company grid isn't empty on a first visit.
+  // DataSync (which normally syncs) only mounts after the gate is unlocked; on return visits
+  // the persisted store already has companies, but a brand-new browser starts empty.
+  useEffect(() => {
+    if (!unlocked) syncCommentsFromServer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Auto-select referral company pill once companies load
   useEffect(() => {
     if (unlocked || !companies.length) return
