@@ -126,7 +126,7 @@ const CompanyGrid = ({ selectedCompanyId, onSelectCompany }: { selectedCompanyId
 
 const PICK_LIMIT = 4
 
-const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
+const PickCompanyModal = ({ onSelect, onClose }: { onSelect: (id: string) => void; onClose: () => void }) => {
   const companies = useStore(s => s.companies)
   const events = useStore(s => s.events)
   const hiddenCompanyIds = useStore(s => s.hiddenCompanyIds)
@@ -192,9 +192,14 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const hasMore = !search.trim() && !showAll && filtered.length > PICK_LIMIT
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center p-4 pt-6">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Follow a company</h2>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center p-4 pt-6" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5 flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between mb-1">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Follow a company</h2>
+          <button onClick={onClose} aria-label="Close" className="-mr-1.5 -mt-0.5 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
         <p className="text-sm text-gray-500 dark:text-slate-400 mb-3">Pick one to see its predictions on your home feed.</p>
 
         <div className="relative mb-3">
@@ -208,7 +213,7 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
           />
         </div>
 
-        <div className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-y-auto flex-1 min-h-0">
           {displayed.length === 0 ? (
             <div className="px-4 py-3 text-center">
               <p className="text-sm text-gray-400 dark:text-slate-500 mb-1.5">No companies found.</p>
@@ -431,6 +436,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             useStore.getState().toggleFavoriteCompany(companyId)
             setShowPickCompany(false)
           }}
+          onClose={() => setShowPickCompany(false)}
         />
       )}
     </>
