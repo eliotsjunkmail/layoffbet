@@ -7,6 +7,7 @@ import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
 import { CompanyCreatedModal } from './components/CompanyCreatedModal'
+import { CompanyCodePrompt, requiredCompanyCode, isCompanyUnlocked } from './components/CompanyCodePrompt'
 import type { ReactNode } from 'react'
 
 const API_BASE = ''
@@ -301,6 +302,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState(false)
   const [shake, setShake] = useState(false)
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>()
+  // A company picked on the gate that first needs its access code (e.g. BNY).
+  const [pendingCodeCompany, setPendingCodeCompany] = useState<{ id: string; name: string; slug: string } | null>(null)
   const [anonUsername, setAnonUsername] = useState<string>('')
   const [loadingAnonId, setLoadingAnonId] = useState(true)
   const [showPolicies, setShowPolicies] = useState(false)
@@ -543,7 +546,14 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* Company selection grid */}
         <div className="mb-2">
-          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={(id) => setSelectedCompanyId(prev => prev === id ? undefined : id)} />
+          <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={(id) => {
+            if (selectedCompanyId === id) { setSelectedCompanyId(undefined); return }
+            const c = companies.find(x => x.id === id)
+            // A code-gated company (e.g. BNY) must have its code entered before it can be
+            // selected on the gate, the same as visiting its page.
+            if (c && requiredCompanyCode(c) && !isCompanyUnlocked(c)) { setPendingCodeCompany(c); return }
+            setSelectedCompanyId(id)
+          }} />
         </div>
 
         {/* Challenge card */}
@@ -590,6 +600,26 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
       </div>
+
+      {/* Access-code prompt when a gated company (e.g. BNY) is picked on the gate */}
+      {pendingCodeCompany && (
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4" onClick={() => setPendingCodeCompany(null)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-end p-2">
+              <button onClick={() => setPendingCodeCompany(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-2 pb-6">
+              <CompanyCodePrompt
+                company={pendingCodeCompany}
+                requiredCode={requiredCompanyCode(pendingCodeCompany)!}
+                onUnlock={() => { setSelectedCompanyId(pendingCodeCompany.id); setPendingCodeCompany(null) }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin modal */}
       {adminOpen && (
