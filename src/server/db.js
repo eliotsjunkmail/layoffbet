@@ -222,6 +222,28 @@ export const db = {
     }
   },
 
+  // ===== APP SETTINGS (global key/value) =====
+  async getSetting(key) {
+    const { data, error } = await supabase.from('app_settings').select('value').eq('key', key).maybeSingle()
+    if (error) {
+      if (isMissingTableError(error)) return null // table not migrated yet — treat as unset
+      throwOnError(error, 'getSetting')
+    }
+    return data ? data.value : null
+  },
+
+  async setSetting(key, value) {
+    const { error } = await supabase.from('app_settings').upsert({ key, value: String(value) }, { onConflict: 'key' })
+    if (error && !isMissingTableError(error)) throwOnError(error, 'setSetting')
+  },
+
+  // Global gate settings everyone can read. Defaults to "code not required" so a fresh
+  // project (or one whose app_settings table isn't migrated) never blocks entry.
+  async getPublicSettings() {
+    const codeRequired = await this.getSetting('code_required')
+    return { codeRequired: codeRequired === 'true' }
+  },
+
   async updateCompany(id, updates) {
     const { data, error } = await supabase.from('companies').update(toDb(updates, ['id'])).eq('id', id).select().maybeSingle()
     throwOnError(error, 'updateCompany')
@@ -609,6 +631,8 @@ export const db = {
       }
     }
 
+    const settings = await this.getPublicSettings()
+
     return {
       users,
       events,
@@ -625,6 +649,7 @@ export const db = {
       latestUpvoteAtByComment,
       companySuggestions,
       moderationQueue,
+      settings,
     }
   },
 

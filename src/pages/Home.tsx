@@ -130,7 +130,7 @@ export const Home = () => {
   const [hidingComments, setHidingComments] = useState(false)
   const [anonCoins, setAnonCoins] = useState(() => {
     const stored = localStorage.getItem('anonCoins')
-    return stored ? parseInt(stored) : 50
+    return stored ? parseInt(stored) : 500
   })
   const [anonCoinsSpent, setAnonCoinsSpent] = useState(() => {
     const stored = localStorage.getItem('anonCoinsSpent')

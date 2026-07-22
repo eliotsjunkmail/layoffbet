@@ -349,6 +349,26 @@ export const api = {
     return response.json()
   },
 
+  // Global gate settings (also arrive via api.sync()).
+  getSettings: async () => {
+    const response = await fetch(`${API_BASE}/api/settings`)
+    if (!response.ok) throw new Error('Failed to fetch settings')
+    return response.json()
+  },
+
+  setCodeRequired: async (username: string, password: string, codeRequired: boolean) => {
+    const response = await fetch(`${API_BASE}/api/admin/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, codeRequired }),
+    })
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to update settings')
+    }
+    return response.json()
+  },
+
   getAnalyticsDetail: async (username: string, password: string, metric: string, days: number) => {
     const response = await fetch(`${API_BASE}/api/admin/analytics/detail`, {
       method: 'POST',

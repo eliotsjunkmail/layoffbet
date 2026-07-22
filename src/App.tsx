@@ -17,7 +17,6 @@ const DEFAULT_LAUNCH = '2026-09-01'
 const GATE_ADMIN_USER = 'admin'
 const GATE_ADMIN_PASS = 'admin'
 const ANON_FAVORITE_COMPANY_KEY = 'lb-anon-favorite-company'
-const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const REFERRAL_SLUG_KEY = 'lb-referral-slug'
 const REFERRAL_PATH_KEY = 'lb-referral-path'
 const GATE_SKIP_PATHS = new Set(['', 'login', 'create', 'search', 'bets', 'profile', 'admin', 'settings', 'feedback', 'content-guidelines', 'privacy-policy'])
@@ -293,6 +292,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
   const companies = useStore(s => s.companies)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
+  // Whether the invite code is required is a global server setting (synced on mount), so an
+  // admin toggling it applies to everyone — not just their own browser.
+  const codeRequired = useStore(s => s.appSettings.codeRequired)
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem(GATE_KEY) === '1')
   const [launchDate, setLaunchDate] = useState(() => localStorage.getItem(LAUNCH_DATE_KEY) || DEFAULT_LAUNCH)
   const [input, setInput] = useState('')
@@ -313,7 +315,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
   const [adminErr, setAdminErr] = useState(false)
   const [newDate, setNewDate] = useState(launchDate)
   const [saved, setSaved] = useState(false)
-  const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
 
   const { days, hours, mins, secs } = useCountdown(launchDate)
 
@@ -519,11 +520,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     setTimeout(() => { setSaved(false); setAdminOpen(false); setAdminStep('login'); setAdminUser(''); setAdminPass('') }, 1200)
   }
 
-  const toggleCodeRequired = () => {
-    const next = !codeRequired
-    setCodeRequired(next)
-    localStorage.setItem(GATE_CODE_REQUIRED_KEY, next ? 'true' : 'false')
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">

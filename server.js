@@ -184,7 +184,7 @@ app.post('/api/admin/import', async (req, res) => {
           id: 'user-' + crypto.randomBytes(8).toString('hex'),
           username: item.username.trim(),
           password: item.password,
-          coins: item.coins ?? 100,
+          coins: item.coins ?? 500,
           isAdmin: false,
           isAnonymous: false,
           createdAt: new Date().toISOString(),
@@ -266,7 +266,7 @@ const ADMIN_CSV_ENTITIES = {
     numberFields: ['coins', 'anonymousNumber', 'shareCount'],
     booleanFields: ['isAdmin', 'isAnonymous'],
     requiredForCreate: ['username'],
-    beforeCreate: (data) => ({ coins: data.coins ?? 100, lastCoinsDate: data.lastCoinsDate || new Date().toISOString().split('T')[0], ...data }),
+    beforeCreate: (data) => ({ coins: data.coins ?? 500, lastCoinsDate: data.lastCoinsDate || new Date().toISOString().split('T')[0], ...data }),
   },
   events: {
     getAll: () => db.getEvents(),
@@ -549,6 +549,31 @@ app.post('/api/admin/analytics', async (req, res) => {
   }
 })
 
+// Global gate settings, publicly readable (also included in the /api/sync payload).
+app.get('/api/settings', async (req, res) => {
+  try {
+    res.json(await db.getPublicSettings())
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Set whether the gate invite code is required — a global setting, so an admin toggling it
+// applies to every visitor (not just their own browser).
+app.post('/api/admin/settings', async (req, res) => {
+  try {
+    const { username, password, codeRequired } = req.body
+    if (!username || !password) return res.status(401).json({ error: 'Authentication required' })
+    const user = await db.getUserByUsername(username)
+    if (!user || user.password !== password || !user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
+
+    if (codeRequired !== undefined) await db.setSetting('code_required', codeRequired ? 'true' : 'false')
+    res.json({ ok: true, ...(await db.getPublicSettings()) })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // Drill-down list behind a single analytics metric (admin only).
 app.post('/api/admin/analytics/detail', async (req, res) => {
   try {
@@ -589,7 +614,7 @@ app.post('/api/users/register', async (req, res) => {
         id: 'user-' + crypto.randomBytes(8).toString('hex'),
         username,
         password,
-        coins: anonUser ? anonUser.coins : 100,
+        coins: anonUser ? anonUser.coins : 500,
         isAdmin: false,
         isAnonymous: false,
         createdAt: anonUser ? anonUser.createdAt : new Date().toISOString(),
@@ -701,7 +726,7 @@ app.post('/api/users/anonymous', async (req, res) => {
           id: 'anon-' + crypto.randomBytes(8).toString('hex'),
           username: anonUsername,
           password: null,
-          coins: 50,
+          coins: 500,
           isAdmin: false,
           isAnonymous: true,
           createdAt: new Date().toISOString(),

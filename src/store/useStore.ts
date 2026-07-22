@@ -90,6 +90,7 @@ interface StoreState {
   upvotedCommentIds: string[]
   pendingCommentVotes: Record<string, boolean>
   latestUpvoteAtByComment: Record<string, string>
+  appSettings: { codeRequired: boolean }
 
   getEffectiveStatus: (event: Event) => Event['status']
   banUser: (userId: string) => void
@@ -101,7 +102,7 @@ export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
       currentUser: null,
-      guestCoins: 50,
+      guestCoins: 500,
       users: [ADMIN_USER],
       companies: [],
       events: [],
@@ -127,6 +128,7 @@ export const useStore = create<StoreState>()(
       upvotedCommentIds: [],
       pendingCommentVotes: {},
       latestUpvoteAtByComment: {},
+      appSettings: { codeRequired: false },
 
       setTheme: (theme) => set({ theme }),
       setOnboardingCompany: (companyId) => set({ onboardingCompanyId: companyId }),
@@ -284,7 +286,7 @@ export const useStore = create<StoreState>()(
         localStorage.removeItem('anonCoins')
         localStorage.removeItem('anonCoinsSpent')
         localStorage.removeItem('layoff-bets-currentUser')
-        set({ currentUser: null, guestCoins: 50, favoriteCompanyIds: [] })
+        set({ currentUser: null, guestCoins: 500, favoriteCompanyIds: [] })
       },
 
       updateDisplayName: async (displayName: string) => {
@@ -322,7 +324,7 @@ export const useStore = create<StoreState>()(
           // Update store with anonymous user
           set(s => ({
             users: [...s.users.filter(u => u.id !== anonUser.id), anonUser],
-            guestCoins: anonUser.coins || 50,
+            guestCoins: anonUser.coins || 500,
           }))
         } catch (error) {
           console.error('Failed to initialize anonymous user:', error)
@@ -333,7 +335,7 @@ export const useStore = create<StoreState>()(
         const { currentUser, anonVotedEvents, bets, events } = get()
         if (!currentUser) return
 
-        const anonCoins = parseInt(localStorage.getItem('anonCoins') || '50')
+        const anonCoins = parseInt(localStorage.getItem('anonCoins') || '500')
         const anonCoinsSpent = parseInt(localStorage.getItem('anonCoinsSpent') || '0')
         const remainingCoins = Math.max(0, anonCoins - anonCoinsSpent)
         const newBets: Bet[] = []
@@ -1098,6 +1100,7 @@ export const useStore = create<StoreState>()(
               hiddenCompanyIds: serverData.hiddenCompanyIds || [],
               upvotedCommentIds: newUpvotedCommentIds,
               latestUpvoteAtByComment: serverData.latestUpvoteAtByComment || {},
+              appSettings: serverData.settings || { codeRequired: false },
             })
           }
         } catch (error) {
@@ -1127,6 +1130,7 @@ export const useStore = create<StoreState>()(
         upvotedCommentIds: s.upvotedCommentIds,
         hiddenCompanyIds: s.hiddenCompanyIds,
         latestUpvoteAtByComment: s.latestUpvoteAtByComment,
+        appSettings: s.appSettings,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return

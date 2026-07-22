@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useStore } from '../store/useStore'
+import { api } from '../services/api'
 import { Layout } from '../components/Layout'
 import { Trash2, Users, TrendingUp, MessageSquare, Building2, Plus, Pencil, Check, X, Settings, Calendar, Download, Upload, Merge } from 'lucide-react'
 import { DuplicateCompaniesModal } from '../components/DuplicateCompaniesModal'
 import { AddCompanyModal } from '../components/AddCompanyModal'
 import { StateTypeahead } from '../components/StateTypeahead'
 
-const GATE_CODE_REQUIRED_KEY = 'lb-gate-code-required'
 const ADS_ENABLED_KEY = 'lb-ads-enabled'
 
 type Tab = 'settings' | 'companies' | 'users' | 'bets' | 'comments' | 'events'
@@ -379,7 +379,7 @@ export const Admin = () => {
   const [deletingAllComments, setDeletingAllComments] = useState(false)
   const [deletingAllChat, setDeletingAllChat] = useState(false)
   const [deletingAllBets, setDeletingAllBets] = useState(false)
-  const [codeRequired, setCodeRequired] = useState(() => localStorage.getItem(GATE_CODE_REQUIRED_KEY) !== 'false')
+  const codeRequired = useStore(s => s.appSettings.codeRequired)
   const [adsEnabled, setAdsEnabled] = useState(() => localStorage.getItem(ADS_ENABLED_KEY) !== 'false')
   const [showDuplicatesModal, setShowDuplicatesModal] = useState(false)
   const [bulkEditingEvents, setBulkEditingEvents] = useState(false)
@@ -626,10 +626,20 @@ export const Admin = () => {
   const getUsername = (userId?: string) => !userId ? '-' : users.find(u => u.id === userId)?.username || userId
   const getCompanyName = (companyId?: string) => !companyId ? '-' : companies.find(c => c.id === companyId)?.name || companyId
 
-  const toggleCodeRequired = () => {
+  // The gate invite-code requirement is a global server setting, so toggling it here applies
+  // to every visitor. Optimistically update the store, persist to the server, revert on error.
+  const toggleCodeRequired = async () => {
     const next = !codeRequired
-    setCodeRequired(next)
-    localStorage.setItem(GATE_CODE_REQUIRED_KEY, next ? 'true' : 'false')
+    const prev = useStore.getState().appSettings
+    useStore.setState({ appSettings: { ...prev, codeRequired: next } })
+    try {
+      await api.setCodeRequired(currentUser.username || '', currentUser.password || '', next)
+      setMessage({ type: 'success', text: next ? 'Invite code now required for all users' : 'Invite code no longer required' })
+      setTimeout(() => setMessage(null), 2500)
+    } catch (err) {
+      useStore.setState({ appSettings: prev })
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update setting' })
+    }
   }
 
   const toggleAds = () => {
