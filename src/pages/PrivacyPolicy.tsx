@@ -29,7 +29,7 @@ export const PrivacyPolicy = () => {
           list: [
             'IP address (for fraud prevention and abuse detection)',
             'A first-party anonymous session identifier stored in your browser, so we can recognize a returning anonymous visitor across sessions without a login',
-            'Interaction analytics (events created, bets placed, comments, chat messages, companies favorited, and daily active-usage) — used in aggregate for operational and amusement-purpose analytics',
+            'Interaction analytics (events created, bets placed, comments, chat messages, companies favorited, and daily active-usage) — used in aggregate',
             'Account data (username, hashed password, virtual coin balance)',
           ],
         },
@@ -56,7 +56,7 @@ export const PrivacyPolicy = () => {
         },
         {
           title: 'Analytics & Activity Tracking',
-          body: 'To understand platform usage, we record your interactions and a daily "active" signal, tied to your anonymous session identifier or your account. This powers internal metrics such as total, anonymous, and registered user counts, daily/weekly/monthly active users, and the volume of events, bets, comments, chat messages, and favorites. These analytics are for operational and amusement purposes and are reviewed by administrators in aggregate.',
+          body: 'To understand platform usage, we record your interactions and a daily "active" signal, tied to your anonymous session identifier or your account. This powers internal metrics such as total, anonymous, and registered user counts, daily/weekly/monthly active users, and the volume of events, bets, comments, chat messages, and favorites. These analytics are reviewed by administrators in aggregate.',
         },
         {
           title: 'Anonymous Participation & Public Content',

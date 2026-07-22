@@ -14,7 +14,7 @@ export const CookieBanner = () => {
     <div className="fixed bottom-0 inset-x-0 z-40 p-3 sm:p-4">
       <div className="mx-auto max-w-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg px-4 py-3 flex items-start gap-3">
         <p className="flex-1 text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-          We use first-party cookies and local storage to keep you signed in and to remember an anonymous session. Anonymous sessions and platform interactions are tracked in aggregate for operational and amusement-purpose analytics. See our{' '}
+          We use first-party cookies and local storage to keep you signed in and to remember an anonymous session. Anonymous sessions and platform interactions are tracked in aggregate. See our{' '}
           <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Privacy Policy</Link>.
         </p>
         <button

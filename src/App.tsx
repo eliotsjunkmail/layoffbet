@@ -722,7 +722,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Analytics &amp; Tracking</h3>
                     <p className="text-gray-600 dark:text-slate-400">
-                      Anonymous sessions and platform interactions are tracked in aggregate for operational and amusement-purpose analytics (user counts and active-usage trends). We do not use third-party advertising or cross-site tracking cookies.
+                      Anonymous sessions and platform interactions are tracked in aggregate (user counts and active-usage trends). We do not use third-party advertising or cross-site tracking cookies.
                     </p>
                   </div>
                   <div>
