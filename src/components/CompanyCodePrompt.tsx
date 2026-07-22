@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Lock } from 'lucide-react'
+import { Lock, Loader2 } from 'lucide-react'
 
 // Companies that require an access code before their content (company page or any of their
 // event pages) can be viewed. Enforced for everyone including admins, asked once per browser.
@@ -19,6 +19,7 @@ export const isCompanyUnlocked = (c: { id: string; name: string; slug: string })
 export const CompanyCodePrompt = ({ company, requiredCode, onUnlock }: { company: { id: string; name: string }; requiredCode: string; onUnlock: () => void }) => {
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
+  const [unlocking, setUnlocking] = useState(false)
 
   return (
     <div className="max-w-sm mx-auto mt-12 sm:mt-20 text-center px-4">
@@ -30,9 +31,12 @@ export const CompanyCodePrompt = ({ company, requiredCode, onUnlock }: { company
       <form
         onSubmit={e => {
           e.preventDefault()
+          if (unlocking) return
           if (input.trim().toLowerCase() === requiredCode) {
             try { localStorage.setItem(companyCodeStorageKey(company.id), '1') } catch { /* ignore */ }
-            onUnlock()
+            setUnlocking(true)
+            // Brief spinner so the unlock reads as intentional before the content swaps in.
+            setTimeout(onUnlock, 500)
           } else {
             setError(true)
           }
@@ -44,11 +48,13 @@ export const CompanyCodePrompt = ({ company, requiredCode, onUnlock }: { company
           onChange={e => { setInput(e.target.value); setError(false) }}
           placeholder="Enter access code"
           autoFocus
+          disabled={unlocking}
           className={`w-full bg-white dark:bg-slate-800 border rounded-xl px-4 py-3 text-center text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none transition-colors ${error ? 'border-rose-400 focus:border-rose-500' : 'border-gray-300 dark:border-slate-700 focus:border-blue-500'}`}
         />
         {error && <p className="text-xs text-rose-500">That's not the right code.</p>}
-        <button type="submit" disabled={!input.trim()} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          Unlock
+        <button type="submit" disabled={!input.trim() || unlocking} className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {unlocking && <Loader2 className="w-4 h-4 animate-spin" />}
+          {unlocking ? 'Unlocking…' : 'Unlock'}
         </button>
       </form>
     </div>
