@@ -612,7 +612,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         <div className="text-center mt-6 space-y-3">
-          <p className="text-xs text-slate-500 leading-relaxed">For amusement only. All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling activity. An anonymous open forum; posts are user-generated and not endorsed by Layoff Chat. Anonymous sessions and interactions are tracked for analytics.</p>
+          <p className="text-xs text-slate-500 leading-relaxed">All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling activity. An anonymous open forum; posts are user-generated and not endorsed by Layoff Chat. Anonymous sessions and interactions are tracked for analytics.</p>
           <p className="text-xs text-slate-600">{APP_VERSION}</p>
           <div className="flex items-center justify-center gap-2 text-xs">
             <button onClick={() => { setShowPolicies(true); setPoliciesTab('guidelines') }} className="text-slate-600 hover:text-slate-500 transition-colors">Content Guidelines</button>
@@ -697,7 +697,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     Layoff Chat is an anonymous open forum built on good-faith participation. Current and former employees can post anonymously. These guidelines protect all users and keep the platform valuable and safe.
                   </p>
                   <p className="text-gray-600 dark:text-slate-400">
-                    <span className="font-semibold text-gray-900 dark:text-white">For amusement only.</span> All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling advice. Posts are user-generated and not endorsed by Layoff Chat.
+                    All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling advice. Posts are user-generated and not endorsed by Layoff Chat.
                   </p>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Prohibited Content</h3>
