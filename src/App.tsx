@@ -138,6 +138,8 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
   const [showAll, setShowAll] = useState(false)
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false)
   const [createdCompany, setCreatedCompany] = useState<{ id: string; name: string } | null>(null)
+  // A code-gated company (e.g. BNY) picked here always re-asks for its code before following.
+  const [pendingCodeCompany, setPendingCodeCompany] = useState<{ id: string; name: string; slug: string } | null>(null)
   const [toast, setToast] = useState('')
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 4000) }
@@ -233,7 +235,7 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
             return (
               <button
                 key={c.id}
-                onClick={() => onSelect(c.id)}
+                onClick={() => { if (requiredCompanyCode(c)) setPendingCodeCompany(c); else onSelect(c.id) }}
                 className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-left ${i > 0 ? 'border-t border-gray-100 dark:border-slate-800' : ''}`}
               >
                 <CompanyLogo name={c.name} id={c.id} industry={c.industry} color={c.color} size="md" />
@@ -278,6 +280,25 @@ const PickCompanyModal = ({ onSelect }: { onSelect: (id: string) => void }) => {
           // so a full navigation is used instead of useNavigate.
           onCreateEvent={() => { window.location.href = `/admin?tab=events&newEventCompanyId=${createdCompany.id}` }}
         />
+      )}
+
+      {pendingCodeCompany && (
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4" onClick={() => setPendingCodeCompany(null)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-end p-2">
+              <button onClick={() => setPendingCodeCompany(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-2 pb-6">
+              <CompanyCodePrompt
+                company={pendingCodeCompany}
+                requiredCode={requiredCompanyCode(pendingCodeCompany)!}
+                onUnlock={() => { const id = pendingCodeCompany.id; setPendingCodeCompany(null); onSelect(id) }}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && (
