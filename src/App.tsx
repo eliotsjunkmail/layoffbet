@@ -699,16 +699,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             </div>
           </div>
           <div className="space-y-2.5">
-            <div className="flex flex-col items-start">
-              <span className="text-[10px] text-slate-500 mb-0.5 ml-1">Old Timer · 22 yrs</span>
+            <div className="flex justify-start">
               <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Badge readers went quiet on the 4th floor this morning. Seen this movie before.</div>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] text-slate-500 mb-0.5 mr-1">The Cynic</span>
+            <div className="flex justify-end">
               <div className="bg-blue-600/90 text-white text-xs rounded-2xl rounded-tr-sm px-3 py-2 max-w-[85%]">All-hands got moved to Friday at 4pm. Nobody schedules good news for a Friday afternoon.</div>
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-[10px] text-slate-500 mb-0.5 ml-1">Old Timer · 22 yrs</span>
+            <div className="flex justify-start">
               <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Reorg deck already leaked. Severance line item's back. Buckle up.</div>
             </div>
           </div>
