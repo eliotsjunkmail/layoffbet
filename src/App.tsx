@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
-import { X, Search as SearchIcon, MessageSquare, Users, ArrowRight } from 'lucide-react'
+import { X, Search as SearchIcon, MessageSquare, Users } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
@@ -676,9 +676,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               </tbody>
             </table>
           </div>
-          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
-            See all layoff notices <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         {/* 2. Sample chat — secondary (dimmer than the WARN block above) */}
@@ -697,9 +694,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Reorg deck already leaked. Severance line item's back. Buckle up.</div>
             </div>
           </div>
-          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800/70 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
-            Join the conversation <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         {/* 3. Sample bet — secondary (dimmer than the WARN block above) */}
@@ -722,9 +716,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               <span>412 predictions · 38.6k coins in play</span>
             </div>
           </div>
-          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800/70 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
-            Place your prediction <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         <div className="text-center mt-6 space-y-3">
