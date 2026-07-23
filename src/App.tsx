@@ -632,7 +632,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* Company selection grid */}
-        <div className="mb-2">
+        <div className="mb-6">
           <CompanyGrid selectedCompanyId={selectedCompanyId} onSelectCompany={(id) => {
             if (selectedCompanyId === id) { setSelectedCompanyId(undefined); return }
             const c = companies.find(x => x.id === id)
@@ -678,7 +678,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* ── Preview blocks: a taste of what's inside, each with a CTA to enter ── */}
 
         {/* 1. Recent WARN notices */}
-        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+        <div className="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
           <div className="mb-3">
             <div className="text-sm font-semibold text-white leading-tight">Latest layoff notices - WARN</div>
           </div>
@@ -702,7 +702,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* 2. Sample chat — secondary (dimmer than the WARN block above) */}
-        <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
+        <div className="mt-6 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="mb-3">
             <div className="text-sm font-semibold text-white leading-tight">Inside the break room</div>
           </div>
@@ -720,7 +720,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* 3. Sample bet — secondary (dimmer than the WARN block above) */}
-        <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
+        <div className="mt-6 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="mb-3">
             <div className="text-sm font-semibold text-white leading-tight">Live predictions</div>
           </div>
@@ -742,7 +742,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         </div>
 
         {/* Repeated entry CTA at the foot of the previews */}
-        <button type="button" onClick={() => enterSite()} disabled={loadingAnonId} className="mt-4 w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        <button type="button" onClick={() => enterSite()} disabled={loadingAnonId} className="mt-6 w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
           {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
         </button>
 
