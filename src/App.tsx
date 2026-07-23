@@ -677,7 +677,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             </form>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-3">
+          <form onSubmit={submit} className="space-y-3 pb-4">
             {enterButton}
             {signInLink}
           </form>
