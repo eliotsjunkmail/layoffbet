@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
-import { X, Search as SearchIcon, MessageSquare, Users } from 'lucide-react'
+import { X, Search as SearchIcon, MessageSquare, Users, User } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
@@ -694,7 +694,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     <td className="px-3 py-2">
                       <span className="inline-block max-w-[120px] truncate align-middle px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-medium">{n.company}</span>
                     </td>
-                    <td className="px-2 py-2 text-right tabular-nums text-slate-300">{n.employees}</td>
+                    <td className="px-2 py-2">
+                      <span className="flex items-center justify-end gap-1 tabular-nums text-slate-300">
+                        <User className="w-3 h-3 text-slate-500 flex-shrink-0" />{n.employees}
+                      </span>
+                    </td>
                     <td className="px-3 py-2 text-right tabular-nums text-slate-400 whitespace-nowrap">{fmtNoticeDate(n.date)}</td>
                   </tr>
                 ))}
