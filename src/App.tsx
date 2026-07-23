@@ -687,8 +687,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </button>
         </div>
 
-        {/* 2. Sample chat */}
-        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+        {/* 2. Sample chat — secondary (dimmer than the WARN block above) */}
+        <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
               <MessageSquare className="w-4 h-4 text-blue-400" />
@@ -712,13 +712,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Reorg deck already leaked. Severance line item's back. Buckle up.</div>
             </div>
           </div>
-          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
+          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800/70 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
             Join the conversation <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* 3. Sample bet */}
-        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+        {/* 3. Sample bet — secondary (dimmer than the WARN block above) */}
+        <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -743,7 +743,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               <span>412 predictions · 38.6k coins in play</span>
             </div>
           </div>
-          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
+          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800/70 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
             Place your prediction <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
