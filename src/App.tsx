@@ -680,7 +680,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* 1. Recent WARN notices */}
         <div className="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
           <div className="mb-3">
-            <div className="text-sm font-semibold text-white leading-tight">Latest layoff notices - WARN</div>
+            <div className="text-sm font-semibold text-white leading-tight">Latest layoff notices</div>
           </div>
           <div className="overflow-hidden rounded-xl border border-slate-800">
             <table className="w-full text-left">
@@ -691,7 +691,9 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                     onClick={() => handleNoticeClick(n.companyId)}
                     className={`text-xs cursor-pointer hover:bg-slate-800/60 transition-colors ${i > 0 ? 'border-t border-slate-800' : ''}`}
                   >
-                    <td className="px-3 py-2 font-medium text-slate-200 truncate max-w-[130px]">{n.company}</td>
+                    <td className="px-3 py-2">
+                      <span className="inline-block max-w-[120px] truncate align-middle px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-medium">{n.company}</span>
+                    </td>
                     <td className="px-2 py-2 text-right tabular-nums text-slate-300">{n.employees}</td>
                     <td className="px-3 py-2 text-right tabular-nums text-slate-400 whitespace-nowrap">{fmtNoticeDate(n.date)}</td>
                   </tr>
