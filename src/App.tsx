@@ -548,7 +548,15 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         if (effectiveCompanyId) {
           localStorage.setItem(ANON_FAVORITE_COMPANY_KEY, effectiveCompanyId)
-          useStore.getState().toggleFavoriteCompany(effectiveCompanyId)
+          // Persist the favorite to the server BEFORE navigating. DataSync's restoreSession
+          // reloads favorites from the server on mount, so a fire-and-forget write would race
+          // that reload and the follow could silently vanish on Home. Awaiting guarantees the
+          // server has it first; then mirror it into the store optimistically.
+          try { await api.addFavorite(user.id, effectiveCompanyId) } catch (e) { console.error('Failed to save favorite:', e) }
+          const existingFavs = useStore.getState().favoriteCompanyIds
+          if (!existingFavs.includes(effectiveCompanyId)) {
+            useStore.setState({ favoriteCompanyIds: [...existingFavs, effectiveCompanyId] })
+          }
         }
 
         if (referralPath) {
