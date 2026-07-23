@@ -690,14 +690,14 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           <div className="mb-3">
             <div className="text-sm font-semibold text-white leading-tight">Latest layoff notices</div>
           </div>
-          <div className="overflow-hidden rounded-xl border border-slate-800">
+          <div className="overflow-hidden rounded-xl">
             <table className="w-full text-left">
               <tbody>
                 {recentWarnNotices.map((n, i) => (
                   <tr
                     key={i}
                     onClick={() => handleNoticeClick(n.companyId)}
-                    className={`text-xs cursor-pointer hover:bg-slate-800/60 transition-colors ${i > 0 ? 'border-t border-slate-800' : ''}`}
+                    className="text-xs cursor-pointer hover:bg-slate-800/60 transition-colors"
                   >
                     <td className="px-3 py-2">
                       <span className="inline-block max-w-[120px] truncate align-middle px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-medium">{n.company}</span>
