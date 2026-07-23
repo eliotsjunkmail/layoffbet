@@ -441,18 +441,30 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
       .filter(e => e.isWarnActNotice)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5)
-      .map(e => ({ company: e.companyName, employees: parseWorkers(e.title), date: new Date(e.createdAt) }))
+      .map(e => ({ company: e.companyName, companyId: e.companyId as string | undefined, employees: parseWorkers(e.title), date: new Date(e.createdAt) }))
     if (real.length > 0) return real
+    // Sample rows — still clickable when the named company happens to exist in the store.
+    const byName = (name: string) => companies.find(c => c.name.toLowerCase() === name.toLowerCase())?.id
     return [
-      { company: 'Acme Inc', employees: '1,240', date: new Date('2026-07-18T00:00:00') },
-      { company: 'Verizon', employees: '860', date: new Date('2026-07-11T00:00:00') },
-      { company: 'Conduent', employees: '540', date: new Date('2026-07-03T00:00:00') },
-      { company: 'BNSF', employees: '410', date: new Date('2026-06-24T00:00:00') },
-      { company: 'ADP', employees: '295', date: new Date('2026-06-15T00:00:00') },
+      { company: 'Acme Inc', companyId: byName('Acme Inc'), employees: '1,240', date: new Date('2026-07-18T00:00:00') },
+      { company: 'Verizon', companyId: byName('Verizon'), employees: '860', date: new Date('2026-07-11T00:00:00') },
+      { company: 'Conduent', companyId: byName('Conduent'), employees: '540', date: new Date('2026-07-03T00:00:00') },
+      { company: 'BNSF', companyId: byName('BNSF'), employees: '410', date: new Date('2026-06-24T00:00:00') },
+      { company: 'ADP', companyId: byName('ADP'), employees: '295', date: new Date('2026-06-15T00:00:00') },
     ]
-  }, [events])
+  }, [events, companies])
 
   const fmtNoticeDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  // Clicking a WARN-notice row enters the site with that company pre-selected. Code-gated
+  // companies (e.g. BNY) prompt for their code first, matching the gate pill behavior.
+  const handleNoticeClick = (companyId?: string) => {
+    if (loadingAnonId) return
+    if (!companyId) return enterSite()
+    const c = companies.find(x => x.id === companyId)
+    if (c && requiredCompanyCode(c) && !isCompanyUnlocked(c)) { setPendingCodeCompany(c); return }
+    enterSite(companyId)
+  }
 
   if (unlocked || window.location.pathname === '/login') return (
     <>
@@ -475,8 +487,10 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     enterSite()
   }
 
-  // Shared entry path used by both the main gate form and the preview-block CTAs below.
-  const enterSite = async () => {
+  // Shared entry path used by the main gate form, the bottom CTA, and the WARN-notice rows.
+  // An optional companyIdOverride enters the site with that company pre-selected (favorited),
+  // exactly as if the user had entered and then picked it.
+  const enterSite = async (companyIdOverride?: string) => {
     if (!codeRequired || GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
         setLoadingAnonId(true)
@@ -522,7 +536,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         useStore.setState({ currentUser: user })
 
         // Resolve effective company: gate selection OR referral slug from URL
-        let effectiveCompanyId = selectedCompanyId
+        let effectiveCompanyId = companyIdOverride ?? selectedCompanyId
         const referralSlug = sessionStorage.getItem(REFERRAL_SLUG_KEY)
         const referralPath = sessionStorage.getItem(REFERRAL_PATH_KEY)
         if (!effectiveCompanyId && referralSlug) {
@@ -583,6 +597,20 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     setTimeout(() => { setSaved(false); setAdminOpen(false); setAdminStep('login'); setAdminUser(''); setAdminPass('') }, 1200)
   }
 
+  // Reused by the top entry area and the repeated CTA above the disclaimer.
+  const enterButton = (
+    <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+      {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
+    </button>
+  )
+  const signInLink = (
+    <p className="text-center mt-3">
+      <a href="/login?gate=1" className="text-xs text-slate-500 transition-colors">
+        Have an account? <span className="text-blue-400 hover:text-blue-300">Sign in</span>
+      </a>
+    </p>
+  )
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -615,39 +643,37 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           }} />
         </div>
 
-        {/* Challenge card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+        {/* Entry: a card wrapper only when an invite code is required; otherwise just the
+            button + sign-in, no container. */}
+        {codeRequired ? (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+            <form onSubmit={submit} className="space-y-3">
+              <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={e => { setInput(e.target.value); setError(false) }}
+                  placeholder="Enter invite code"
+                  autoComplete="off"
+                  className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
+                />
+              </div>
+              {error && (
+                <p className="text-xs text-rose-400 flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
+                  That's not right — try again
+                </p>
+              )}
+              {enterButton}
+              {signInLink}
+            </form>
+          </div>
+        ) : (
           <form onSubmit={submit} className="space-y-3">
-            {codeRequired && (
-              <>
-                <div className={shake ? 'animate-[wiggle_0.4s_ease-in-out]' : ''}>
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={e => { setInput(e.target.value); setError(false) }}
-                    placeholder="Enter invite code"
-                    autoComplete="off"
-                    className={`w-full bg-slate-800 border ${error ? 'border-rose-500' : 'border-slate-700 focus:border-blue-500'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors text-sm`}
-                  />
-                </div>
-                {error && (
-                  <p className="text-xs text-rose-400 flex items-center gap-1.5">
-                    <span className="inline-block w-1.5 h-1.5 bg-rose-400 rounded-full" />
-                    That's not right — try again
-                  </p>
-                )}
-              </>
-            )}
-            <button type="submit" disabled={loadingAnonId} className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-              {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
-            </button>
-            <p className="text-center mt-3">
-              <a href="/login?gate=1" className="text-xs text-slate-500 transition-colors">
-                Have an account? <span className="text-blue-400 hover:text-blue-300">Sign in</span>
-              </a>
-            </p>
+            {enterButton}
+            {signInLink}
           </form>
-        </div>
+        )}
 
         {/* ── Preview blocks: a taste of what's inside, each with a CTA to enter ── */}
 
@@ -660,7 +686,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             <table className="w-full text-left">
               <tbody>
                 {recentWarnNotices.map((n, i) => (
-                  <tr key={i} className={`text-xs ${i > 0 ? 'border-t border-slate-800' : ''}`}>
+                  <tr
+                    key={i}
+                    onClick={() => handleNoticeClick(n.companyId)}
+                    className={`text-xs cursor-pointer hover:bg-slate-800/60 transition-colors ${i > 0 ? 'border-t border-slate-800' : ''}`}
+                  >
                     <td className="px-3 py-2 font-medium text-slate-200 truncate max-w-[130px]">{n.company}</td>
                     <td className="px-2 py-2 text-right tabular-nums text-slate-300">{n.employees}</td>
                     <td className="px-3 py-2 text-right tabular-nums text-slate-400 whitespace-nowrap">{fmtNoticeDate(n.date)}</td>
@@ -692,7 +722,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
         {/* 3. Sample bet — secondary (dimmer than the WARN block above) */}
         <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="mb-3">
-            <div className="text-sm font-semibold text-white leading-tight">Live prediction</div>
+            <div className="text-sm font-semibold text-white leading-tight">Live predictions</div>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-800/40 p-3.5">
             <div className="text-sm font-semibold text-slate-100 mb-2.5">Will Acme Inc announce layoffs by Sep 30?</div>
@@ -710,6 +740,11 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
             </div>
           </div>
         </div>
+
+        {/* Repeated entry CTA at the foot of the previews */}
+        <button type="button" onClick={() => enterSite()} disabled={loadingAnonId} className="mt-4 w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+          {loadingAnonId ? 'Loading...' : 'Enter anonymously'}
+        </button>
 
         <div className="text-center mt-6 space-y-3">
           <p className="text-xs text-slate-500 leading-relaxed">All predictions and bets use virtual coins with no real-world or monetary value — not financial, legal, or gambling activity. An anonymous open forum; posts are user-generated and not endorsed by Layoff Chat. Anonymous sessions and interactions are tracked for analytics.</p>
