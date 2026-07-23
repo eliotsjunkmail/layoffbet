@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
-import { X, Search as SearchIcon, MessageSquare, FileWarning, Users, TrendingUp, ArrowRight } from 'lucide-react'
+import { X, Search as SearchIcon, MessageSquare, Users, ArrowRight } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
@@ -653,14 +653,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* 1. Recent WARN notices */}
         <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-              <FileWarning className="w-4 h-4 text-amber-400" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-white leading-tight">Latest WARN notices</div>
-              <div className="text-[11px] text-slate-500 leading-tight">Official layoff filings, newest first</div>
-            </div>
+          <div className="mb-3">
+            <div className="text-sm font-semibold text-white leading-tight">Latest layoff notices - WARN</div>
           </div>
           <div className="overflow-hidden rounded-xl border border-slate-800">
             <table className="w-full text-left">
@@ -689,14 +683,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* 2. Sample chat — secondary (dimmer than the WARN block above) */}
         <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="w-4 h-4 text-blue-400" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-white leading-tight">Inside the break room</div>
-              <div className="text-[11px] text-slate-500 leading-tight">Acme Inc · anonymous employee chat</div>
-            </div>
+          <div className="mb-3">
+            <div className="text-sm font-semibold text-white leading-tight">Inside the break room</div>
           </div>
           <div className="space-y-2.5">
             <div className="flex justify-start">
@@ -716,14 +704,8 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
 
         {/* 3. Sample bet — secondary (dimmer than the WARN block above) */}
         <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-white leading-tight">Live prediction</div>
-              <div className="text-[11px] text-slate-500 leading-tight">Play-money odds from the crowd</div>
-            </div>
+          <div className="mb-3">
+            <div className="text-sm font-semibold text-white leading-tight">Live prediction</div>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-800/40 p-3.5">
             <div className="text-sm font-semibold text-slate-100 mb-2.5">Will Acme Inc announce layoffs by Sep 30?</div>
