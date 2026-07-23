@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store/useStore'
 import { api } from './services/api'
-import { X, Search as SearchIcon, MessageSquare } from 'lucide-react'
+import { X, Search as SearchIcon, MessageSquare, FileWarning, Users, TrendingUp, ArrowRight } from 'lucide-react'
 import { APP_VERSION } from './constants'
 import { CompanyLogo } from './components/CompanyLogo'
 import { AddCompanyModal } from './components/AddCompanyModal'
@@ -318,6 +318,7 @@ const PickCompanyModal = ({ onSelect, onClose }: { onSelect: (id: string) => voi
 const SiteGate = ({ children }: { children: ReactNode }) => {
   const currentUser = useStore(s => s.currentUser)
   const companies = useStore(s => s.companies)
+  const events = useStore(s => s.events)
   const syncCommentsFromServer = useStore(s => s.syncCommentsFromServer)
   // Whether the invite code is required is a global server setting (synced on mount), so an
   // admin toggling it applies to everyone — not just their own browser.
@@ -426,6 +427,33 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     }
   }, [currentUser])
 
+  // The 5 most recent WARN Act notices for the preview table. Worker counts live inside the
+  // generated title ("… of 1,200 workers by …"), so parse them out; sort newest-first by
+  // when the notice was posted. Falls back to representative samples on a fresh/empty DB so
+  // the gate never renders a blank table. Declared before the early return below so hook
+  // order stays stable across the locked/unlocked renders.
+  const recentWarnNotices = useMemo(() => {
+    const parseWorkers = (title: string): string => {
+      const m = title.replace(/,/g, '').match(/of\s+(\d+)\s+workers?/i)
+      return m ? Number(m[1]).toLocaleString() : '—'
+    }
+    const real = events
+      .filter(e => e.isWarnActNotice)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+      .map(e => ({ company: e.companyName, employees: parseWorkers(e.title), date: new Date(e.createdAt) }))
+    if (real.length > 0) return real
+    return [
+      { company: 'Acme Inc', employees: '1,240', date: new Date('2026-07-18T00:00:00') },
+      { company: 'Verizon', employees: '860', date: new Date('2026-07-11T00:00:00') },
+      { company: 'Conduent', employees: '540', date: new Date('2026-07-03T00:00:00') },
+      { company: 'BNSF', employees: '410', date: new Date('2026-06-24T00:00:00') },
+      { company: 'ADP', employees: '295', date: new Date('2026-06-15T00:00:00') },
+    ]
+  }, [events])
+
+  const fmtNoticeDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
   if (unlocked || window.location.pathname === '/login') return (
     <>
       {children}
@@ -442,8 +470,13 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     </>
   )
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault()
+    enterSite()
+  }
+
+  // Shared entry path used by both the main gate form and the preview-block CTAs below.
+  const enterSite = async () => {
     if (!codeRequired || GATE_CODES.includes(input.trim().toLowerCase())) {
       try {
         setLoadingAnonId(true)
@@ -550,7 +583,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     setTimeout(() => { setSaved(false); setAdminOpen(false); setAdminStep('login'); setAdminUser(''); setAdminPass('') }, 1200)
   }
 
-
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -615,6 +647,105 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
               </a>
             </p>
           </form>
+        </div>
+
+        {/* ── Preview blocks: a taste of what's inside, each with a CTA to enter ── */}
+
+        {/* 1. Recent WARN notices */}
+        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+              <FileWarning className="w-4 h-4 text-amber-400" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white leading-tight">Latest WARN notices</div>
+              <div className="text-[11px] text-slate-500 leading-tight">Official layoff filings, newest first</div>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-slate-800">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-wide text-slate-500 bg-slate-800/50">
+                  <th className="px-3 py-2 font-medium">Company</th>
+                  <th className="px-2 py-2 font-medium text-right">Employees</th>
+                  <th className="px-3 py-2 font-medium text-right">Notice</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentWarnNotices.map((n, i) => (
+                  <tr key={i} className={`text-xs ${i > 0 ? 'border-t border-slate-800' : ''}`}>
+                    <td className="px-3 py-2 font-medium text-slate-200 truncate max-w-[130px]">{n.company}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-slate-300">{n.employees}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-slate-400 whitespace-nowrap">{fmtNoticeDate(n.date)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
+            See all layoff notices <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* 2. Sample chat */}
+        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+              <MessageSquare className="w-4 h-4 text-blue-400" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white leading-tight">Inside the break room</div>
+              <div className="text-[11px] text-slate-500 leading-tight">Acme Inc · anonymous employee chat</div>
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] text-slate-500 mb-0.5 ml-1">Old Timer · 22 yrs</span>
+              <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Badge readers went quiet on the 4th floor this morning. Seen this movie before.</div>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] text-slate-500 mb-0.5 mr-1">The Cynic</span>
+              <div className="bg-blue-600/90 text-white text-xs rounded-2xl rounded-tr-sm px-3 py-2 max-w-[85%]">All-hands got moved to Friday at 4pm. Nobody schedules good news for a Friday afternoon.</div>
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] text-slate-500 mb-0.5 ml-1">Old Timer · 22 yrs</span>
+              <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Reorg deck already leaked. Severance line item's back. Buckle up.</div>
+            </div>
+          </div>
+          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
+            Join the conversation <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* 3. Sample bet */}
+        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white leading-tight">Live prediction</div>
+              <div className="text-[11px] text-slate-500 leading-tight">Play-money odds from the crowd</div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-800/40 p-3.5">
+            <div className="text-sm font-semibold text-slate-100 mb-2.5">Will Acme Inc announce layoffs by Sep 30?</div>
+            <div className="flex h-2.5 rounded-full overflow-hidden mb-2">
+              <div className="bg-emerald-500" style={{ width: '68%' }} />
+              <div className="bg-rose-500" style={{ width: '32%' }} />
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-emerald-400">YES 68%</span>
+              <span className="font-semibold text-rose-400">NO 32%</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
+              <Users className="w-3.5 h-3.5" />
+              <span>412 predictions · 38.6k coins in play</span>
+            </div>
+          </div>
+          <button onClick={enterSite} disabled={loadingAnonId} className="mt-3 w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl transition-colors text-xs disabled:opacity-50">
+            Place your prediction <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         <div className="text-center mt-6 space-y-3">
