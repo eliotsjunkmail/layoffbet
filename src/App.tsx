@@ -658,13 +658,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
           <div className="overflow-hidden rounded-xl border border-slate-800">
             <table className="w-full text-left">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-wide text-slate-500 bg-slate-800/50">
-                  <th className="px-3 py-2 font-medium">Company</th>
-                  <th className="px-2 py-2 font-medium text-right">Employees</th>
-                  <th className="px-3 py-2 font-medium text-right">Notice</th>
-                </tr>
-              </thead>
               <tbody>
                 {recentWarnNotices.map((n, i) => (
                   <tr key={i} className={`text-xs ${i > 0 ? 'border-t border-slate-800' : ''}`}>
