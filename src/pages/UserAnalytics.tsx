@@ -8,6 +8,10 @@ import { api } from '../services/api'
 // ---- payload shape (mirrors db.getAnalytics) ----
 interface Split { anonymous: number; registered: number }
 interface CompanyStat { id: string; name: string; slug: string; clicks: number; shares: number; events: number; bets: number; comments: number; chatMessages: number; favorites: number }
+interface ActionWindow {
+  totals: { events: number; bets: number; comments: number; chatMessages: number; favorites: number; shares: number; pageViews: number }
+  byType: { events: Split; bets: Split; comments: Split; chatMessages: Split; favorites: Split; shares: Split }
+}
 interface Analytics {
   generatedAt: string
   rangeDays: number
@@ -17,6 +21,8 @@ interface Analytics {
   activeInRange: number
   actionTotals: { events: number; bets: number; comments: number; chatMessages: number; favorites: number; shares: number }
   actionTotalsByType: { events: Split; bets: Split; comments: Split; chatMessages: Split; favorites: Split; shares: Split }
+  actionWindows?: Record<string, ActionWindow>
+  totalPageViews?: number
   series: {
     newUsers: { date: string; anonymous: number; registered: number }[]
     actions: { date: string; events: number; bets: number; comments: number; chatMessages: number }[]
@@ -26,9 +32,19 @@ interface Analytics {
 }
 
 const RANGES = [
+  { label: '24 hours', days: 1 },
   { label: '7 days', days: 7 },
   { label: '30 days', days: 30 },
   { label: '90 days', days: 90 },
+]
+
+// Local range selector for the "Platform Actions" card (independent of the page-level range).
+const ACTION_WINDOWS = [
+  { key: 'all', label: 'All time' },
+  { key: '1', label: 'Today' },
+  { key: '7', label: '7 days' },
+  { key: '30', label: '30 days' },
+  { key: '90', label: '90 days' },
 ]
 
 // Validated categorical pair (dataviz skill): anonymous = blue slot 1, registered = green
@@ -202,33 +218,44 @@ const TrendArea = ({ data }: { data: { date: string; count: number }[] }) => {
 }
 
 // ---- horizontal ranked bars (action totals, single hue + value labels) ----
-const RankBars = ({ rows, onSelect }: { rows: { label: string; value: number; split: Split; metric: string }[]; onSelect?: (metric: string, label: string) => void }) => {
+// A row without a `split` renders a single-hue bar (e.g. page views, which have no
+// anonymous/registered attribution); a row without a `metric` isn't clickable.
+interface RankRow { label: string; value: number; split?: Split; metric?: string; note?: string }
+const RankBars = ({ rows, onSelect }: { rows: RankRow[]; onSelect?: (metric: string, label: string) => void }) => {
   const c = useColors()
   const max = Math.max(1, ...rows.map(r => r.value))
   return (
     <div className="space-y-1">
       {rows.map(r => {
+        const clickable = !!(onSelect && r.metric)
         const body = (
           <>
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="font-medium text-gray-700 dark:text-slate-300 flex items-center gap-1">
                 {r.label}
-                {onSelect && <ChevronRight className="w-3 h-3 text-gray-300 dark:text-slate-600" />}
+                {r.note && <span className="text-[10px] font-normal text-gray-400 dark:text-slate-500">· {r.note}</span>}
+                {clickable && <ChevronRight className="w-3 h-3 text-gray-300 dark:text-slate-600" />}
               </span>
               <span className="tabular-nums text-gray-500 dark:text-slate-400">
                 {fmt(r.value)}
-                <span className="text-gray-400 dark:text-slate-500"> · {fmt(r.split.anonymous)} anon / {fmt(r.split.registered)} reg</span>
+                {r.split && <span className="text-gray-400 dark:text-slate-500"> · {fmt(r.split.anonymous)} anon / {fmt(r.split.registered)} reg</span>}
               </span>
             </div>
-            {/* stacked anon/registered proportion within the bar */}
+            {/* stacked anon/registered proportion within the bar (or single hue if no split) */}
             <div className="h-2.5 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden flex" style={{ width: `${Math.max(4, (r.value / max) * 100)}%` }}>
-              <div style={{ background: c.anon, width: r.value ? `${(r.split.anonymous / r.value) * 100}%` : '0%' }} />
-              <div style={{ background: c.reg, width: r.value ? `${(r.split.registered / r.value) * 100}%` : '0%' }} />
+              {r.split ? (
+                <>
+                  <div style={{ background: c.anon, width: r.value ? `${(r.split.anonymous / r.value) * 100}%` : '0%' }} />
+                  <div style={{ background: c.reg, width: r.value ? `${(r.split.registered / r.value) * 100}%` : '0%' }} />
+                </>
+              ) : (
+                <div style={{ background: c.anon, width: '100%' }} />
+              )}
             </div>
           </>
         )
-        return onSelect
-          ? <button key={r.label} onClick={() => onSelect(r.metric, r.label)} className="block w-full text-left px-2 py-1.5 -mx-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">{body}</button>
+        return clickable
+          ? <button key={r.label} onClick={() => onSelect!(r.metric!, r.label)} className="block w-full text-left px-2 py-1.5 -mx-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">{body}</button>
           : <div key={r.label} className="px-2 py-1.5">{body}</div>
       })}
     </div>
@@ -372,6 +399,7 @@ export const UserAnalytics = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [detail, setDetail] = useState<{ metric: string; title: string } | null>(null)
+  const [actionWin, setActionWin] = useState('all')
 
   useEffect(() => {
     let cancelled = false
@@ -448,19 +476,44 @@ export const UserAnalytics = () => {
             <TrendArea data={data.series.activeUsers} />
           </ChartCard>
 
-          {/* Action frequencies */}
-          <ChartCard title="Platform Actions (all-time)" right={<Legend items={[{ color: colors.anon, label: 'Anonymous' }, { color: colors.reg, label: 'Registered' }]} />}>
-            <RankBars
-              onSelect={(metric, label) => setDetail({ metric, title: label })}
-              rows={[
-                { label: 'Betting events created', metric: 'events', value: data.actionTotals.events, split: data.actionTotalsByType.events },
-                { label: 'Bets placed', metric: 'bets', value: data.actionTotals.bets, split: data.actionTotalsByType.bets },
-                { label: 'Comments made', metric: 'comments', value: data.actionTotals.comments, split: data.actionTotalsByType.comments },
-                { label: 'Chat messages sent', metric: 'chatMessages', value: data.actionTotals.chatMessages, split: data.actionTotalsByType.chatMessages },
-                { label: 'Companies favorited', metric: 'favorites', value: data.actionTotals.favorites, split: data.actionTotalsByType.favorites },
-                { label: 'Shares', metric: 'shares', value: data.actionTotals.shares, split: data.actionTotalsByType.shares },
-              ]} />
-          </ChartCard>
+          {/* Action frequencies — its own range selector (all-time / today / 7 / 30 / 90).
+              Shares and page views are running counters with no per-event timestamp, so they
+              always reflect all-time totals regardless of the selected window. */}
+          {(() => {
+            const aw = data.actionWindows?.[actionWin] || { totals: { ...data.actionTotals, pageViews: data.totalPageViews ?? 0 }, byType: data.actionTotalsByType }
+            const isAll = actionWin === 'all'
+            return (
+              <ChartCard
+                title="Platform Actions"
+                right={
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-700/50 rounded-lg p-0.5">
+                    {ACTION_WINDOWS.map(w => (
+                      <button
+                        key={w.key}
+                        onClick={() => setActionWin(w.key)}
+                        className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${actionWin === w.key ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
+                      >
+                        {w.label}
+                      </button>
+                    ))}
+                  </div>
+                }
+              >
+                <div className="mb-3"><Legend items={[{ color: colors.anon, label: 'Anonymous' }, { color: colors.reg, label: 'Registered' }]} /></div>
+                <RankBars
+                  onSelect={(metric, label) => setDetail({ metric, title: label })}
+                  rows={[
+                    { label: 'Betting events created', metric: 'events', value: aw.totals.events, split: aw.byType.events },
+                    { label: 'Bets placed', metric: 'bets', value: aw.totals.bets, split: aw.byType.bets },
+                    { label: 'Comments made', metric: 'comments', value: aw.totals.comments, split: aw.byType.comments },
+                    { label: 'Chat messages sent', metric: 'chatMessages', value: aw.totals.chatMessages, split: aw.byType.chatMessages },
+                    { label: 'Companies favorited', metric: 'favorites', value: aw.totals.favorites, split: aw.byType.favorites },
+                    { label: 'Shares', metric: 'shares', value: aw.totals.shares, split: aw.byType.shares, note: isAll ? undefined : 'all-time' },
+                    { label: 'Page views', value: aw.totals.pageViews, note: 'all-time' },
+                  ]} />
+              </ChartCard>
+            )
+          })()}
 
           {/* Per-company breakdown */}
           <ChartCard title="Stats by Company">

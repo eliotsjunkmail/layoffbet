@@ -780,7 +780,7 @@ export const db = {
     ])
     const [chatRows, favRows, activityRows] = await Promise.all([
       fetchAllRows(() => supabase.from('chat_messages').select('user_id, created_at, company_id'), 'getAnalytics:chat', { safe: true }),
-      fetchAllRows(() => supabase.from('favorites').select('user_id, company_id'), 'getAnalytics:favorites', { safe: true }),
+      fetchAllRows(() => supabase.from('favorites').select('*'), 'getAnalytics:favorites', { safe: true }),
       fetchAllRows(() => supabase.from('user_activity').select('user_id, is_anonymous, active_date'), 'getAnalytics:activity', { safe: true }),
     ])
     const chat = (chatRows || []).map(fromDb) // -> { userId, createdAt }
@@ -836,6 +836,42 @@ export const db = {
       chatMessages: splitByActor(chat),
       favorites: splitByActor(favorites),
       shares: sharesSplit,
+    }
+
+    // Windowed action totals for the dashboard's "Platform Actions" range selector. Events,
+    // bets, comments, chat and favorites carry per-row timestamps so they window precisely;
+    // shares and page views are running counters with no per-event timestamp, so they're
+    // reported all-time in every window (the UI labels them as such).
+    const totalPageViews = companies.reduce((sum, c) => sum + (c.viewCount || 0), 0)
+    const inWindow = (iso, startKey) => { const k = dayKey(iso); return k != null && (startKey == null || k >= startKey) }
+    const windowActions = (startKey) => {
+      const fEvents = events.filter(e => inWindow(e.createdAt, startKey))
+      const fBets = bets.filter(b => inWindow(b.createdAt, startKey))
+      const fComments = comments.filter(c => inWindow(c.createdAt, startKey))
+      const fChat = chat.filter(m => inWindow(m.createdAt, startKey))
+      const fFavs = favorites.filter(f => inWindow(f.created_at, startKey))
+      return {
+        totals: {
+          events: fEvents.length, bets: fBets.length, comments: fComments.length,
+          chatMessages: fChat.length, favorites: fFavs.length,
+          shares: actionTotals.shares, pageViews: totalPageViews,
+        },
+        byType: {
+          events: splitByActor(fEvents.map(e => ({ userId: e.creatorId }))),
+          bets: splitByActor(fBets),
+          comments: splitByActor(fComments),
+          chatMessages: splitByActor(fChat),
+          favorites: splitByActor(fFavs),
+          shares: sharesSplit,
+        },
+      }
+    }
+    const actionWindows = {
+      all: windowActions(null),
+      '1': windowActions(offsetKey(0)),
+      '7': windowActions(offsetKey(6)),
+      '30': windowActions(offsetKey(29)),
+      '90': windowActions(offsetKey(89)),
     }
 
     // Active users (distinct pinged user_ids in each window). Date strings are YYYY-MM-DD
@@ -909,6 +945,8 @@ export const db = {
       activeInRange,
       actionTotals,
       actionTotalsByType,
+      actionWindows,
+      totalPageViews,
       series: {
         newUsers: windowKeys.map(k => ({ date: k, anonymous: newUsersAnon[k], registered: newUsersReg[k] })),
         actions: windowKeys.map(k => ({ date: k, events: actEvents[k], bets: actBets[k], comments: actComments[k], chatMessages: actChat[k] })),
