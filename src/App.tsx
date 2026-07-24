@@ -715,25 +715,7 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
 
-        {/* 2. Sample chat — secondary (dimmer than the WARN block above) */}
-        <div className="mt-6 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
-          <div className="mb-3">
-            <div className="text-sm font-semibold text-white leading-tight">Inside the break room</div>
-          </div>
-          <div className="space-y-2.5">
-            <div className="flex justify-start">
-              <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Badge readers went quiet on the 4th floor this morning. Seen this movie before.</div>
-            </div>
-            <div className="flex justify-end">
-              <div className="bg-slate-600 text-white text-xs rounded-2xl rounded-tr-sm px-3 py-2 max-w-[85%]">All-hands got moved to Friday at 4pm. Nobody schedules good news for a Friday afternoon.</div>
-            </div>
-            <div className="flex justify-start">
-              <div className="bg-slate-800 text-slate-200 text-xs rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%]">Reorg deck already leaked. Severance line item's back. Buckle up.</div>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Sample bet — secondary (dimmer than the WARN block above) */}
+        {/* 2. Sample bet — secondary (dimmer than the WARN block above) */}
         <div className="mt-6 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="mb-3">
             <div className="text-sm font-semibold text-white leading-tight">Live predictions</div>
