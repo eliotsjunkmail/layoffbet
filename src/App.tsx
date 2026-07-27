@@ -454,7 +454,18 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
     ]
   }, [events, companies])
 
-  const fmtNoticeDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  // Relative "how long ago" label for a notice date (e.g. today, yesterday, 3 days ago).
+  const fmtNoticeDate = (d: Date) => {
+    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+    const startOfTarget = new Date(d); startOfTarget.setHours(0, 0, 0, 0)
+    const diff = Math.round((startOfToday.getTime() - startOfTarget.getTime()) / 86400000)
+    if (diff <= 0) return 'today'
+    if (diff === 1) return 'yesterday'
+    if (diff < 7) return `${diff} days ago`
+    if (diff < 30) { const w = Math.floor(diff / 7); return `${w} week${w > 1 ? 's' : ''} ago` }
+    if (diff < 365) { const m = Math.floor(diff / 30); return `${m} month${m > 1 ? 's' : ''} ago` }
+    const y = Math.floor(diff / 365); return `${y} year${y > 1 ? 's' : ''} ago`
+  }
 
   // Clicking a WARN-notice row enters the site with that company pre-selected. Code-gated
   // companies (e.g. BNY) prompt for their code first, matching the gate pill behavior.
@@ -683,10 +694,32 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
           </form>
         )}
 
-        {/* ── Preview blocks: a taste of what's inside, each with a CTA to enter ── */}
+        {/* ── Preview blocks: a taste of what's inside ── */}
 
-        {/* 1. Recent WARN notices */}
+        {/* 1. Sample bet */}
         <div className="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+          <div className="mb-3">
+            <div className="text-sm font-semibold text-white leading-tight">Live predictions</div>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-800/40 p-3.5">
+            <div className="text-sm font-semibold text-slate-100 mb-2.5">Will Acme Inc announce layoffs by Sep 30?</div>
+            <div className="flex h-2.5 rounded-full overflow-hidden mb-2">
+              <div className="bg-emerald-500" style={{ width: '68%' }} />
+              <div className="bg-rose-500" style={{ width: '32%' }} />
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-emerald-400">YES 68%</span>
+              <span className="font-semibold text-rose-400">NO 32%</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
+              <Users className="w-3.5 h-3.5" />
+              <span>412 predictions · 38.6k coins in play</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Recent WARN notices — secondary (dimmer than the predictions block above) */}
+        <div className="mt-6 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
           <div className="mb-3">
             <div className="text-sm font-semibold text-white leading-tight">Latest layoff notices</div>
           </div>
@@ -712,28 +745,6 @@ const SiteGate = ({ children }: { children: ReactNode }) => {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        {/* 2. Sample bet — secondary (dimmer than the WARN block above) */}
-        <div className="mt-6 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-5">
-          <div className="mb-3">
-            <div className="text-sm font-semibold text-white leading-tight">Live predictions</div>
-          </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-800/40 p-3.5">
-            <div className="text-sm font-semibold text-slate-100 mb-2.5">Will Acme Inc announce layoffs by Sep 30?</div>
-            <div className="flex h-2.5 rounded-full overflow-hidden mb-2">
-              <div className="bg-emerald-500" style={{ width: '68%' }} />
-              <div className="bg-rose-500" style={{ width: '32%' }} />
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-emerald-400">YES 68%</span>
-              <span className="font-semibold text-rose-400">NO 32%</span>
-            </div>
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
-              <Users className="w-3.5 h-3.5" />
-              <span>412 predictions · 38.6k coins in play</span>
-            </div>
           </div>
         </div>
 
