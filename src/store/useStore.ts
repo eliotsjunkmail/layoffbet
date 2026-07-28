@@ -1022,9 +1022,20 @@ export const useStore = create<StoreState>()(
           const saved = localStorage.getItem('layoff-bets-currentUser')
           if (saved) {
             const user = JSON.parse(saved)
+            // The 'layoff-bets-currentUser' snapshot is written once at sign-in and never
+            // updated as coins/shares change, so its balance goes stale after any bet. Trust
+            // the live store/synced-users balance for this same user so a reload doesn't
+            // reset the coin count back to the sign-in value.
+            const users = get().users
+            const freshMe = users.find(u => u.id === user.id)
+            const persistedMe = get().currentUser
+            const source = freshMe || (persistedMe && persistedMe.id === user.id ? persistedMe : null)
+            if (source) {
+              if (typeof source.coins === 'number') user.coins = source.coins
+              if (source.shareCount != null) user.shareCount = source.shareCount
+            }
             set({ currentUser: user })
             // Verify user still exists in the users list
-            const users = get().users
             if (!users.find(u => u.id === user.id)) {
               localStorage.removeItem('layoff-bets-currentUser')
               set({ currentUser: null })
